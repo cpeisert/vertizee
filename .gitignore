@@ -1,0 +1,70 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+# See https://stackoverflow.com/questions/3719243/best-practices-for-adding-gitignore-file-for-python-projects
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+tmp/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+.coverage
+/.sass-cache
+/connect.lock
+/coverage
+apps/**/coverage/
+/libpeerconnection.log
+npm-debug.log
+Pipfile*
+testem.log
+/typings
+venv/
+
+# Sphinx documentation
+docs/_build/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+htmlcov/
