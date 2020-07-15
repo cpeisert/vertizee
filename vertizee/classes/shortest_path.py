@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data structure for working with graph paths."""
+"""Data structure for working with a path that may be a shortest path between some source vertex
+and destination vertex."""
 
 from __future__ import annotations
 from typing import Callable, List, Optional, TYPE_CHECKING
@@ -118,7 +119,7 @@ class ShortestPath:
         self._path: List[Vertex] = [self._source]
 
     def relax(self, predecessor_path: 'ShortestPath',
-              weight_function: Optional[Callable[[Vertex, Vertex, bool], float]] = None,
+              weight_function: Optional[Callable[[Vertex, Vertex, bool], float]],
               reverse_graph: bool = False) -> bool:
         """If there is a shorter path to this path's destination vertex passing through some
         predecessor vertex (i.e. `predecessor_path.destination`), then update this path to go
@@ -142,12 +143,11 @@ class ShortestPath:
         Args:
             predecessor_path (ShortestPath): A graph path from the source to some vertex u that has
                 an edge connecting u to the destination of this path.
-            weight_function (Callable[[Vertex, Vertex, bool], float], optional): A function that
-                accepts two vertices and a boolean indicating if the graph is reversed (i.e. edges
-                of directed graphs in the opposite direction) and returns the corresponding edge
+            weight_function (Callable[[Vertex, Vertex, bool], float]): A function that accepts
+                two vertices and a boolean indicating if the graph is reversed (i.e. edges of
+                directed graphs in the opposite direction) and returns the corresponding edge
                 weight. If not provided, then the default `Edge.weight` property is used. For
-                multigraphs, the lowest edge weight among the parallel edges is used. Defaults
-                to None.
+                multigraphs, the lowest edge weight among the parallel edges is used.
             reverse_graph (bool, optional): For directed graphs, setting to True will yield a
                 traversal as if the graph were reversed (i.e. the reverse/transpose/converse
                 graph). Defaults to False.
@@ -164,24 +164,12 @@ class ShortestPath:
         if predecessor_path.length == INFINITY:
             return False
 
-        graph: GraphBase = self._source._parent_graph
         j: Vertex = predecessor_path.destination
         k: Vertex = self.destination
 
-        if reverse_graph:
-            edge_j_k = graph[k][j]
-        else:
-            edge_j_k = graph[j][k]
-        if edge_j_k is None:
+        edge_len = weight_function(j, k, reverse_graph)
+        if edge_len is None:  # This can happen if the weight function is designed as a filter.
             return False
-
-        if weight_function is None:
-            edge_len = edge_j_k.weight
-            if len(edge_j_k.parallel_edge_weights) > 0:
-                min_parallel = min(edge_j_k.parallel_edge_weights)
-                edge_len = min(edge_len, min_parallel)
-        else:
-            edge_len = weight_function(j, k, reverse_graph)
 
         if self.length > predecessor_path.length + edge_len:
             self._length = predecessor_path.length

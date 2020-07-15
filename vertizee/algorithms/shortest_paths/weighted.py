@@ -16,6 +16,7 @@
 
 from typing import Callable, Optional, Union
 
+from vertizee.classes.collections.fibonacci_heap import FibonacciHeap
 from vertizee.classes.collections.priority_queue import PriorityQueue
 from vertizee.classes.collections.vertex_dict import VertexDict
 from vertizee.classes.edge import EdgeType
@@ -108,26 +109,24 @@ def get_weight_function(
     return get_min_weight
 
 
-def shortest_path_priority_function(path: ShortestPath) -> float:
-    return path.length
-
-
 def shortest_paths_bellman_ford(
         graph: GraphBase, source: VertexKeyType, weight: Union[Callable, str] = 'Edge__weight',
         reverse_graph: bool = False) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices of a weighted, directed graph using the Bellman-Ford algorithm based on the
-    implementation in "Introduction to Algorithms: Third Edition".
+    vertices of a weighted, directed graph using the Bellman-Ford algorithm.
 
-    This implementation runs in O(mn) where m = |E| and n = |V|. The Bellman-Ford algorithm is not
-    as fast as Dijkstra, but it can handle negative edge weights.
+    Running time: O(mn) where m = |E| and n = |V|
 
-    Unreachable vertices will have an empty list of vertices for their path and a length of
-    infinity. In additional, `ShortestPath.is_destination_unreachable` will return True.
+    The Bellman-Ford algorithm is not as fast as Dijkstra, but it can handle negative edge weights.
+    This implementation is based on "Introduction to Algorithms: Third Edition" [1].
+
+    Unreachable vertices will have a path length of infinity. In additional,
+    `ShortestPath.is_destination_unreachable` will return True.
 
     The Edge class has a built-in `weight` property, which is used by default to determine edge
-    weights (a.k.a. edge lengths). Alternatively, a weight function may be specified that accepts
-    two vertices and returns the weight of the connecting edge.
+    weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
+    two vertices and returns the weight of the connecting edge. See
+    `~weighted.get_weight_function`.
 
     Args:
         graph (GraphBase): The graph to search.
@@ -142,7 +141,7 @@ def shortest_paths_bellman_ford(
             False.
 
     Returns:
-        VertexDict[VertexKeyType, ShortestPath]: A dictionary mapping vertices to their shortest
+        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest
             paths and associated path lengths.
 
     Raises:
@@ -151,9 +150,9 @@ def shortest_paths_bellman_ford(
 
     See Also:
         `~edge.Edge`
-        `~edge.DiEdge`
         `~shortest_path.ShortestPath`
         `~vertex_dict.VertexDict`
+        `~weighted.get_weight_function`.
         `~weighted.shortest_paths_dijkstra`
 
     Example:
@@ -223,18 +222,24 @@ def shortest_paths_dijkstra(
         graph: GraphBase, source: VertexKeyType, weight: Union[Callable, str] = 'Edge__weight',
         reverse_graph: bool = False) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices of a weighted graph using Dijkstra's algorithm based on the implementation in
-    "Introduction to Algorithms: Third Edition".
+    vertices of a graph with positive edge weights using Dijkstra's algorithm.
 
-    Unreachable vertices will have an empty list of vertices for their path and a length of
-    infinity. In additional, `ShortestPath.is_destination_unreachable` will return True.
+    Running time: O((m + n)log(n)) where m = |E| and n = |V|. Running time is due to implementation
+    using a minimum priority queue based on a binary heap. For an implementation built using a
+    Fibonacci heap and corresponding running time of O(n * log(n) + m), see
+    `~weighted.shortest_paths_dijkstra_fibonacci`.
 
     This algorithm is not guaranteed to work if edge weights are negative or are floating point
-    numbers (overflows and roundoff errors can cause problems).
+    numbers (overflows and roundoff errors can cause problems). To handle negative edge weights,
+    see `~weighted.shortest_paths_bellman_ford`.
+
+    Unreachable vertices will have a path length of infinity. In additional,
+    `ShortestPath.is_destination_unreachable` will return True.
 
     The Edge class has a built-in `weight` property, which is used by default to determine edge
-    weights (a.k.a. edge lengths). Alternatively, a weight function may be specified that accepts
-    two vertices and returns the weight of the connecting edge.
+    weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
+    two vertices and returns the weight of the connecting edge. See
+    `~weighted.get_weight_function`.
 
     Args:
         graph (GraphBase): The graph to search.
@@ -250,7 +255,7 @@ def shortest_paths_dijkstra(
             False.
 
     Returns:
-        VertexDict[VertexKeyType, ShortestPath]: A dictionary mapping vertices to their shortest
+        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest
             paths and associated path lengths.
 
     See Also:
@@ -259,6 +264,7 @@ def shortest_paths_dijkstra(
         `~shortest_path.ShortestPath`
         `~vertex_dict.VertexDict`
         `~weighted.shortest_paths_bellman_ford`
+        `~weighted.shortest_paths_dijkstra_fibonacci`
 
     Example:
         >>> g = DiGraph([
@@ -278,7 +284,7 @@ def shortest_paths_dijkstra(
         >>> paths['y'].length
         5
         >>> paths['x'].path
-        [s, y, t, x]
+        [s, y, t, x
         >>> paths['x'].length
         9
 
@@ -292,7 +298,7 @@ def shortest_paths_dijkstra(
     weight_function = get_weight_function(weight)
 
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
-    priority_queue: PriorityQueue[ShortestPath] = PriorityQueue(shortest_path_priority_function)
+    priority_queue: PriorityQueue[ShortestPath] = PriorityQueue(lambda path: path.length)
 
     for vertex in graph:
         vertex_path = ShortestPath(source=s, destination=vertex, initial_length=INFINITY)
@@ -302,13 +308,11 @@ def shortest_paths_dijkstra(
     vertex_to_path_map[s].reinitialize(initial_length=0)
     priority_queue.add_or_update(vertex_to_path_map[s])
 
-    set_of_min_path_vertices = set([s])
+    set_of_min_path_vertices = set()
 
     while len(priority_queue) > 0:
         u_path = priority_queue.pop()
         u: Vertex = u_path.destination
-        if u is None:
-            u = u_path.source
         set_of_min_path_vertices.add(u)
         u_parent = _get_parent_vertex_of_path_destination(u_path)
         u_adj_list = u.get_adj_for_search(parent=u_parent, reverse_graph=reverse_graph)
@@ -317,34 +321,35 @@ def shortest_paths_dijkstra(
             if w in set_of_min_path_vertices:
                 continue
             w_path = vertex_to_path_map[w]
-            u_w_weight = weight_function(u, w, reverse_graph)
-            if u_w_weight is None:
-                continue
-            relaxed = w_path.relax(u_path, weight_function=weight_function,
-                                   reverse_graph=reverse_graph)
+            relaxed = w_path.relax(u_path, weight_function, reverse_graph)
             if relaxed:
                 priority_queue.add_or_update(w_path)
 
     return vertex_to_path_map
 
 
-# TODO(cpeisert): Implement with Fibonacci Heap
 def shortest_paths_dijkstra_fibonacci(
         graph: GraphBase, source: VertexKeyType, weight: Union[Callable, str] = 'Edge__weight',
         reverse_graph: bool = False) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices of a weighted graph using Dijkstra's algorithm based on the implementation in
-    "Introduction to Algorithms: Third Edition".
+    vertices of a graph with positive edge weights using Dijkstra's algorithm.
 
-    Unreachable vertices will have an empty list of vertices for their path and a length of
-    infinity. In additional, `ShortestPath.is_destination_unreachable` will return True.
+    Running time:  O(n * log(n) + m) where m = |E| and n = |V|. Running time is due to
+    implementation using a minimum priority queue based on a Fibonacci heap. For an implementation
+    using a binary heap and corresponding running time of O((m + n)log(n)), see
+    `~weighted.shortest_paths_dijkstra`.
 
     This algorithm is not guaranteed to work if edge weights are negative or are floating point
-    numbers (overflows and roundoff errors can cause problems).
+    numbers (overflows and roundoff errors can cause problems). To handle negative edge weights,
+    see `~weighted.shortest_paths_bellman_ford`.
+
+    Unreachable vertices will have a path length of infinity. In additional,
+    `ShortestPath.is_destination_unreachable` will return True.
 
     The Edge class has a built-in `weight` property, which is used by default to determine edge
-    weights (a.k.a. edge lengths). Alternatively, a weight function may be specified that accepts
-    two vertices and returns the weight of the connecting edge.
+    weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
+    two vertices and returns the weight of the connecting edge. See
+    `~weighted.get_weight_function`.
 
     Args:
         graph (GraphBase): The graph to search.
@@ -360,7 +365,7 @@ def shortest_paths_dijkstra_fibonacci(
             False.
 
     Returns:
-        VertexDict[VertexKeyType, ShortestPath]: A dictionary mapping vertices to their shortest
+        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest
             paths and associated path lengths.
 
     See Also:
@@ -368,62 +373,37 @@ def shortest_paths_dijkstra_fibonacci(
         `~edge.DiEdge`
         `~shortest_path.ShortestPath`
         `~vertex_dict.VertexDict`
+        `~weighted.shortest_paths_bellman_ford`
         `~weighted.shortest_paths_dijkstra`
-
-    Example:
-        >>> g = DiGraph([
-            ('s', 't', 10), ('s', 'y', 5),
-            ('t', 'y', 2), ('t', 'x', 1),
-            ('x', 'z', 4),
-            ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
-            ('z', 's', 7), ('z', 'x', 6)
-        ])
-        >>> paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(g, 's')
-        >>> len(paths)
-        5
-        >>> paths['s'].length
-        0
-        >>> paths['y'].path
-        [s, y]
-        >>> paths['y'].length
-        5
-        >>> paths['x'].path
-        [s, y, t, x]
-        >>> paths['x'].length
-        9
 
     References:
         [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
             Introduction to Algorithms: Third Edition, page 658. The MIT Press, 2009.
     """
-
     #
-    # TODO(cpeisert): implement with Fibonacci Heap and run benchmarks.
+    # TODO(cpeisert): run benchmarks.
     #
-
     s: Vertex = graph[source]
     if s is None:
         raise ValueError('source vertex not found in the graph')
     weight_function = get_weight_function(weight)
 
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
-    priority_queue: PriorityQueue[ShortestPath] = PriorityQueue(shortest_path_priority_function)
+    fib_heap: FibonacciHeap[ShortestPath] = FibonacciHeap(lambda path: path.length)
 
     for vertex in graph:
         vertex_path = ShortestPath(source=s, destination=vertex, initial_length=INFINITY)
         vertex_to_path_map[vertex] = vertex_path
-        priority_queue.add_or_update(vertex_path)
+        fib_heap.insert(vertex_path)
 
     vertex_to_path_map[s].reinitialize(initial_length=0)
-    priority_queue.add_or_update(vertex_to_path_map[s])
+    fib_heap.update_item_with_decreased_priority(vertex_to_path_map[s])
 
-    set_of_min_path_vertices = set([s])
+    set_of_min_path_vertices = set()
 
-    while len(priority_queue) > 0:
-        u_path = priority_queue.pop()
+    while len(fib_heap) > 0:
+        u_path = fib_heap.extract_min()
         u: Vertex = u_path.destination
-        if u is None:
-            u = u_path.source
         set_of_min_path_vertices.add(u)
         u_parent = _get_parent_vertex_of_path_destination(u_path)
         u_adj_list = u.get_adj_for_search(parent=u_parent, reverse_graph=reverse_graph)
@@ -432,13 +412,9 @@ def shortest_paths_dijkstra_fibonacci(
             if w in set_of_min_path_vertices:
                 continue
             w_path = vertex_to_path_map[w]
-            u_w_weight = weight_function(u, w, reverse_graph)
-            if u_w_weight is None:
-                continue
-            relaxed = w_path.relax(u_path, weight_function=weight_function,
-                                   reverse_graph=reverse_graph)
+            relaxed = w_path.relax(u_path, weight_function, reverse_graph)
             if relaxed:
-                priority_queue.add_or_update(w_path)
+                fib_heap.update_item_with_decreased_priority(w_path)
 
     return vertex_to_path_map
 

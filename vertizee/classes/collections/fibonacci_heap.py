@@ -18,6 +18,7 @@ function."""
 import math
 from typing import Callable, Dict, Generic, Optional, Set, TypeVar, Union
 
+NEG_INFINITY = float('-inf')
 T = TypeVar('T')
 
 
@@ -110,7 +111,7 @@ class FibonacciHeap(Generic[T]):
         return self._length
 
     def delete(self, item: T):
-        self.update_item_with_decreased_priority(item, float('-inf'))
+        self.update_item_with_decreased_priority(item, NEG_INFINITY)
         self.extract_min()
 
     def extract_min(self) -> Optional[T]:
@@ -191,10 +192,10 @@ class FibonacciHeap(Generic[T]):
             if not y.marked:
                 y.marked = True
                 break
-            else:
-                z = y.parent
-                self._cut(y, z)
-                y = z
+
+            z = y.parent
+            self._cut(y, z)
+            y = z
 
     def _consolidate(self):
         """Consolidate the root list.

@@ -18,7 +18,7 @@ import pytest
 
 from vertizee import NegativeWeightCycle
 from vertizee.algorithms.shortest_paths.weighted \
-    import shortest_paths_bellman_ford, shortest_paths_dijkstra
+    import shortest_paths_bellman_ford, shortest_paths_dijkstra, shortest_paths_dijkstra_fibonacci
 from vertizee.classes.collections.vertex_dict import VertexDict
 from vertizee.classes.digraph import DiGraph, MultiDiGraph
 from vertizee.classes.edge import EdgeType
@@ -249,5 +249,23 @@ class TestWeighted:
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 7, 'Length of path s ~> t should be 7.'
         assert paths['x'].length == 8, 'Length of path s ~> x should be 8.'
+        assert paths['y'].length == 5, 'Length of path s ~> x should be 5.'
+        assert paths['z'].length == 7, 'Length of path s ~> z should be 7.'
+
+    def test_dijkstra_fibonacci_default_edge_weight(self):
+        g = DiGraph([
+            ('s', 't', 10), ('s', 'y', 5),
+            ('t', 'y', 2), ('t', 'x', 1),
+            ('x', 'z', 4),
+            ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
+            ('z', 's', 7), ('z', 'x', 6)
+        ])
+
+        paths: VertexDict[ShortestPath] = shortest_paths_dijkstra_fibonacci(g, 's')
+
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert paths['s'].length == 0, 'Length of s path should be 0.'
+        assert paths['t'].length == 8, 'Length of path s ~> t should be 8.'
+        assert paths['x'].length == 9, 'Length of path s ~> x should be 9.'
         assert paths['y'].length == 5, 'Length of path s ~> x should be 5.'
         assert paths['z'].length == 7, 'Length of path s ~> z should be 7.'

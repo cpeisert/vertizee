@@ -200,7 +200,9 @@ def write_adj_list_to_file(
         if adj_edges is None:
             lines.append(line)
             continue
-        for edge in adj_edges:
+
+        sorted_edges = sorted(adj_edges, key=lambda e: e.__str__())
+        for edge in sorted_edges:
             line = _add_edge_to_line(
                 line, edge, vertex, delimiter, include_weights, weights_are_integers)
 
