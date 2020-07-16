@@ -79,7 +79,7 @@ class TestUndirectedGraphs:
         v3 = g.add_vertex('3')
         v4 = g.add_vertex('4')
 
-        TestUndirectedGraphs.build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
+        _build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
 
         assert g.vertex_count == 5,\
             f'Graph should have 5 vertices, but had {g.vertex_count} vertices.'
@@ -160,7 +160,7 @@ class TestUndirectedGraphs:
         v3 = g.add_vertex(3)
         v4 = g.add_vertex(4)
 
-        TestUndirectedGraphs.build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
+        _build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
         total_weight = 0
         edge_count = 0
         for incident_edge in v0:
@@ -188,7 +188,7 @@ class TestUndirectedGraphs:
         v3 = g.add_vertex(3)
         v4 = g.add_vertex(4)
 
-        TestUndirectedGraphs.build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
+        _build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
         g.remove_vertex(v4)  # Remove isolated vertex.
 
         pre_merge_degree = v0.degree + v1.degree
@@ -280,7 +280,7 @@ class TestUndirectedGraphs:
         v3 = g.add_vertex(3)
         v4 = g.add_vertex(4)
 
-        TestUndirectedGraphs.build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
+        _build_parallel_weighted_graph(g, [v0, v1, v2, v3, v4])
 
         # Since there are 115 edges in the graph, and edge (0, 1) has 106 parallel edges,
         # edge (0, 1) should appear with frequency 106/115 (92.1%) on average when randomly
@@ -308,26 +308,26 @@ class TestUndirectedGraphs:
             'Random edge sampling should yield edge (0, 1) 92% of time due to 106 ' \
             f'parallel edges in a graph of 115 total edges. Actual frequency was {frequency}.'
 
-    @staticmethod
-    def build_parallel_weighted_graph(g: MultiGraph, v: List[Vertex]) -> MultiGraph:
-        # (0, 0, 0.5)  sum(parallel_edge_weights) => 10
-        g.add_edge(v[0], v[0], weight=0.5, parallel_edge_count=5,
-                   parallel_edge_weights=list(range(5)))
-        # (0, 1, 0.5)  sum(parallel_edge_weights) => 4950
-        g.add_edge(v[0], v[1], weight=0.5, parallel_edge_count=100,
-                   parallel_edge_weights=list(range(100)))
-        # Add more parallel edges between v0 and v1.
-        # (0, 1, 1.0)  sum(parallel_edge_weights) => 4957
-        # Total parallel edges => 106
-        g.add_edge(v[1], v[0], weight=1.0, parallel_edge_count=4,
-                   parallel_edge_weights=list(range(4)))
-        # (1, 2, 1.5)
-        g.add_edge(v[1], v[2], weight=1.5)
-        # (2, 0, 0.1)
-        g.add_edge(v[2], v[0], weight=0.1)
-        # (3, 2, 1.9)
-        g.add_edge(v[3], v[2], weight=1.9)
-        # Isolated vertex
-        g.add_vertex(v[4].key)
 
-        return g
+def _build_parallel_weighted_graph(g: MultiGraph, v: List[Vertex]) -> MultiGraph:
+    # (0, 0, 0.5)  sum(parallel_edge_weights) => 10
+    g.add_edge(v[0], v[0], weight=0.5, parallel_edge_count=5,
+                parallel_edge_weights=list(range(5)))
+    # (0, 1, 0.5)  sum(parallel_edge_weights) => 4950
+    g.add_edge(v[0], v[1], weight=0.5, parallel_edge_count=100,
+                parallel_edge_weights=list(range(100)))
+    # Add more parallel edges between v0 and v1.
+    # (0, 1, 1.0)  sum(parallel_edge_weights) => 4957
+    # Total parallel edges => 106
+    g.add_edge(v[1], v[0], weight=1.0, parallel_edge_count=4,
+                parallel_edge_weights=list(range(4)))
+    # (1, 2, 1.5)
+    g.add_edge(v[1], v[2], weight=1.5)
+    # (2, 0, 0.1)
+    g.add_edge(v[2], v[0], weight=0.1)
+    # (3, 2, 1.9)
+    g.add_edge(v[3], v[2], weight=1.9)
+    # Isolated vertex
+    g.add_vertex(v[4].key)
+
+    return g

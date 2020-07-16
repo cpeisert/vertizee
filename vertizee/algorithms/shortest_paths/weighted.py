@@ -14,7 +14,7 @@
 
 """Algorithms for calculating shortest paths for weighted graphs."""
 
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 
 from vertizee.classes.collections.fibonacci_heap import FibonacciHeap
 from vertizee.classes.collections.priority_queue import PriorityQueue
@@ -67,8 +67,8 @@ def get_weight_function(
         ```
 
     Args:
-        weight (Union[Callable, str]): If callable, then `weight` itself is returned. If a string
-            is specified, it is the key to use to retrieve the weight from a `Edge.attr`
+        weight (Union[Callable, str], optional): If callable, then `weight` itself is returned. If
+            a string is specified, it is the key to use to retrieve the weight from an `Edge.attr`
             dictionary. The default value ('Edge__weight') returns a function that accesses the
             `Edge.weight` property.
         reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
@@ -99,7 +99,7 @@ def get_weight_function(
         if weight == 'Edge__weight':
             min_weight = edge.weight
         else:
-            min_weight = edge.attr.get(weight, 1)
+            min_weight = edge.attr.get(weight, 1.0)
 
         if len(edge.parallel_edge_weights) > 0:
             min_parallel = min(edge.parallel_edge_weights)
@@ -107,6 +107,119 @@ def get_weight_function(
         return min_weight
 
     return get_min_weight
+
+
+def all_pairs_shortest_paths_floyd_warshall(
+        graph: GraphBase, weight: str = 'Edge__weight') -> VertexDict[VertexDict[ShortestPath]]:
+    """Finds the shortest paths between all pairs of vertices in a graph using the Floyd-Warshall
+    algorithm.
+
+    Running time: O(n^3) where n = |V|
+    Running space: Omega(n^2), O(n^3)
+
+    The worst case space requirement would be O(n^2), even for dense graphs, however, this
+    implementation returns not only the lengths of the shortest paths, but also the lists of
+    vertices that comprise each shortest path.
+
+    Pairs of vertices for which there is no connecting path will have path length infinity. In
+    additional, `ShortestPath.is_destination_reachable` will return False.
+
+    Args:
+        graph (GraphBase): The graph to search.
+        source (VertexKeyType): The source vertex from which to find shortest paths to all other
+            reachable vertices.
+        weight (str, optional): The key to use to retrieve the weight from the `Edge.attr`
+            dictionary. The default value ('Edge__weight') uses the property `Edge.weight`.
+
+    Returns:
+        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest
+            paths and associated path lengths.
+
+    Raises:
+        NegativeWeightCycle: If the graph contains a negative weight cycle. Note that for
+            undirected graphs, any negative weight edge is a negative weight cycle.
+
+    See Also:
+        `~edge.Edge`
+        `~shortest_path.ShortestPath`
+        `~vertex_dict.VertexDict`
+        `~weighted.all_pairs_shortest_paths_johnson`
+
+    Example:
+        >>> g = DiGraph([
+            ('s', 't', 10), ('s', 'y', 5),
+            ('t', 'y', 2), ('t', 'x', 1),
+            ('x', 'z', 4),
+            ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
+            ('z', 's', 7), ('z', 'x', 6)
+        ])
+        >>> paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_floyd_warshall(g)
+        >>> len(paths)
+        5
+        >>> paths['s']['s'].length
+        0
+        >>> paths['s']['z'].length
+        7
+        >>> paths['s']['z'].path
+        [s, y, z]
+        >>> paths['s']['x'].path
+        [s, y, t, x]
+
+    References:
+        [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+            Introduction to Algorithms: Third Edition, pages 685-699. The MIT Press, 2009.
+    """
+    def default_weight_function(edge: EdgeType):
+        w = edge.weight
+        if len(edge.parallel_edge_weights) > 0:
+            min_parallel = min(edge.parallel_edge_weights)
+            w = min(w, min_parallel)
+        return w
+
+    def attr_weight_function(edge: EdgeType):
+        w = edge.attr.get(weight, 1.0)
+        if len(edge.parallel_edge_weights) > 0:
+            min_parallel = min(edge.parallel_edge_weights)
+            w = min(w, min_parallel)
+        return w
+
+    if weight == 'Edge__weight':
+        weight_function = default_weight_function
+    else:
+        weight_function = attr_weight_function
+
+    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()
+
+    # Initialize the default path lengths for all vertex combinations.
+    for i in graph:
+        source_and_destination_to_path[i] = VertexDict()
+        for j in graph:
+            if i == j:
+                source_and_destination_to_path[i][j] = ShortestPath(i, j, initial_length=0)
+                continue
+
+            edge = graph.get_edge(i, j)
+            if edge is None:
+                source_and_destination_to_path[i][j] = ShortestPath(i, j, initial_length=INFINITY)
+            else:
+                w = weight_function(edge)
+                source_and_destination_to_path[i][j] = ShortestPath(i, j)
+                source_and_destination_to_path[i][j].add_edge(j, edge_length=w)
+
+    for k in graph:
+        for i in graph:
+            for j in graph:
+                path_i_j: ShortestPath = source_and_destination_to_path[i][j]
+                path_i_k: ShortestPath = source_and_destination_to_path[i][k]
+                path_k_j: ShortestPath = source_and_destination_to_path[k][j]
+                if path_i_j.length > (path_i_k.length + path_k_j.length):
+                    _merge_subpaths(path_i_j, path_i_k, path_k_j)
+
+    for v in graph:
+        if source_and_destination_to_path[v][v].length < 0:
+            raise NegativeWeightCycle('found a negative weight cycle')
+
+    return source_and_destination_to_path
 
 
 def shortest_paths_bellman_ford(
@@ -121,7 +234,7 @@ def shortest_paths_bellman_ford(
     This implementation is based on "Introduction to Algorithms: Third Edition" [1].
 
     Unreachable vertices will have a path length of infinity. In additional,
-    `ShortestPath.is_destination_unreachable` will return True.
+    `ShortestPath.is_destination_reachable` will return False.
 
     The Edge class has a built-in `weight` property, which is used by default to determine edge
     weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
@@ -213,7 +326,7 @@ def shortest_paths_bellman_ford(
             u, w = w, u
         weight_u_w = weight_function(u, w, reverse_graph)
         if w_path.length > u_path.length + weight_u_w:
-            raise NegativeWeightCycle('Bellman-Ford algorithm found a negative weight cycle')
+            raise NegativeWeightCycle('found a negative weight cycle')
 
     return vertex_to_path_map
 
@@ -234,7 +347,7 @@ def shortest_paths_dijkstra(
     see `~weighted.shortest_paths_bellman_ford`.
 
     Unreachable vertices will have a path length of infinity. In additional,
-    `ShortestPath.is_destination_unreachable` will return True.
+    `ShortestPath.is_destination_reachable` will return False.
 
     The Edge class has a built-in `weight` property, which is used by default to determine edge
     weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
@@ -344,7 +457,7 @@ def shortest_paths_dijkstra_fibonacci(
     see `~weighted.shortest_paths_bellman_ford`.
 
     Unreachable vertices will have a path length of infinity. In additional,
-    `ShortestPath.is_destination_unreachable` will return True.
+    `ShortestPath.is_destination_reachable` will return False.
 
     The Edge class has a built-in `weight` property, which is used by default to determine edge
     weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
@@ -420,6 +533,21 @@ def shortest_paths_dijkstra_fibonacci(
 
 
 def _get_parent_vertex_of_path_destination(shortest_path: ShortestPath) -> Optional[Vertex]:
-    if shortest_path.is_destination_unreachable() or len(shortest_path._path) < 2:
+    if not shortest_path.is_destination_reachable() or len(shortest_path._path) < 2:
         return None
     return shortest_path.path[-2]
+
+
+def _merge_subpaths(
+        path_i_j: ShortestPath, path_i_k: ShortestPath, path_k_j: ShortestPath) -> ShortestPath:
+    """Helper function for all_pairs_shortest_paths_floyd_warshall to merge subpaths into
+    a new shortest path i ~> j that passes through k."""
+    path_i_j.clone_from_excluding_destination(path_i_k)
+    path_i_j._edge_count += path_k_j.edge_count
+    path_i_j._length += path_k_j.length
+    path_i_j._path_contains_destination = True
+
+    k_j_vertices: List[Vertex] = path_k_j.path
+    if len(k_j_vertices) > 1:
+        k_j_vertices = k_j_vertices[1:]  # Remove k
+        path_i_j._path += k_j_vertices

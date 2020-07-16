@@ -51,7 +51,10 @@ class ShortestPath:
         self._edge_count: int = 0
         self._length: float = initial_length
         self._path: List[Vertex] = [self.source]
-        self._path_contains_destination: bool = False
+        if self._source == self._destination:
+            self._path_contains_destination: bool = True
+        else:
+            self._path_contains_destination: bool = False
 
     def add_edge(self, adj_vertex: Vertex, edge_length: float = 1):
         """Adds a new edge by specifying a vertex adjacent to the last vertex in the current path.
@@ -62,7 +65,10 @@ class ShortestPath:
                 1.
         """
         self._edge_count += 1
-        self._length += edge_length
+        if NEG_INFINITY < self._length < INFINITY:
+            self._length += edge_length
+        else:
+            self._length = edge_length
         self._path.append(adj_vertex)
         if adj_vertex == self._destination:
             self._path_contains_destination = True
@@ -87,9 +93,12 @@ class ShortestPath:
     def edge_count(self) -> int:
         return self._edge_count
 
-    def is_destination_unreachable(self) -> bool:
+    def is_destination_reachable(self) -> bool:
         """Returns True if the destination vertex is unreachable from the source vertex."""
-        return self._length == INFINITY or self._length == NEG_INFINITY
+        if self._path_contains_destination:
+            return NEG_INFINITY < self._length < INFINITY
+        else:
+            return False
 
     @property
     def length(self) -> float:

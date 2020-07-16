@@ -35,7 +35,7 @@ class TestUnweighted:
 
         assert len(paths) == 8, 'Shortest paths dictionary should have length equal to number ' \
             'of vertices.'
-        assert paths[6].is_destination_unreachable(), \
+        assert not paths[6].is_destination_reachable(), \
             'Vertex 6 should be unreachable from vertex 0.'
         assert paths[6].length == float('inf'), \
             'Unreachable vertex should have path length infinity.'
