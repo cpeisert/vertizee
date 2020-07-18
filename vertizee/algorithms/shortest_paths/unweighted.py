@@ -26,7 +26,8 @@ INFINITY = float('inf')
 
 
 def breadth_first_search_shortest_paths(
-        graph: GraphBase, source: VertexKeyType) -> VertexDict[ShortestPath]:
+        graph: GraphBase, source: VertexKeyType, find_path_lengths_only: bool = True
+) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices.
 
@@ -37,6 +38,11 @@ def breadth_first_search_shortest_paths(
         graph (GraphBase): The graph to search.
         source (VertexKeyType): The source vertex from which to find shortest paths to all other
             reachable vertices.
+        find_path_lengths_only(bool, optional): If True, only calculates the shortest path lengths,
+            but does not determine the actual vertex sequences comprising each path. To reconstruct
+            specific shortest paths, see `~shortest_path.reconstruct_path`. If set to False, then
+            the ShortestPath.path property will contain the sequence of vertices comprising the
+            shortest path. Defaults to True.
 
     Returns:
         VertexDict[VertexKeyType, ShortestPath]: A dictionary mapping vertices to their shortest
@@ -63,10 +69,16 @@ def breadth_first_search_shortest_paths(
     if s is None:
         raise ValueError('source vertex was not found in the graph')
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
-    for vertex in graph:
-        vertex_path = ShortestPath(source=s, destination=vertex, initial_length=INFINITY)
-        vertex_to_path_map[vertex] = vertex_path
+    store_paths = not find_path_lengths_only
+
+    for v in graph:
+        vertex_path = ShortestPath(s, v, initial_length=INFINITY, store_full_paths=store_paths)
+        vertex_to_path_map[v] = vertex_path
     vertex_to_path_map[s].reinitialize(initial_length=0)
+
+    # pylint: disable=unused-argument
+    def weight_function(v1: Vertex, v2: Vertex, reverse_graph: bool) -> float:
+        return 1
 
     seen: Set[Vertex] = {s}
     queue = deque({s})
@@ -76,7 +88,8 @@ def breadth_first_search_shortest_paths(
         for w in u_adj:
             if w not in seen:
                 seen.add(w)
-                vertex_to_path_map[w].clone_from_excluding_destination(vertex_to_path_map[u])
-                vertex_to_path_map[w].add_edge(w, edge_length=1)
+                u_path: ShortestPath = vertex_to_path_map[u]
+                w_path: ShortestPath = vertex_to_path_map[w]
+                w_path.relax_edge(u_path, weight_function=weight_function)
                 queue.append(w)
     return vertex_to_path_map

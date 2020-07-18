@@ -53,27 +53,23 @@ class GraphBase:
         is_simple_graph (bool, optional): If True, then the graph enforces the property that it
             be simple graph (i.e. no parallel edges and no self loops). Attempting to add a
             parallel edge or a self loop raises an error. Defaults to False.
-        debug_mode (bool, optional): If True, enable additional logging and state checks.
-            Defaults to False.
     """
     _create_key = object()
 
     @classmethod
     def _create(cls, is_directed_graph: bool, is_multigraph: bool,
-                is_simple_graph: bool = False, debug_mode: bool = False) -> 'GraphBase':
+                is_simple_graph: bool = False) -> 'GraphBase':
         """Initializes a new graph. Subclasses should enable initialization using the standard
         `__init__` method."""
         return GraphBase(
             cls._create_key, is_directed_graph=is_directed_graph,
-            is_multigraph=is_multigraph, is_simple_graph=is_simple_graph,
-            debug_mode=debug_mode)
+            is_multigraph=is_multigraph, is_simple_graph=is_simple_graph)
 
     def __init__(self, create_key, is_directed_graph: bool, is_multigraph: bool,
-                 is_simple_graph: bool = False, debug_mode: bool = False):
+                 is_simple_graph: bool = False):
         if create_key != GraphBase._create_key:
             raise ValueError('Graph objects must be initialized using `_create`.')
 
-        self._debug_mode = debug_mode
         self._edges: Set[EdgeType] = set()
         self._edges_with_freq_weight: Dict[EdgeType, int] = {}
         """ `_edges_with_freq_weight` associates each edge with the number of times it occurs in

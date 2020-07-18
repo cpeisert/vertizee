@@ -44,7 +44,7 @@ class Graph(GraphBase):
     def __init__(self, *args: GraphPrimitive):
         super().__init__(
             GraphBase._create_key, is_directed_graph=False, is_multigraph=False,
-            is_simple_graph=False, debug_mode=False)
+            is_simple_graph=False)
         super().add_edges_from(*args)
 
     def deepcopy(self) -> 'Graph':
@@ -58,7 +58,7 @@ class MultiGraph(GraphBase):
     def __init__(self, *args: GraphPrimitive):
         super().__init__(
             GraphBase._create_key, is_directed_graph=False, is_multigraph=True,
-            is_simple_graph=False, debug_mode=False)
+            is_simple_graph=False)
         super().add_edges_from(*args)
 
     def deepcopy(self) -> 'MultiGraph':
@@ -75,7 +75,7 @@ class SimpleGraph(GraphBase):
     def __init__(self, *args: GraphPrimitive):
         super().__init__(
             GraphBase._create_key, is_directed_graph=False, is_multigraph=False,
-            is_simple_graph=True, debug_mode=False)
+            is_simple_graph=True)
         super().add_edges_from(*args)
 
     def deepcopy(self) -> 'SimpleGraph':

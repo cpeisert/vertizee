@@ -23,10 +23,24 @@ class VertizeeError(VertizeeException):
     """Exception for a serious error in Vertizee."""
 
 
-class NegativeWeightCycle(VertizeeException):
+class AlgorithmError(VertizeeException):
+    """Exception for unexpected termination of algorithms."""
+
+
+class Unfeasible(VertizeeException):
+    """Exception raised by algorithms trying to solve a problem
+    instance that has no feasible solution."""
+
+
+class NegativeWeightCycle(Unfeasible):
     """Exception raised if a negative weight cycle is found that precludes a solution. For example,
     see the Bellman-Ford algorithm for solving the single-source shortest-paths problem."""
 
 
-class NotImplemented(VertizeeException):
-    """Exception raised by algorithms not implemented for a type of graph."""
+class NoPath(Unfeasible):
+    """Exception for algorithms that should return a path when running
+    on graphs where such a path does not exist."""
+
+
+class VertexNotFound(VertizeeException):
+    """Exception raised if requested vertex is not present in the graph"""

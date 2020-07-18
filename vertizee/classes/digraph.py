@@ -49,7 +49,7 @@ class DiGraph(GraphBase):
     def __init__(self, *args: GraphPrimitive):
         super().__init__(
             GraphBase._create_key, is_directed_graph=True, is_multigraph=False,
-            is_simple_graph=False, debug_mode=False)
+            is_simple_graph=False)
         super().add_edges_from(*args)
 
     # pylint: disable=arguments-differ
@@ -97,7 +97,7 @@ class MultiDiGraph(GraphBase):
     def __init__(self, *args: GraphPrimitive):
         super().__init__(
             GraphBase._create_key, is_directed_graph=True, is_multigraph=True,
-            is_simple_graph=False, debug_mode=False)
+            is_simple_graph=False)
         super().add_edges_from(*args)
 
     # pylint: disable=arguments-differ
