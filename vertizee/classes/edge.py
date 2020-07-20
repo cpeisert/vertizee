@@ -95,13 +95,13 @@ class Edge:
         self.attr: dict = {}
         """Custom attribute dictionary to store any additional data associated with edges."""
 
-        self._weight: float = weight
+        self._weight: float = float(weight)
 
         self._parallel_edge_count = parallel_edge_count
         if parallel_edge_weights is None:
             self._parallel_edge_weights: List[float] = []
         else:
-            self._parallel_edge_weights: List[float] = parallel_edge_weights
+            self._parallel_edge_weights: List[float] = [float(x) for x in parallel_edge_weights]
 
         self._parent_graph: 'GraphBase' = self.vertex1._parent_graph
 

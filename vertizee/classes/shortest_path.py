@@ -300,12 +300,11 @@ class ShortestPath:
         Returns:
             bool: Returns True if the path was relaxed (i.e. shortened).
         """
+        if self.length <= (path_s_k.length + path_k_d.length):
+            return False
         if path_s_k.source != self.source:
             return False
         if path_s_k.destination != path_k_d.source:
-            return False
-
-        if self.length <= (path_s_k.length + path_k_d.length):
             return False
 
         # Merge paths s ~> k and k ~> d.

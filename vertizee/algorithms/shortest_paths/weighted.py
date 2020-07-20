@@ -191,7 +191,8 @@ def all_pairs_shortest_paths_floyd_warshall(
             ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
             ('z', 's', 7), ('z', 'x', 6)
         ])
-        >>> paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_floyd_warshall(g)
+        >>> paths: VertexDict[VertexDict[ShortestPath]] = \
+            all_pairs_shortest_paths_floyd_warshall(g, find_path_lengths_only=False)
         >>> len(paths)
         5
         >>> paths['s']['s'].length
@@ -294,7 +295,8 @@ def all_pairs_shortest_paths_johnson(
             ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
             ('z', 's', 7), ('z', 'x', 6)
         ])
-        >>> paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_johnson(g)
+        >>> paths: VertexDict[VertexDict[ShortestPath]] = \
+            all_pairs_shortest_paths_johnson(g, find_path_lengths_only=False)
         >>> len(paths)
         5
         >>> paths['s']['s'].length
@@ -464,7 +466,8 @@ def shortest_paths_bellman_ford(
             ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
             ('z', 's', 7), ('z', 'x', 6)
         ])
-        >>> paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(g, 's')
+        >>> paths: VertexDict[ShortestPath] = \
+            shortest_paths_bellman_ford(g, 's', find_path_lengths_only=False)
         >>> len(paths)
         5
         >>> paths['s'].length
@@ -583,7 +586,8 @@ def shortest_paths_dijkstra(
             ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
             ('z', 's', 7), ('z', 'x', 6)
         ])
-        >>> paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(g, 's')
+        >>> paths: VertexDict[ShortestPath] = \
+            shortest_paths_dijkstra(g, 's', find_path_lengths_only=False)
         >>> len(paths)
         5
         >>> paths['s'].length
