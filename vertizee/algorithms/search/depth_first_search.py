@@ -108,6 +108,7 @@ class DFSResults:
         return self._is_acyclic
 
 
+# TODO(cpeisert): Refactor DepthFirstSearchTree into classes.collections package.
 class DepthFirstSearchTree:
     """A depth-first tree is a tree comprised of vertices and edges discovered during a
     depth-first search.
