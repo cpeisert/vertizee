@@ -1,20 +1,17 @@
 ---
 name: "\U0001F680Feature request"
-about: Suggest a feature for Vertizee. If this doesn’t look right, <a href="/cpeisert/vertizee/issues/new/choose">choose
-  a different type</a>.
-title: ''
+about: Suggest a feature for Vertizee.
+title: "[FEAT] <-- ✍️ Brief description... -->"
 labels: ''
 assignees: ''
 
 ---
 
 <!--🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅
-
 Hi there! 😄 
 
 To expedite issue processing please search open and closed issues before submitting a new one.
 Existing issues often contain information about workarounds, resolution, or progress updates.
-
 🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅-->
 
 # 🚀 Feature request

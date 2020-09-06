@@ -1,20 +1,17 @@
 ---
 name: "\U0001F41EBug report"
-about: Report a bug in Vertizee. If this doesn’t look right, <a href="/cpeisert/vertizee/issues/new/choose">choose
-  a different type</a>.
-title: "[BUG] <-- ✍️ Brief description -->"
+about: Report a bug in Vertizee.
+title: "[BUG] <-- ✍️ Brief description... -->"
 labels: ''
 assignees: ''
 
 ---
 
 <!--🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅
-
 Hi there! 😄
 
 To expedite issue processing please search open and closed issues before submitting a new one.
 Existing issues often contain information about workarounds, resolution, or progress updates.
-
 🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅-->
 
 # 🐞 Bug report
@@ -43,8 +40,8 @@ You can read more about issue submission guidelines here: https://github.com/cpe
 
 
 ## 🔥 Exception or Error
-<pre><code>
 <!-- If the issue is accompanied by an exception or an error, please share it below: -->
+<pre><code>
 <!-- ✍️-->
 
 </code></pre>

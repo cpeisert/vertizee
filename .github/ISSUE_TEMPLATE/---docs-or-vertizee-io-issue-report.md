@@ -1,20 +1,17 @@
 ---
 name: "\U0001F4DA Docs or vertizee.io issue report"
-about: Report an issue in Vertizee's documentation. If this doesn’t look right, <a
-  href="/cpeisert/vertizee/issues/new/choose">choose a different type</a>.
-title: ''
+about: Report an issue in Vertizee's documentation.
+title: "[DOCS] <-- ✍️ Brief description... -->"
 labels: ''
 assignees: ''
 
 ---
 
 <!--🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅
-
 Hi there! 😄
 
 To expedite issue processing please search open and closed issues before submitting a new one.
 Existing issues often contain information about workarounds, resolution, or progress updates.
-
 🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅-->
 
 # 📚 Docs or vertizee.io bug report
@@ -47,8 +44,8 @@ https://vertizee.io/...
 
 
 ## 🔥 Exception or Error
-<pre><code>
 <!-- If the issue is accompanied by an exception or an error, please share it below: -->
+<pre><code>
 <!-- ✍️-->
 
 </code></pre>
