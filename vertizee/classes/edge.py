@@ -32,11 +32,15 @@ DEFAULT_WEIGHT = 1
 
 
 class Edge:
-    """Edge is a graph primitive that represents a connection between two vertices.
+    """Edge is a graph primitive that represents an undirected connection between two vertices.
 
-    It may also be assigned a weight as well as custom attributes. This class supports both
+    To ensure the integrity of graphs, edges should never be initialized directly. Attempting
+    to initialize an edge using its `__init__` method will raise an error. To create edges, use
+    GraphBase methods such as `add_edge`.
+
+    Edges may be assigned a weight as well as custom attributes. This class supports both
     directed and undirected edges. However, directed graphs use the subclass DiEdge, which provides
-    tail and head vertex properties.
+    tail and head Vertex properties.
 
     IMPORTANT: If multiple edges are added with the same vertices, then a single `Edge` instance
     is used to store the parallel edges. When working with edges, use the `parallel_edge_count`
@@ -44,18 +48,14 @@ class Edge:
     by vertex pairs (a, b) and (b, a) map to the same Edge object in undirected graphs, but
     different Edge objects in directed graphs.
 
-    To ensure the integrity of the graph, edges should never be initialized directly. Attempting
-    to initialize an edge using its `__init__` method will raise an error. To create edges, use
-    GraphBase methods such as `add_edge`.
-
     Args:
-        v1 (Vertex): The first vertex. If a second vertex is not provided, then it is assumed
-            that the edge is a self loop on `vertex1`.
-        v2 (Vertex, optional): The second vertex. Defaults to None.
-        weight (float, optional): Edge weight. Defaults to 1.
-        parallel_edge_count (int, optional): The number of parallel edges from vertex1 to vertex2.
+        v1: The first vertex (the order does not matter, since this is an
+            undirected edge).
+        v2: The second vertex.
+        weight: Optional; Edge weight. Defaults to 1.
+        parallel_edge_count: Optional; The number of parallel edges from vertex1 to vertex2.
             Defaults to 0.
-        parallel_edge_weights (List[float], optional): List of weights for the parallel edges.
+        parallel_edge_weights: Optional; List of weights for the parallel edges.
             Defaults to None.
 
     Note:
@@ -67,7 +67,7 @@ class Edge:
     _create_key = object()
 
     @classmethod
-    def _create(cls, v1: Vertex, v2: Optional[Vertex] = None,
+    def _create(cls, v1: Vertex, v2: Vertex,
                 weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
                 parallel_edge_weights: Optional[List[float]] = None):
         """Initializes a new Edge."""
@@ -75,7 +75,7 @@ class Edge:
                     parallel_edge_count=parallel_edge_count,
                     parallel_edge_weights=parallel_edge_weights)
 
-    def __init__(self, create_key, v1: Vertex, v2: Optional[Vertex] = None,
+    def __init__(self, create_key, v1: Vertex, v2: Vertex,
                  weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
                  parallel_edge_weights: Optional[List[float]] = None):
         if create_key != Edge._create_key:
@@ -86,11 +86,7 @@ class Edge:
         # treated as immutable (read-only). If the vertex keys need to change, first delete the
         # edge instance and then create a new instance.
         self._vertex1 = v1
-        if v2 is None:
-            # Assume this is a self loop.
-            self._vertex2 = v1
-        else:
-            self._vertex2 = v2
+        self._vertex2 = v2
 
         self.attr: dict = {}
         """Custom attribute dictionary to store any additional data associated with edges."""
@@ -231,21 +227,22 @@ class Edge:
 
 
 class DiEdge(Edge):
-    """DiEdge is a graph primitive that represents an directed connection between two vertices.
+    """DiEdge is a graph primitive that represents a directed connection between two vertices.
+
+    To ensure the integrity of graphs, edges should never be initialized directly. Attempting
+    to initialize an edge using its `__init__` method will raise an error. To create edges, use
+    GraphBase methods such as `add_edge`.
 
     The starting vertex is called the tail and the destination vertex is called the head. The edge
     points from the tail to the head.
 
     Args:
-        vertex1 (Vertex): The first vertex (the order does not matter, since this is an
-            undirected edge). If a second vertex is not provided, then it is assumed that the
-            edge is a self loop on `vertex1`.
-        vertex2 (Vertex, optional): The second vertex (the order does not matter, since this
-            is an undirected edge). Defaults to None.
-        weight (float, optional): Edge weight. Defaults to 0.0.
-        parallel_edge_count (int, optional): The number of parallel edges from vertex1 to vertex2.
+        vertex1: The first vertex.
+        vertex2: The second vertex.
+        weight: Optional; Edge weight. Defaults to 0.0.
+        parallel_edge_count: Optional; The number of parallel edges from vertex1 to vertex2.
             Defaults to 0.
-        parallel_edge_weights (List[float], optional): List of weights for the parallel edges.
+        parallel_edge_weights: Optional; List of weights for the parallel edges.
             Defaults to None.
     """
     # Limit initialization to protected method `_create`.
@@ -253,7 +250,7 @@ class DiEdge(Edge):
 
     # pylint: disable=arguments-differ
     @classmethod
-    def _create(cls, tail: Vertex, head: Optional[Vertex] = None,
+    def _create(cls, tail: Vertex, head: Vertex,
                 weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
                 parallel_edge_weights: Optional[List[float]] = None) -> 'DiEdge':
         """Initializes a new Edge."""
@@ -261,7 +258,7 @@ class DiEdge(Edge):
                       parallel_edge_count=parallel_edge_count,
                       parallel_edge_weights=parallel_edge_weights)
 
-    def __init__(self, create_key, tail: Vertex, head: Optional[Vertex] = None,
+    def __init__(self, create_key, tail: Vertex, head: Vertex,
                  weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
                  parallel_edge_weights: Optional[List[float]] = None):
         if create_key != DiEdge.__create_key:

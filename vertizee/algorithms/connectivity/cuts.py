@@ -23,6 +23,13 @@ from vertizee.classes.vertex import Vertex
 
 
 class KargerResults:
+    """Container class to store the results of computing the minimum cut.
+
+    Attributes:
+        contracted_graph: The modified graph after edge contractions.
+        cut_edge: The final edge comprising the minimum cut.
+        karger_contract_run_count: Count of algorithm iterations.
+    """
     def __init__(self, contracted_graph: GraphBase = None, cut_edge: EdgeType = None,
                  karger_contract_run_count: int = 0):
         self.contracted_graph: GraphBase = contracted_graph
@@ -31,13 +38,20 @@ class KargerResults:
 
 
 def brute_force_min_cut(graph: GraphBase) -> KargerResults:
-    """
-    Use multiple iterations of the Karger algorithm
-    (https://en.wikipedia.org/wiki/Karger%27s_algorithm) to find the minimum cut of the graph.
+    """Uses multiple iterations of the Karger algorithm to find the minimum cut of the graph.
+
     Note that for the Karger algorithm to be guaranteed of finding a minimum cut on a graph with
     n vertices, it must be run at least n^2 * log(n) iterations.
-    :param graph: The multi-graph to cut.
-    :return: The minimum cut.
+
+    See Also:
+        `Karger algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
+
+    Args:
+        graph: The multigraph in which to find the minimum cut.
+
+    Returns:
+        The minimum cut, which is the final EdgeType object containing the last two vertices after
+        all other vertices have been merged through the edge contraction process.
     """
     n = graph.vertex_count
     run_iterations = 4
@@ -55,14 +69,26 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
     return KargerResults(cut_edge=cuts[min_cut_size], karger_contract_run_count=run_iterations)
 
 
-def fast_min_cut(graph: GraphBase) -> KargerResults:
-    """
+"""
     Use the Karger-Stein algorithm (https://en.wikipedia.org/wiki/Karger%27s_algorithm) to find
     the minimum cut size of the graph.
     :param graph: The multi-graph to cut.
     :return: The cut, which is the final EdgeType object containing the last two vertices after all
-        other vertices have
-    been merged through the edge contraction process.
+        other vertices have been merged through the edge contraction process.
+    """
+
+def fast_min_cut(graph: GraphBase) -> KargerResults:
+    """Uses the Karger-Stein algorithm to find the minimum cut of the graph.
+
+    See Also:
+        `Karger-Stein algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
+
+    Args:
+        graph: The multigraph in which to find the minimum cut.
+
+    Returns:
+        The minimum cut, which is the final EdgeType object containing the last two vertices after
+        all other vertices have been merged through the edge contraction process.
     """
     if graph.vertex_count <= 6:
         return brute_force_min_cut(graph)
@@ -83,20 +109,21 @@ def fast_min_cut(graph: GraphBase) -> KargerResults:
 
 
 def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResults:
-    """
-    Use the Karger algorithm (https://en.wikipedia.org/wiki/Karger%27s_algorithm) to contract the
-    graph by repeatedly selecting a random edge, removing the edge, and merging the vertices of
-    the deleted edge. This process is continued until the number of vertices
-    |V| <= minimum_vertices.
-    :param graph: The multi-graph to cut. A deep copy is made such that the caller can be
-        guaranteed that the original
-    graph passed to this function is not modified.
-    :param minimum_vertices: The minimum number of vertices to leave in the graph after performing
-        repeated edge
-    removal and vertex merging.
-    :return: The cut, which is the final EdgeType object containing the last two vertices after all
-        other vertices have
-    been merged through the edge contraction process.
+    """Use the Karger algorithm to contract the graph by repeatedly selecting a random edge,
+    removing the edge, and merging the vertices of the deleted edge.
+
+    This process is continued until the number of vertices |V| <= minimum_vertices.
+
+    Args:
+        graph: The multigraph for which a minimum cut is to be found. A deep copy is made such that
+            the caller can be guaranteed that the original graph passed to this function is not
+            modified.
+        minimum_vertices: Optional; The minimum number of vertices to leave in the graph after
+            performing repeated edge removal and vertex merging. Defaults to 2.
+
+    Returns:
+        The minimum cut, which is the final EdgeType object containing the last two vertices after
+        all other vertices have been merged through the edge contraction process.
     """
     if len(graph.edges) < 1:
         return KargerResults(contracted_graph=graph, cut_edge=None)

@@ -12,37 +12,66 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Setup script for Vertizee.
 
-from setuptools import find_packages, setup
-
+You can install Vertizee with:
+python setup.py install
+"""
 #pylint: disable=exec-used, undefined-variable
 
-# This reads the __version__ variable from tensornetwork/version.py
-with open('vertizee/version.py') as f:
+import sys
+from setuptools import find_packages, setup
+
+DISTNAME = 'vertizee'
+DESCRIPTION = 'An object-oriented, typed, graph library for the analysis and study of graphs.'
+with open('README.md', 'r') as f:
+    LONG_DESCRIPTION = f.read()
+LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
+AUTHOR = f'The {DISTNAME.title()} Authors'
+AUTHOR_EMAIL = 'cpeisert@gmail.com'
+LICENSE = 'Apache 2.0'
+ORG_OR_USER = 'cpeisert'
+PYTHON_REQUIRES = '>=3.6'
+REQUIREMENTS = [
+    requirement.strip() for requirement in open('requirements/default.txt').readlines()
+]
+DOCS_REQUIREMENTS = [
+    requirement.strip() for requirement in open('requirements/docs.txt').readlines()
+]
+TEST_REQUIREMENTS = [
+    requirement.strip() for requirement in open('requirements/test.txt').readlines()
+]
+URL = f'https://github.io/{ORG_OR_USER}/{DISTNAME}'
+
+
+if sys.argv[-1] == "setup.py":
+    print('To install, run "python setup.py install"')
+    print()
+
+if sys.version_info[:2] < (3, 6):
+    ver: tuple = sys.version_info[:2]
+    error = f'{DISTNAME.title()} requires Python 3.6 or later ({ver[0]}.{ver[1]} detected).'
+    sys.stderr.write(error + "\n")
+    sys.exit(1)
+
+# Read the __version__ variable.
+with open(f'{DISTNAME}/version.py') as f:
     exec(f.read(), globals())
 
-description = ('A library for the analysis and study graphs.')
-
-# Reading long Description from README.md file.
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-# Read in requirements
-requirements = [
-    requirement.strip() for requirement in open('requirements.txt').readlines()
-]
-
-setup(
-    name='vertizee',
-    version=__version__,
-    url='https://github.com/cpeisert/Vertizee',
-    author='The Vertizee Authors',
-    author_email='cpeisert@gmail.com',
-    python_requires=('>=3.6.0'),
-    install_requires=requirements,
-    license='Apache 2.0',
-    description=description,
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    packages=find_packages(),
-)
+if __name__ == "__main__":
+    setup(
+        name=DISTNAME,
+        version=__version__,
+        url=URL,
+        author=AUTHOR,
+        author_email=AUTHOR_EMAIL,
+        python_requires=PYTHON_REQUIRES,
+        install_requires=REQUIREMENTS,
+        extras_require=DOCS_REQUIREMENTS + TEST_REQUIREMENTS,
+        license=LICENSE,
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
+        packages=find_packages(),
+    )

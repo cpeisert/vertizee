@@ -1,8 +1,2 @@
-flaky
-pipenv
-pytest
-pytest-cov>=2.10
-retrying
-tox
-tox-pip-extensions
-wheel>=0.33.6
+-r requirements/default.txt
+-r requirements/test.txt
