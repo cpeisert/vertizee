@@ -36,12 +36,16 @@ PYTHON_REQUIRES = '>=3.6'
 REQUIREMENTS = [
     requirement.strip() for requirement in open('requirements/default.txt').readlines()
 ]
+
 DOCS_REQUIREMENTS = [
     requirement.strip() for requirement in open('requirements/docs.txt').readlines()
 ]
 TEST_REQUIREMENTS = [
     requirement.strip() for requirement in open('requirements/test.txt').readlines()
 ]
+EXTRA_REQUIREMENTS = {
+    'all': DOCS_REQUIREMENTS + TEST_REQUIREMENTS
+}
 URL = f'https://github.io/{ORG_OR_USER}/{DISTNAME}'
 
 
@@ -68,7 +72,7 @@ if __name__ == "__main__":
         author_email=AUTHOR_EMAIL,
         python_requires=PYTHON_REQUIRES,
         install_requires=REQUIREMENTS,
-        extras_require=DOCS_REQUIREMENTS + TEST_REQUIREMENTS,
+        extras_require=EXTRA_REQUIREMENTS,
         license=LICENSE,
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
