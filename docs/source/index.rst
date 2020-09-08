@@ -58,6 +58,17 @@ Christopher Peisert during the pandemic of 2020 and drew inspiration from
 `NetworkX <https://networkx.github.io/>`_.
 
 
+| Section | Description |
+|-|-|
+| [Installation](#installation) | How to install the package |
+| [Quick Tour](#quick-tour) | Working with graphs |
+| [Tutorial: The Essentials](essentials.ipynb) | Essential concepts to get started quickly |
+| [Tutorial: BFS and DFS traversals](#quick-tour-bfs-dfs) | Traversing graphs with breadth-first-search and depth-first-search |
+| [Tutorial: Shortest paths](#quick-tour-shortest-paths) | Finding the shortest paths through weighted and unweighted graphs |
+| [Tutorial: All-pairs-shortest-paths](#quick-tour-all-pairs-shortest-paths) | Finding all of the shortest paths between every pair of vertices |
+| [Tutorial: Strongly-connected-components](#quick-tour-strongly-connected) | Finding the strongly-connected components of a directed graph |
+
+
 Documentation
 -------------
 

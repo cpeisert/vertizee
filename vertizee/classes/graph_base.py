@@ -115,7 +115,7 @@ class GraphBase:
         """Returns the number of vertices in the graph when the `len` function is applied."""
         return len(self._vertices)
 
-    def add_edge(self, v1: VertexKeyType, v2: Optional[VertexKeyType] = None,
+    def add_edge(self, v1: VertexKeyType, v2: VertexKeyType,
                  weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
                  parallel_edge_weights: Optional[List[float]] = None) -> EdgeType:
         """Adds a new edge to the graph.
@@ -126,7 +126,7 @@ class GraphBase:
 
         Args:
             vertex1 (VertexKeyType): The first vertex.
-            vertex2 (VertexKeyType, optional): The second vertex.
+            vertex2 (VertexKeyType): The second vertex.
             weight (float, optional): The edge weight. Defaults to 0.0.
             parallel_edge_count (int, optional): The number of parallel edges, not including the
                 initial edge between the vertices. Defaults to 0.
@@ -145,11 +145,8 @@ class GraphBase:
 
         parsed_primitives = graph_primitives.parse_graph_primitives(v1)
         vertex1 = self._get_or_add_vertex(parsed_primitives.vertex_keys[0])
-        if v2 is None:
-            vertex2 = vertex1  # Self loop.
-        else:
-            parsed_primitives = graph_primitives.parse_graph_primitives(v2)
-            vertex2 = self._get_or_add_vertex(parsed_primitives.vertex_keys[0])
+        parsed_primitives = graph_primitives.parse_graph_primitives(v2)
+        vertex2 = self._get_or_add_vertex(parsed_primitives.vertex_keys[0])
 
         error_msg = None
         existing_v1v2 = self.get_edge(vertex1, vertex2)
