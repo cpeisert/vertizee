@@ -125,8 +125,8 @@ class GraphBase:
         edge is assumed to be a self loop.
 
         Args:
-            vertex1 (VertexKeyType): The first vertex.
-            vertex2 (VertexKeyType): The second vertex.
+            v1 (VertexKeyType): The first vertex.
+            v2 (VertexKeyType): The second vertex.
             weight (float, optional): The edge weight. Defaults to 0.0.
             parallel_edge_count (int, optional): The number of parallel edges, not including the
                 initial edge between the vertices. Defaults to 0.
