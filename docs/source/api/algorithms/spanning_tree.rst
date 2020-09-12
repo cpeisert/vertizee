@@ -1,7 +1,9 @@
+============================================================================
 Spanning Trees
 ============================================================================
 
-.. autosummary::
-     :toctree: _stubs
+.. autofunction:: vertizee.algorithms.tree.spanning.spanning_tree_kruskal
 
-     vertizee.algorithms.tree.spanning
+.. autofunction:: vertizee.algorithms.tree.spanning.spanning_tree_prim
+
+.. autofunction:: vertizee.algorithms.tree.spanning.spanning_tree_prim_fibonacci

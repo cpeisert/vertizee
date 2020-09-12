@@ -10,7 +10,7 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 
 ## Basic Example
 
-```
+```python
 >>> import vertizee as vz
 >>> g = vz.DiGraph()
 >>> g.add_edge('s', 't', weight=10)
@@ -80,19 +80,20 @@ conda install --channel conda-forge vertizee
 
 ## Documentation
 
-Vertizee API documentation: https://cpeisert.github.io/vertizee
+Vertizee documentation: https://cpeisert.github.io/vertizee
 
 
 ## Tutorials
 
-- [The Essentials](https://colab.research.google.com/drive/) - Essential concepts to get started quickly
-- [Breadth-first and Depth-first Search](https://colab.research.google.com/drive/) - Graph search and traversal using BFS and DFS
-- [Shortest paths](https://colab.research.google.com/drive/) - Finding the shortest paths through weighted and unweighted graphs
-- [All-pairs-shortest-paths](https://colab.research.google.com/drive/) - Finding all of the shortest paths between every pair of vertices
-- [Strongly-connected-components](https://colab.research.google.com/drive/) - Finding the strongly-connected components of a directed graph
+| Notebook     |      Description      |   |
+|:----------|:-------------|------:|
+| [Getting Started](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb)  | How to create and work with graphs  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb) |
+| [Breadth-First and Depth-First Search](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/bfs_dfs.ipynb)  | BFS and DFS graph search and traversal  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/bfs_dfs.ipynb) |
+| [Shortest paths](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb)  | Finding shortest paths and all-pairs shortest paths  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb) |
+| [Connected Components](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb)  | Finding strongly-connected components  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb) |
 
 
 ## Want to help?
 
-Want to [file a bug](https://github.com/cpeisert/vertizee/issues), contribute some code, or improve documentation? Excellent! Read up on our
-guidelines for [contributing](https://github.com/cpeisert/vertizee/blob/master/CONTRIBUTING.md).
+Want to [file a bug](https://github.com/cpeisert/vertizee/issues), contribute some code, or improve documentation? Excellent!
+Read up on our guidelines for [contributing](https://github.com/cpeisert/vertizee/blob/master/CONTRIBUTING.rst).

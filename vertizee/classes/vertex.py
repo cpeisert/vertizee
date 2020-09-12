@@ -118,7 +118,8 @@ class Vertex:
     def __getitem__(self, vertex_key: VertexKeyType) -> EdgeType:
         """Support index accessor notation to retrieve edges.
 
-        Example:
+        Example::
+
             vertex1 = graph[1]
             edge12 = vertex1[2]  # same as graph[1][2]
 

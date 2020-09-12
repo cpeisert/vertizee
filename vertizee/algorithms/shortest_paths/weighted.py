@@ -41,31 +41,31 @@ def get_weight_function(
     Notes:
         To support reversed graphs, custom weight functions should implement the following pattern:
 
-        ```
-        def get_min_weight(v1: VertexKeyType, v2: VertexKeyType, reverse_graph: bool) -> float:
-            graph = v1._parent_graph
-            if reverse_graph:
-                edge: EdgeType = graph[v2][v1]
-                edge_str = f'({v2.key}, {v1.key})'
-            else:
-                edge: EdgeType = graph[v1][v2]
-                edge_str = f'({v1.key}, {v2.key})'
-            if edge is None:
-                raise AlgorithmError(f'graph does not have edge {edge_str}')
+        .. code-block:: python
 
-            <YOUR CODE HERE>
+            def get_min_weight(v1: VertexKeyType, v2: VertexKeyType, reverse_graph: bool) -> float:
+                graph = v1._parent_graph
+                if reverse_graph:
+                    edge: EdgeType = graph[v2][v1]
+                    edge_str = f'({v2.key}, {v1.key})'
+                else:
+                    edge: EdgeType = graph[v1][v2]
+                    edge_str = f'({v1.key}, {v2.key})'
+                if edge is None:
+                    raise AlgorithmError(f'graph does not have edge {edge_str}')
 
-            return min_weight
-        ```
+                <YOUR CODE HERE>
+
+                return min_weight
 
         The weight function may also serve as a filter by returning None for any edge that should
         be excluded from the shortest path search.  For example, adding the following would
         exclude blue edges:
 
-        ```
-        if edge.attr.get('color', 'red') == 'blue':
-            return None
-        ```
+        .. code-block:: python
+
+            if edge.attr.get('color', 'red') == 'blue':
+                return None
 
     Args:
         weight (Union[Callable, str], optional): If callable, then `weight` itself is returned. If
@@ -148,11 +148,11 @@ def all_pairs_shortest_paths_floyd_warshall(
     """Finds the shortest paths between all pairs of vertices in a graph using the Floyd-Warshall
     algorithm.
 
-    Running time: O(n^3) where n = |V|
+    Running time: O(n^3) where n = \|V\|
     Running space if `find_path_lengths_only` is True: O(n^2)
     Running space if `find_path_lengths_only` is False: O(n^3)
 
-    When the number of edges |E| is less than (n^2)/log(n), then the graph is sufficiently sparse
+    When the number of edges \|E\| is less than (n^2)/log(n), then the graph is sufficiently sparse
     that Johnson's algorithm will provide better asymptotic running time. See
     `~weighted.all_pairs_shortest_paths_johnson`.
 
@@ -183,7 +183,8 @@ def all_pairs_shortest_paths_floyd_warshall(
         `~vertex_dict.VertexDict`
         `~weighted.all_pairs_shortest_paths_johnson`
 
-    Example:
+    Example::
+
         >>> g = DiGraph([
             ('s', 't', 10), ('s', 'y', 5),
             ('t', 'y', 2), ('t', 'x', 1),
@@ -250,7 +251,7 @@ def all_pairs_shortest_paths_johnson(
     """Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm.
 
-    Running time: O(mn(log(n))) where m = |E| and n = |V|
+    Running time: O(mn(log(n))) where m = \|E\| and n = \|V\|
 
     For a theoretically faster implementation with running time O((n^2)log(n) + mn), see
     `~weighted.all_pairs_shortest_paths_johnson_fibonacci`.
@@ -287,7 +288,8 @@ def all_pairs_shortest_paths_johnson(
         `~weighted.all_pairs_shortest_paths_floyd_warshall`
         `~weighted.all_pairs_shortest_paths_johnson_fibonacci`
 
-    Example:
+    Example::
+
         >>> g = DiGraph([
             ('s', 't', 10), ('s', 'y', 5),
             ('t', 'y', 2), ('t', 'x', 1),
@@ -346,7 +348,7 @@ def all_pairs_shortest_paths_johnson_fibonacci(
     """Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm implemented with a Fibonacci heap version of Dijkstra's algorithm.
 
-    Running time: O((n^2)log(n) + mn) where m = |E| and n = |V|
+    Running time: O((n^2)log(n) + mn) where m = \|E\| and n = \|V\|
 
     Pairs of vertices for which there is no connecting path will have path length infinity. In
     additional, `ShortestPath.is_destination_reachable()` will return False.
@@ -414,7 +416,7 @@ def shortest_paths_bellman_ford(
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices of a weighted graph using the Bellman-Ford algorithm.
 
-    Running time: O(mn) where m = |E| and n = |V|
+    Running time: O(mn) where m = \|E\| and n = \|V\|
 
     The Bellman-Ford algorithm is not as fast as Dijkstra, but it can handle negative edge weights.
 
@@ -458,7 +460,8 @@ def shortest_paths_bellman_ford(
         `~weighted.get_weight_function`.
         `~weighted.shortest_paths_dijkstra`
 
-    Example:
+    Example::
+
         >>> g = DiGraph([
             ('s', 't', 10), ('s', 'y', 5),
             ('t', 'y', 2), ('t', 'x', 1),
@@ -531,7 +534,7 @@ def shortest_paths_dijkstra(
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices of a graph with positive edge weights using Dijkstra's algorithm.
 
-    Running time: O((m + n)log(n)) where m = |E| and n = |V|. Running time is due to implementation
+    Running time: O((m + n)log(n)) where m = \|E\| and n = \|V\|. Running time is due to implementation
     using a minimum priority queue based on a binary heap. For an implementation built using a
     Fibonacci heap and corresponding running time of O(n(log(n)) + m), see
     `~weighted.shortest_paths_dijkstra_fibonacci`.
@@ -578,7 +581,8 @@ def shortest_paths_dijkstra(
         `~weighted.shortest_paths_bellman_ford`
         `~weighted.shortest_paths_dijkstra_fibonacci`
 
-    Example:
+    Example::
+
         >>> g = DiGraph([
             ('s', 't', 10), ('s', 'y', 5),
             ('t', 'y', 2), ('t', 'x', 1),
@@ -647,7 +651,7 @@ def shortest_paths_dijkstra_fibonacci(
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices of a graph with positive edge weights using Dijkstra's algorithm.
 
-    Running time:  O(n(log(n)) + m) where m = |E| and n = |V|. Running time is due to
+    Running time:  O(n(log(n)) + m) where m = \|E\| and n = \|V\|. Running time is due to
     implementation using a minimum priority queue based on a Fibonacci heap. For an implementation
     using a binary heap and corresponding running time of O((m + n)log(n)), see
     `~weighted.shortest_paths_dijkstra`.

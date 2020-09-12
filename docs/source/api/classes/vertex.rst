@@ -1,7 +1,6 @@
+============================================================================
 Vertex
 ============================================================================
 
-.. autosummary::
-     :toctree: _stubs
-
-     vertizee.classes.vertex
+.. autoclass:: vertizee.classes.vertex.Vertex
+    :members:

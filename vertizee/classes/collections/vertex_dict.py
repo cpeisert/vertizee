@@ -30,7 +30,8 @@ class VertexDict(dict, Dict[VertexKeyType, VT]):
     The dictionary keys are stored internally as strings, but when getting and setting dictionary
     values, keys may be given as any one of int, str, or Vertex.
 
-    Example:
+    Example::
+
         >>> v1 = Vertex(1)
         >>> v2 = Vertex('2')
         >>> v3 = Vertex(3)

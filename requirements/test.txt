@@ -1,3 +1,2 @@
 pytest>=6.0.0
 pytest-cov>=2.10
-pytype>=2020.08.28

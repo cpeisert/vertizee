@@ -41,7 +41,7 @@ class TestDFSResults:
         assert len(dfs.dfs_forest) == 1, 'DFS search with source vertex should yield one DFS tree'
         assert len(tree.vertices) == 6, 'DFS tree should have 6 vertices (excluding vertices 6 & 7)'
         assert len(tree.edges_in_discovery_order) == 5, 'DFS tree should have 5 edges, since ' \
-            'for all trees |E| = |V| - 1.'
+            'for all trees \|E\| = \|V\| - 1.'
         assert 6 not in tree.vertices, 'DFS tree should not contain vertex 6.'
         assert not dfs.is_acyclic(), 'Graph should not be acyclic, since it contains 2 cycles.'
 

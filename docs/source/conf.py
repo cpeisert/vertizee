@@ -20,10 +20,11 @@ project = 'Vertizee'
 copyright = '2020, The Vertizee Authors'
 author = 'The Vertizee Authors'
 
-# The short X.Y.Z version; should match the Git tag.
+# The short X.Y.Z version.
 version = vertizee.version.__version__
-# The full release, including release candidate info.
+
 _release_candidate = ''  # RC format: -rc.#   Example: '-rc.0'
+# The full version, including alpha/beta/rc tags.
 release = f'{version}{_release_candidate}'
 
 # -- General configuration ---------------------------------------------------
@@ -34,24 +35,25 @@ release = f'{version}{_release_candidate}'
 extensions = [
     'nbsphinx',  # Jupyter Notebook Tools for Sphinx
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.doctest',
     'sphinx.ext.githubpages',
     'sphinx.ext.imgconverter',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',  # Converts Google-style docstrings to reStructuredText
+    'sphinx.ext.viewcode',
     'recommonmark',  # Markdown support
-    'sphinx_rtd_theme'
 ]
 
 autodoc_default_options = {
+    'autoclass_content': 'class',
+    'inherited-members': True,
     'members': True,
-    'inherited-members': True
+    'member-order': 'bysource',
+    'show-inheritance': True,
+    'special-members': '__call__, __getitem__',
+    'undoc-members': True,
 }
-
-# generate autosummary pages
-autosummary_generate = True
-autosummary_generate_overwrite = True
 
 # nbsphinx options
 html_sourcelink_suffix = ''
@@ -59,6 +61,8 @@ nbsphinx_kernel_name = 'python3'
 # nbsphinx_input_prompt = 'In [%s]:'
 # nbsphinx_output_prompt = 'Out [%s]:'
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = None
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -88,3 +92,6 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+def setup(app):
+    app.add_css_file('css/code-snippets.css')

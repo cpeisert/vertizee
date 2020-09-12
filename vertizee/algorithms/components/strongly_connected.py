@@ -27,8 +27,8 @@ def kosaraju_strongly_connected_components(graph: GraphBase) -> List[DepthFirstS
     """Returns strongly connected components, where each component is a DepthFirstSearchTree.
 
     This function uses Kosaraju's algorithm, with the caveat that the strongly-connected components
-    (SCC) are returned in reverse topological. This ordering refers to topologically sorting the
-    condensation graph (i.e. the graph created by representing each SCC as a vertex).
+    (SCC) are returned in reverse topological order. This ordering refers to topologically sorting
+    the condensation graph (i.e. the graph created by representing each SCC as a vertex).
 
     Args:
         graph (GraphBase): The graph to search.

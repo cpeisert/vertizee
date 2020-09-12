@@ -65,7 +65,8 @@ class FibonacciHeap(Generic[T]):
             type `T` is not float or integer, then a priority function must be provided to ensure
             correct operation of the heap. Defaults to None.
 
-    Example:
+    Example::
+
         >>> fh: FibonacciHeap[int] = FibonacciHeap()
         >>> for i in range(10): fh.insert(i)
         >>> fh.minimum

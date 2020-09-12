@@ -10,7 +10,8 @@ As a contributor, here are the guidelines we would like you to follow:
  - `Question or Problem?`_
  - `Found a Bug?`_
  - `Missing a Feature?`_
- - `Submission Guidelines`_
+ - `Submitting an Issue`_
+ - `Submitting a Pull Request (PR)`_
 
 
 Question or Problem?
@@ -49,12 +50,9 @@ determine the right steps to proceed:
 * **Small Features** can be crafted and directly :ref:`submitted as a Pull Request <section-submit-pull-request>`.
 
 
-Submission Guidelines
+Submitting an Issue
 ================================
 
-
-Submitting an Issue
---------------------------------
 
 Before you submit an issue, please search the issue tracker, maybe an issue for your problem already
 exists and the discussion might inform you of workarounds readily available.
@@ -66,17 +64,18 @@ Unfortunately, we are not able to investigate / fix bugs without a minimal repro
 
 You can file new issues by selecting from our `new issue templates <https://github.com/cpeisert/vertizee/issues/new/choose>`_ and filling out the issue template.
 
+
 .. _section-submit-pull-request:
 
 Submitting a Pull Request (PR)
---------------------------------
+================================
 
 Before you submit your Pull Request (PR) consider the following guidelines:
 
 1. Search `GitHub <https://github.com/cpeisert/vertizee/pulls>`_ for an open or closed PR that relates to your submission.
    You don't want to duplicate existing efforts.
 
-2. Be sure that an issue describes the problem you're fixing, or documents the design for the feature you'd like to add.
-   Discussing the design upfront helps to ensure that we're ready to accept your work.
+2. Be sure that an issue describes the problem you are fixing, or documents the design for the feature you would like to add.
+   Discussing the design upfront helps to ensure that we are ready to accept your work.
 
-3. Following the instructions in the :doc:`Contributor Development Guide <_contributor_development_guide>` to prepare your contribution.
+3. To prepare your contribution, follow the instructions in the :doc:`Contributor Guide <contributor_guide>`.

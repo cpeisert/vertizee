@@ -1,7 +1,5 @@
+============================================================================
 Components
 ============================================================================
 
-.. autosummary::
-     :toctree: _stubs
-
-     vertizee.algorithms.components.strongly_connected
+.. autofunction:: vertizee.algorithms.components.strongly_connected.kosaraju_strongly_connected_components

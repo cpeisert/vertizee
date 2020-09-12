@@ -96,7 +96,8 @@ class PriorityQueue(Generic[T]):
         minimum (bool, optional): If True, priority queue is a minimum priority queue,
             otherwise a maximum priority queue. Default value is True.
 
-    Example:
+    Example::
+
         >>> PRIORITY = 'priority_key'
         >>> def priority_function(vertex: Vertex) -> int:
         >>>     return vertex.attr[PRIORITY]

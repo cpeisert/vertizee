@@ -1,7 +1,9 @@
+============================================================================
 Edge and DiEdge
 ============================================================================
 
-.. autosummary::
-     :toctree: _stubs
+.. autoclass:: vertizee.classes.edge.Edge
+    :members:
 
-     vertizee.classes.edge
+.. autoclass:: vertizee.classes.edge.DiEdge
+    :members:

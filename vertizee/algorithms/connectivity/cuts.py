@@ -22,6 +22,8 @@ from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex
 
 
+# TODO(cpeisert): simplify return type of cut algorithms.
+# TODO(cpeisert): rename algorithms to reflect popular names (e.g. fast_min_cut_karger_stein)
 class KargerResults:
     """Container class to store the results of computing the minimum cut.
 
@@ -112,7 +114,7 @@ def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResult
     """Use the Karger algorithm to contract the graph by repeatedly selecting a random edge,
     removing the edge, and merging the vertices of the deleted edge.
 
-    This process is continued until the number of vertices |V| <= minimum_vertices.
+    This process is continued until the number of vertices \|V\| <= minimum_vertices.
 
     Args:
         graph: The multigraph for which a minimum cut is to be found. A deep copy is made such that
