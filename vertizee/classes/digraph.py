@@ -32,6 +32,9 @@ Example:
     edge20 = g.add_edge(2, 0)
     assert g[0].degree == 3
 """
+# Note: In Python < 3.10, in order to prevent Sphinx from unfolding type aliases, future
+# annotations must be imported and type aliases that should not be unfolded must be quoted.
+from __future__ import annotations
 
 from typing import List, Optional, Set
 
@@ -46,7 +49,7 @@ from vertizee.classes.vertex import VertexKeyType
 
 class DiGraph(GraphBase):
     """A digraph is a directed graph without parallel edges. Self loops are allowed."""
-    def __init__(self, *args: GraphPrimitive):
+    def __init__(self, *args: 'GraphPrimitive'):
         super().__init__(
             GraphBase._create_key, is_directed_graph=True, is_multigraph=False,
             is_simple_graph=False)
@@ -94,7 +97,7 @@ class DiGraph(GraphBase):
 
 class MultiDiGraph(GraphBase):
     """A multidigraph is a directed graph that allows parallel edges and self loops."""
-    def __init__(self, *args: GraphPrimitive):
+    def __init__(self, *args: 'GraphPrimitive'):
         super().__init__(
             GraphBase._create_key, is_directed_graph=True, is_multigraph=True,
             is_simple_graph=False)

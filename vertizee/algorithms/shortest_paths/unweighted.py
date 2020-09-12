@@ -52,7 +52,8 @@ def breadth_first_search_shortest_paths(
         `~shortest_path.ShortestPath`
         `~vertex_dict.VertexDict`
 
-    Example:
+    Example::
+
         >>> g = Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         >>> paths = breadth_first_search_shortest_paths(g, 0)

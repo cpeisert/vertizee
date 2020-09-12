@@ -1,7 +1,6 @@
+============================================================================
 Vertex Dictionary
 ============================================================================
 
-.. autosummary::
-     :toctree: _stubs
-
-     vertizee.classes.collections.vertex_dict
+.. autoclass:: vertizee.classes.collections.vertex_dict.VertexDict
+    :members:

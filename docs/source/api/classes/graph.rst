@@ -1,3 +1,4 @@
+============================================================================
 Graph Classes
 ============================================================================
 
@@ -11,7 +12,7 @@ Which graph class should I use?
 -------------------------------
 
 +----------------+------------+--------------------+------------------------+
-| Networkx Class | Type       | Self-loops allowed | Parallel edges allowed |
+| Vertizee Class | Type       | Self-loops allowed | Parallel edges allowed |
 +================+============+====================+========================+
 | SimpleGraph    | undirected | No                 | No                     |
 +----------------+------------+--------------------+------------------------+
@@ -25,9 +26,20 @@ Which graph class should I use?
 +----------------+------------+--------------------+------------------------+
 
 
-.. autosummary::
-     :toctree: _stubs
+.. autoclass:: vertizee.classes.graph.SimpleGraph
+    :members:
 
-     vertizee.classes.graph_base
-     vertizee.classes.graph
-     vertizee.classes.digraph
+.. autoclass:: vertizee.classes.graph.Graph
+    :members:
+
+.. autoclass:: vertizee.classes.graph.MultiGraph
+    :members:
+
+.. autoclass:: vertizee.classes.digraph.DiGraph
+    :members:
+
+.. autoclass:: vertizee.classes.digraph.MultiDiGraph
+    :members:
+
+.. autoclass:: vertizee.classes.graph_base.GraphBase
+    :members:

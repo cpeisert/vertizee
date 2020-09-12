@@ -49,7 +49,8 @@ class UnionFind(Generic[T]):
         *args (T, optional): Items to initialize as disjoint sets. Each item is added to its own
             set.
 
-    Example:
+    Example::
+
         >>> uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5)
         >>> len(uf)
         5

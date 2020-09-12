@@ -49,9 +49,9 @@ class TestWeightedAllPairsShortestPaths:
         paths: VertexDict[VertexDict[ShortestPath]] = \
             all_pairs_shortest_paths_floyd_warshall(g)
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert len(paths['s']) == 5, 'Each source in the shortest paths dictionary should have ' \
-            'a destinations dictionary of length equal to |V|.'
+            'a destinations dictionary of length equal to \|V\|.'
         assert paths['s']['s'].length == 0, 'Length of s ~> s path should be 0.'
         assert paths['s']['t'].length == 8, 'Length of path s ~> t should be 8.'
         assert paths['s']['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -75,9 +75,9 @@ class TestWeightedAllPairsShortestPaths:
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_floyd_warshall(g)
 
-        assert len(paths) == 6, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 6, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert len(paths['s']) == 6, 'Each source in the shortest paths dictionary should have ' \
-            'a destinations dictionary of length equal to |V|.'
+            'a destinations dictionary of length equal to \|V\|.'
 
         assert paths['a']['s'].length == -100, 'Length of path a ~> s should be -100.'
         assert paths['a']['t'].length == -90, 'Length of path a ~> t should be -90.'
@@ -188,7 +188,7 @@ class TestWeightedAllPairsShortestPaths:
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_floyd_warshall(g)
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s']['s'].length == 0, 'Length of path s ~> s should be 0.'
         assert paths['s']['t'].length == 10, 'Length of path s ~> t should be 10.'
         assert paths['s']['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -213,9 +213,9 @@ class TestWeightedAllPairsShortestPaths:
         paths: VertexDict[VertexDict[ShortestPath]] = \
             all_pairs_shortest_paths_johnson(g)
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert len(paths['s']) == 5, 'Each source in the shortest paths dictionary should have ' \
-            'a destinations dictionary of length equal to |V|.'
+            'a destinations dictionary of length equal to \|V\|.'
         assert paths['s']['s'].length == 0, 'Length of s ~> s path should be 0.'
         assert paths['s']['t'].length == 8, 'Length of path s ~> t should be 8.'
         assert paths['s']['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -239,9 +239,9 @@ class TestWeightedAllPairsShortestPaths:
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_johnson(g)
 
-        assert len(paths) == 6, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 6, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert len(paths['s']) == 6, 'Each source in the shortest paths dictionary should have ' \
-            'a destinations dictionary of length equal to |V|.'
+            'a destinations dictionary of length equal to \|V\|.'
 
         assert paths['a']['s'].length == -100, 'Length of path a ~> s should be -100.'
         assert paths['a']['t'].length == -90, 'Length of path a ~> t should be -90.'
@@ -313,9 +313,9 @@ class TestWeightedAllPairsShortestPaths:
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_johnson_fibonacci(g)
 
-        assert len(paths) == 6, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 6, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert len(paths['s']) == 6, 'Each source in the shortest paths dictionary should have ' \
-            'a destinations dictionary of length equal to |V|.'
+            'a destinations dictionary of length equal to \|V\|.'
 
         assert paths['a']['s'].length == -100, 'Length of path a ~> s should be -100.'
         assert paths['a']['t'].length == -90, 'Length of path a ~> t should be -90.'
@@ -350,7 +350,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(g, 's')
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 8, 'Length of path s ~> t should be 8.'
         assert paths['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -368,7 +368,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(g, 's')
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 10, 'Length of path s ~> t should be 10.'
         assert paths['x'].length == 7, 'Length of path s ~> x should be 7.'
@@ -410,7 +410,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(g, 's', reverse_graph=True)
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == -2, 'Length of path s ~> t should be -2.'
         assert paths['x'].length == 11, 'Length of path s ~> x should be 11.'
@@ -452,7 +452,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(g, 's')
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 10, 'Length of path s ~> t should be 10.'
         assert paths['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -470,7 +470,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(g, 's')
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 8, 'Length of path s ~> t should be 8.'
         assert paths['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -523,7 +523,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(g, 's', weight=WEIGHT)
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 8, 'Length of path s ~> t should be 8.'
         assert paths['x'].length == 9, 'Length of path s ~> x should be 9.'
@@ -617,7 +617,7 @@ class TestWeightedSingleSourceShortestPaths:
 
         paths: VertexDict[ShortestPath] = shortest_paths_dijkstra_fibonacci(g, 's')
 
-        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to |V|.'
+        assert len(paths) == 5, 'Shortest paths dictionary should have length equal to \|V\|.'
         assert paths['s'].length == 0, 'Length of s path should be 0.'
         assert paths['t'].length == 8, 'Length of path s ~> t should be 8.'
         assert paths['x'].length == 9, 'Length of path s ~> x should be 9.'

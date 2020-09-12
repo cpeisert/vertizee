@@ -35,6 +35,7 @@ max-line-length=100
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 disable=invalid-name,
+        anomalous-backslash-in-string,
         missing-docstring,
         no-else-return,
         no-self-use,
@@ -46,7 +47,6 @@ disable=invalid-name,
         too-few-public-methods,
         too-many-arguments,
         unnecessary-lambda,
-
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

@@ -27,13 +27,18 @@ Supporting Types for Undirected Graphs:
         matter.
 
 
-Example:
-    g = MultiGraph()
-    edge01 = g.add_edge(0, 1)
-    edge12 = g.add_edge(1, 2)
-    edge20 = g.add_edge(2, 0)
-    assert g[0].degree == 2
+Example::
+
+    >>> g = MultiGraph()
+    >>> edge01 = g.add_edge(0, 1)
+    >>> edge12 = g.add_edge(1, 2)
+    >>> edge20 = g.add_edge(2, 0)
+    >>> assert g[0].degree == 2
 """
+
+# Note: In Python < 3.10, in order to prevent Sphinx from unfolding type aliases, future
+# annotations must be imported and type aliases that should not be unfolded must be quoted.
+from __future__ import annotations
 
 from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.graph_primitives import GraphPrimitive
@@ -41,7 +46,7 @@ from vertizee.classes.graph_primitives import GraphPrimitive
 
 class Graph(GraphBase):
     """A graph is an undirected graph without parallel edges. Self loops are allowed."""
-    def __init__(self, *args: GraphPrimitive):
+    def __init__(self, *args: 'GraphPrimitive'):
         super().__init__(
             GraphBase._create_key, is_directed_graph=False, is_multigraph=False,
             is_simple_graph=False)
@@ -55,7 +60,7 @@ class Graph(GraphBase):
 
 class MultiGraph(GraphBase):
     """A multigraph is an undirected graph that allows parallel edges and self loops."""
-    def __init__(self, *args: GraphPrimitive):
+    def __init__(self, *args: 'GraphPrimitive'):
         super().__init__(
             GraphBase._create_key, is_directed_graph=False, is_multigraph=True,
             is_simple_graph=False)
@@ -72,7 +77,7 @@ class MultiGraph(GraphBase):
 
 class SimpleGraph(GraphBase):
     """A simple graph is an undirected graph with no parallel edges and no self loops."""
-    def __init__(self, *args: GraphPrimitive):
+    def __init__(self, *args: 'GraphPrimitive'):
         super().__init__(
             GraphBase._create_key, is_directed_graph=False, is_multigraph=False,
             is_simple_graph=True)

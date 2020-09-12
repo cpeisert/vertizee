@@ -1,7 +1,8 @@
+============================================================================
 Shortest Path
 ============================================================================
 
-.. autosummary::
-     :toctree: _stubs
+.. autofunction:: vertizee.classes.shortest_path.reconstruct_path
 
-     vertizee.classes.shortest_path
+.. autoclass:: vertizee.classes.shortest_path.ShortestPath
+    :members:

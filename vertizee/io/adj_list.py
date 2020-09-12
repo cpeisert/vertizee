@@ -24,7 +24,7 @@ graph along with an edge between the source vertex and destination vertex.
 In the case of undirected graphs, potential edges are first checked against the graph, and only
 added if the edge is not present.
 
-Examples:
+Example::
 
     UNDIRECTED GRAPH ADJACENCY LIST
     1 2 2 3
@@ -57,7 +57,7 @@ Weighted Adjacency List
 The weighted adjacency list format consists of lines starting with a source vertex label followed
 by pairs of destination vertex labels and associated edge weights.
 
-Examples:
+Example::
 
     UNDIRECTED GRAPH ADJACENCY LIST
     1   2,100   3,50

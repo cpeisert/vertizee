@@ -96,9 +96,10 @@ class GraphBase:
     def __getitem__(self, vertex_key: VertexKeyType) -> Vertex:
         """Support index accessor notation to retrieve vertices.
 
-        Example:
-            vertex1 = graph[1]
-            edge12 = vertex1[2]  # same as graph[1][2]
+        Example::
+
+            >>> vertex1 = graph[1]
+            >>> edge12 = vertex1[2]  # same as graph[1][2]
 
         Args:
             vertex_key (VertexKeyType): The key label of the vertex.
@@ -195,8 +196,9 @@ class GraphBase:
         Returns:
             int: The number of edges added.
 
-        Example:
-            graph.add_edges_from([(0, 1), (0, 2), (2, 1), (2, 2)])
+        Example::
+
+            >>> graph.add_edges_from([(0, 1), (0, 2), (2, 1), (2, 2)])
         """
         parsed_primitives = graph_primitives.parse_graph_primitives(*args)
         edge_tuples = graph_primitives.get_all_edge_tuples_from_parsed_primitives(parsed_primitives)
@@ -252,8 +254,9 @@ class GraphBase:
         Returns:
             int: The number of vertices added.
 
-        Example:
-            graph.add_vertices_from([0, 1, 2, 3], [('a', 'b'), ('a', 'd')])
+        Example::
+
+            >>> graph.add_vertices_from([0, 1, 2, 3], [('a', 'b'), ('a', 'd')])
             # Vertices added: 0, 1, 2, 3, a, b, d
         """
         parsed_primitives = graph_primitives.parse_graph_primitives(*args)

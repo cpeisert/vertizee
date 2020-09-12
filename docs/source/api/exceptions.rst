@@ -1,7 +1,16 @@
 Exceptions
 ------------------
 
-.. autosummary::
-     :toctree: _stubs
+.. autoclass:: vertizee.exception.VertizeeException
 
-     vertizee.exception
+.. autoclass:: vertizee.exception.VertizeeError
+
+.. autoclass:: vertizee.exception.AlgorithmError
+
+.. autoclass:: vertizee.exception.Unfeasible
+
+.. autoclass:: vertizee.exception.NegativeWeightCycle
+
+.. autoclass:: vertizee.exception.NoPath
+
+.. autoclass:: vertizee.exception.VertexNotFound
