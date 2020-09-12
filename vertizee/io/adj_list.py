@@ -85,7 +85,7 @@ if TYPE_CHECKING:
     from vertizee.classes.vertex import Vertex
 
 
-def read_adj_list(path: str, new_graph: 'GraphBase', delimiters: str = r',\s*|\s+'):
+def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s+"):
     """Reads an adjacency list from a text file and populates `new_graph`.
 
     The `new_graph` is cleared and then vertices and edges are added from the adjacency list.
@@ -99,7 +99,7 @@ def read_adj_list(path: str, new_graph: 'GraphBase', delimiters: str = r',\s*|\s
             whitespace characters.
     """
     new_graph.clear()
-    with open(path, mode='r') as f:
+    with open(path, mode="r") as f:
         lines = f.read().splitlines()
     if lines is None or len(lines) == 0:
         return
@@ -125,7 +125,7 @@ def read_adj_list(path: str, new_graph: 'GraphBase', delimiters: str = r',\s*|\s
         new_graph.add_edges_from(edge_tuples)
 
 
-def read_weighted_adj_list(path: str, new_graph: 'GraphBase'):
+def read_weighted_adj_list(path: str, new_graph: "GraphBase"):
     """Reads an adjacency list from a text file and populates `new_graph`.
 
     The `new_graph` is cleared and then vertices and edges are added from the adjacency list.
@@ -137,20 +137,20 @@ def read_weighted_adj_list(path: str, new_graph: 'GraphBase'):
         new_graph (GraphBase): The new graph to create from the adjacency list.
     """
     new_graph.clear()
-    with open(path, mode='r') as f:
+    with open(path, mode="r") as f:
         lines = f.read().splitlines()
     if lines is None or len(lines) == 0:
         return
 
     for line in lines:
-        source_match = re.search(r'\w+\b', line)
+        source_match = re.search(r"\w+\b", line)
         if not source_match:
             continue
         source = source_match.group(0)
-        line = line[len(source):]
+        line = line[len(source) :]
 
         edge_tuples: List[Tuple[str, str, float]] = []
-        for match in re.finditer(r'\b(\w+)\s*,\s*(\w+)', line):
+        for match in re.finditer(r"\b(\w+)\s*,\s*(\w+)", line):
             edge_tuples.append((source, match.group(1), float(match.group(2))))
 
         if len(edge_tuples) == 0:
@@ -162,8 +162,12 @@ def read_weighted_adj_list(path: str, new_graph: 'GraphBase'):
 
 
 def write_adj_list_to_file(
-        path: str, graph: 'GraphBase', delimiter: str = '\t', include_weights: bool = False,
-        weights_are_integers: bool = False):
+    path: str,
+    graph: "GraphBase",
+    delimiter: str = "\t",
+    include_weights: bool = False,
+    weights_are_integers: bool = False,
+):
     """Writes a graph as an adjacency list to a file.
 
     If `include_weights` is True, then the adjacency list output format is:
@@ -190,11 +194,12 @@ def write_adj_list_to_file(
 
     for vertex in vertices:
         source_vertex_key = vertex.key
-        line = f'{source_vertex_key}'
+        line = f"{source_vertex_key}"
         if len(vertex.loops) > 0:
-            loop_edge: 'EdgeType' = next(iter(vertex.loops))
+            loop_edge: "EdgeType" = next(iter(vertex.loops))
             line = _add_loop_edges_to_line(
-                line, loop_edge, delimiter, include_weights, weights_are_integers)
+                line, loop_edge, delimiter, include_weights, weights_are_integers
+            )
 
         adj_edges = _get_adj_edges_excluding_loops(graph, vertex)
         if adj_edges is None:
@@ -204,18 +209,24 @@ def write_adj_list_to_file(
         sorted_edges = sorted(adj_edges, key=lambda e: e.__str__())
         for edge in sorted_edges:
             line = _add_edge_to_line(
-                line, edge, vertex, delimiter, include_weights, weights_are_integers)
+                line, edge, vertex, delimiter, include_weights, weights_are_integers
+            )
 
         lines.append(line)
 
-    with open(path, mode='w') as f:
+    with open(path, mode="w") as f:
         for line in lines:
-            f.write(f'{line}\n')
+            f.write(f"{line}\n")
 
 
 def _add_edge_to_line(
-        line: str, edge: 'EdgeType', source_vertex: 'Vertex', delimiter: str = '\t',
-        include_weights: bool = False, weights_are_integers: bool = False) -> str:
+    line: str,
+    edge: "EdgeType",
+    source_vertex: "Vertex",
+    delimiter: str = "\t",
+    include_weights: bool = False,
+    weights_are_integers: bool = False,
+) -> str:
 
     if edge.vertex1 == source_vertex:
         destination_key = edge.vertex2.key
@@ -227,7 +238,7 @@ def _add_edge_to_line(
             weight = int(edge.weight)
         else:
             weight = edge.weight
-        line += f'{delimiter}{destination_key},{weight}'
+        line += f"{delimiter}{destination_key},{weight}"
         while len(edge._parallel_edge_weights) < edge.parallel_edge_count:
             edge._parallel_edge_weights.append(1)
         for i in range(0, edge.parallel_edge_count):
@@ -235,17 +246,21 @@ def _add_edge_to_line(
                 weight = int(edge._parallel_edge_weights[i])
             else:
                 weight = edge._parallel_edge_weights[i]
-            line += f'{delimiter}{destination_key},{weight}'
+            line += f"{delimiter}{destination_key},{weight}"
     else:  # Exclude edge weights.
-        line += f'{delimiter}{destination_key}'
+        line += f"{delimiter}{destination_key}"
         for i in range(0, edge.parallel_edge_count):
-            line += f'{delimiter}{destination_key}'
+            line += f"{delimiter}{destination_key}"
     return line
 
 
 def _add_loop_edges_to_line(
-        line: str, loop_edge: 'EdgeType', delimiter: str = '\t', include_weights: bool = False,
-        weights_are_integers: bool = False) -> str:
+    line: str,
+    loop_edge: "EdgeType",
+    delimiter: str = "\t",
+    include_weights: bool = False,
+    weights_are_integers: bool = False,
+) -> str:
 
     source_vertex_key = loop_edge.vertex1.key
 
@@ -254,7 +269,7 @@ def _add_loop_edges_to_line(
             weight = int(loop_edge.weight)
         else:
             weight = loop_edge.weight
-        line += f'{delimiter}{source_vertex_key},{weight}'
+        line += f"{delimiter}{source_vertex_key},{weight}"
 
         # If parallel self-loops are missing weights, set to default weight 1.
         while len(loop_edge._parallel_edge_weights) < loop_edge.parallel_edge_count:
@@ -264,16 +279,17 @@ def _add_loop_edges_to_line(
                 weight = int(loop_edge._parallel_edge_weights[i])
             else:
                 weight = loop_edge._parallel_edge_weights[i]
-            line += f'{delimiter}{source_vertex_key},{weight}'
+            line += f"{delimiter}{source_vertex_key},{weight}"
     else:
-        line += f'{delimiter}{source_vertex_key}'
+        line += f"{delimiter}{source_vertex_key}"
         for i in range(0, loop_edge.parallel_edge_count):
-            line += f'{delimiter}{source_vertex_key}'
+            line += f"{delimiter}{source_vertex_key}"
     return line
 
 
 def _get_adj_edges_excluding_loops(
-        graph: 'GraphBase', vertex: 'Vertex', reverse_graph: bool = False) -> Set['EdgeType']:
+    graph: "GraphBase", vertex: "Vertex", reverse_graph: bool = False
+) -> Set["EdgeType"]:
     """Helper function to retrieve the adjacent edges of a vertex, excluding self loops.
 
     If `reverse_graph` is True and it is a directed graph, then the child's incoming adjacency
@@ -301,7 +317,8 @@ def _get_adj_edges_excluding_loops(
         else:
             return vertex.edges
 
-def _remove_duplicate_edges(graph: 'GraphBase', edge_tuples: List[Tuple]) -> List[Tuple]:
+
+def _remove_duplicate_edges(graph: "GraphBase", edge_tuples: List[Tuple]) -> List[Tuple]:
     """For undirected graphs, adjacency lists generally repeat edge entries for each endpoint.
     For example, edges (1, 2), (1, 3) would appear as:
 
@@ -313,7 +330,7 @@ def _remove_duplicate_edges(graph: 'GraphBase', edge_tuples: List[Tuple]) -> Lis
     duplicates.
     """
     if graph.is_directed_graph():
-        raise ValueError('graph was a directed graph; function only defined for undirected graphs')
+        raise ValueError("graph was a directed graph; function only defined for undirected graphs")
     cnt = Counter()
     for t in edge_tuples:
         cnt[t] += 1

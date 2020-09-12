@@ -32,7 +32,7 @@ collections of vertices and edges.
 """
 
 import collections.abc
-from typing import Iterable, List, Set, Tuple, TYPE_CHECKING, Union
+from typing import Iterable, List, Optional, Set, Tuple, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ EdgeWeight = float
 EdgeVertexPair = Tuple[VertexKey, VertexKey]
 EdgeTupleWeighted = Tuple[VertexKey, VertexKey, EdgeWeight]
 EdgeTuple = Union[EdgeVertexPair, EdgeTupleWeighted]
-GraphPrimitiveTerminal = Union['Edge', EdgeTuple, 'Vertex', VertexKey]
+GraphPrimitiveTerminal = Union["Edge", EdgeTuple, "Vertex", VertexKey]
 GraphPrimitive = Union[GraphPrimitiveTerminal, Iterable[GraphPrimitiveTerminal]]
 
 
@@ -56,6 +56,7 @@ class ParsedPrimitives:
     in order to the list `vertex_keys`. Vertices that comprise edges (i.e. passed as a 2-tuple,
     3-tuple, or Edge) are added to the set `edge_tuples` (non-weighted) or
     `edge_tuples_weighted` if an edge weight was specified."""
+
     def __init__(self):
         # Pairs of vertices (no weights).
         self.edge_tuples: List[EdgeTuple] = list()
@@ -66,7 +67,8 @@ class ParsedPrimitives:
 
 
 def get_all_edge_tuples_from_parsed_primitives(
-        parsed_primitives: 'ParsedPrimitives') -> List[EdgeTuple]:
+    parsed_primitives: "ParsedPrimitives",
+) -> List[EdgeTuple]:
     """Gets all edge tuples from a `ParsedPrimitive`object.
 
     If the number of vertices in `vertex_keys` is odd, then the last vertex is ignored.
@@ -78,7 +80,7 @@ def get_all_edge_tuples_from_parsed_primitives(
         List[EdgeTuple]: A list of tuples containing vertex keys, or an
             empty list if no vertices found.
     """
-    tuples: List['EdgeTuple'] = list()
+    tuples: List["EdgeTuple"] = list()
     tuples += parsed_primitives.edge_tuples
     tuples += parsed_primitives.edge_tuples_weighted
 
@@ -93,8 +95,7 @@ def get_all_edge_tuples_from_parsed_primitives(
     return tuples
 
 
-def get_all_vertices_from_parsed_primitives(
-        parsed_primitives: 'ParsedPrimitives') -> Set[str]:
+def get_all_vertices_from_parsed_primitives(parsed_primitives: "ParsedPrimitives") -> Set[str]:
     """Gets all vertex keys from a `ParsedPrimitive`object.
 
     Args:
@@ -120,7 +121,7 @@ def get_all_vertices_from_parsed_primitives(
     return vertices
 
 
-def get_edge_tuple_from_parsed_primitives(parsed_primitives: 'ParsedPrimitives') -> Tuple:
+def get_edge_tuple_from_parsed_primitives(parsed_primitives: "ParsedPrimitives") -> Optional[Tuple]:
     """Gets a tuple of vertex keys from a `ParsedPrimitive`object.
 
     If no vertex keys are found, returns None. If only one vertex key found, then the second
@@ -144,7 +145,7 @@ def get_edge_tuple_from_parsed_primitives(parsed_primitives: 'ParsedPrimitives')
     return t
 
 
-def parse_graph_primitives(*args: GraphPrimitive) -> 'ParsedPrimitives':
+def parse_graph_primitives(*args: GraphPrimitive) -> "ParsedPrimitives":
     """Parse a list of arguments, which may be any combination of graph primitives.
 
     Graph Primitive Data Types
@@ -175,19 +176,24 @@ def parse_graph_primitives(*args: GraphPrimitive) -> 'ParsedPrimitives':
             if isinstance(arg, collections.abc.Iterable):
                 for x in arg:
                     non_iterable_primitive = _parse_non_iterable_graph_primitive(
-                        x, parsed_primitives)
+                        x, parsed_primitives
+                    )
                     if not non_iterable_primitive:
                         raise ValueError(
-                            'Expected Iterable of GraphPrimitive to contain non-iterable graph '
-                            f'primitives. Found type {type(x).__name__}.')
+                            "Expected Iterable of GraphPrimitive to contain non-iterable graph "
+                            f"primitives. Found type {type(x).__name__}."
+                        )
             else:
-                raise ValueError('Expected arg to be a GraphPrimitive or an Iterable of '
-                                 f'GraphPrimitive. Found type {type(arg).__name__}.')
+                raise ValueError(
+                    "Expected arg to be a GraphPrimitive or an Iterable of "
+                    f"GraphPrimitive. Found type {type(arg).__name__}."
+                )
     return parsed_primitives
 
 
 def _parse_non_iterable_graph_primitive(
-        arg: GraphPrimitiveTerminal, parsed_primitives: 'ParsedPrimitives') -> bool:
+    arg: GraphPrimitiveTerminal, parsed_primitives: "ParsedPrimitives"
+) -> bool:
     """Parse a single graph primitive `arg` and add it to `parsed_primitives`.
 
     Args:
@@ -213,7 +219,8 @@ def _parse_non_iterable_graph_primitive(
         edge: Edge = arg
         if edge.weight != 0.0:
             parsed_primitives.edge_tuples_weighted.append(
-                (edge.vertex1.key, edge.vertex2.key, edge.weight))
+                (edge.vertex1.key, edge.vertex2.key, edge.weight)
+            )
         else:
             parsed_primitives.edge_tuples.append((edge.vertex1.key, edge.vertex2.key))
     elif isinstance(arg, tuple):
@@ -223,9 +230,10 @@ def _parse_non_iterable_graph_primitive(
             parsed_primitives.edge_tuples.append((str(arg[0]), str(arg[1])))
         else:
             raise ValueError(
-                'GraphPrimitive tuples must have either two items (vertex key 1, vertex key 2) '
-                'or three items (vertex key 1, vertex key 2, edge weight). '
-                f'Found {len(arg)} items.')
+                "GraphPrimitive tuples must have either two items (vertex key 1, vertex key 2) "
+                "or three items (vertex key 1, vertex key 2, edge weight). "
+                f"Found {len(arg)} items."
+            )
     else:
         return False
 

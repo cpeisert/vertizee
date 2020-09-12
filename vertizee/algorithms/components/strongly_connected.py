@@ -16,9 +16,17 @@
 
 from typing import List
 
-from vertizee.algorithms.search.depth_first_search import \
-    _initialize_dfs_graph, _StackFrame, BLACK, COLOR, \
-    DepthFirstSearchTree, dfs_postorder_traversal, GRAY, PARENT, WHITE
+from vertizee.algorithms.search.depth_first_search import (
+    _initialize_dfs_graph,
+    _StackFrame,
+    BLACK,
+    COLOR,
+    DepthFirstSearchTree,
+    dfs_postorder_traversal,
+    GRAY,
+    PARENT,
+    WHITE,
+)
 from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex
 
@@ -42,7 +50,7 @@ def kosaraju_strongly_connected_components(graph: GraphBase) -> List[DepthFirstS
             Soundlikeyourself Publishing LLC, 2018. (pages 57-63)
     """
     if not graph.is_directed_graph():
-        raise ValueError('graph must be directed')
+        raise ValueError("graph must be directed")
     postorder = list(dfs_postorder_traversal(graph, reverse_graph=True))
     # Mark all vertices of graph as unexplored.
     _initialize_dfs_graph(graph)

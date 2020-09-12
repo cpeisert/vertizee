@@ -26,7 +26,7 @@ from vertizee.classes.vertex import Vertex
 INFINITY = float("inf")
 
 
-def _weight_function(edge: EdgeType, weight: str = 'Edge__weight', minimum: bool = True) -> float:
+def _weight_function(edge: EdgeType, weight: str = "Edge__weight", minimum: bool = True) -> float:
     """Returns the weight of a given edge.
 
     If there is no edge weight, then the edge weight is assumed to be one.  If `graph` is a
@@ -42,7 +42,7 @@ def _weight_function(edge: EdgeType, weight: str = 'Edge__weight', minimum: bool
     Returns:
         float: The edge weight.
     """
-    if weight == 'Edge__weight':
+    if weight == "Edge__weight":
         edge_weight = edge.weight
     else:
         edge_weight = edge.attr.get(weight, 1)
@@ -61,7 +61,8 @@ def _weight_function(edge: EdgeType, weight: str = 'Edge__weight', minimum: bool
 
 
 def spanning_tree_kruskal(
-        graph: GraphBase, weight: str = 'Edge__weight', minimum: bool = True) -> Iterator[EdgeType]:
+    graph: GraphBase, weight: str = "Edge__weight", minimum: bool = True
+) -> Iterator[EdgeType]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted graph using Kruskal's
     algorithm.
 
@@ -95,11 +96,10 @@ def spanning_tree_kruskal(
             Introduction to Algorithms: Third Edition, page 631. The MIT Press, 2009.
     """
     if graph.is_directed_graph():
-        raise ValueError('graph must be undirected; see spanning_arborescence_ggst')
+        raise ValueError("graph must be undirected; see spanning_arborescence_ggst")
 
     edge_weight_pairs = [(e, _weight_function(e, weight, minimum)) for e in graph.edges]
-    sorted_edges = \
-        [p[0] for p in sorted(edge_weight_pairs, key=lambda pair: pair[1])]
+    sorted_edges = [p[0] for p in sorted(edge_weight_pairs, key=lambda pair: pair[1])]
     union_find = UnionFind(*graph.vertices)
 
     for edge in sorted_edges:
@@ -109,8 +109,8 @@ def spanning_tree_kruskal(
 
 
 def spanning_tree_prim(
-        graph: GraphBase, root: Vertex = None, weight: str = 'Edge__weight',
-        minimum: bool = True) -> Iterator[EdgeType]:
+    graph: GraphBase, root: Vertex = None, weight: str = "Edge__weight", minimum: bool = True
+) -> Iterator[EdgeType]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted graph using Prim's
     algorithm.
 
@@ -145,15 +145,15 @@ def spanning_tree_prim(
         [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
             Introduction to Algorithms: Third Edition, page 634. The MIT Press, 2009.
     """
-    PRIM_PARENT_KEY = '__prim_parent'
-    PRIM_PRIORITY_KEY = '__prim_priority'
+    PRIM_PARENT_KEY = "__prim_parent"
+    PRIM_PRIORITY_KEY = "__prim_priority"
 
     if graph.is_directed_graph():
-        raise ValueError('graph must be undirected; see spanning_arborescence_ggst')
+        raise ValueError("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
         r: Vertex = graph[root]
         if r is None:
-            raise ValueError('root vertex not found in the graph')
+            raise ValueError("root vertex not found in the graph")
     else:
         if len(graph.vertices) > 0:
             r = next(iter(graph.vertices))
@@ -195,8 +195,8 @@ def spanning_tree_prim(
 
 
 def spanning_tree_prim_fibonacci(
-        graph: GraphBase, root: Vertex = None, weight: str = 'Edge__weight',
-        minimum: bool = True) -> Iterator[EdgeType]:
+    graph: GraphBase, root: Vertex = None, weight: str = "Edge__weight", minimum: bool = True
+) -> Iterator[EdgeType]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted graph using Prim's
     algorithm implemented using a Fibonacci heap.
 
@@ -231,15 +231,15 @@ def spanning_tree_prim_fibonacci(
         [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
             Introduction to Algorithms: Third Edition, page 634. The MIT Press, 2009.
     """
-    PRIM_PARENT_KEY = '__prim_parent'
-    PRIM_PRIORITY_KEY = '__prim_priority'
+    PRIM_PARENT_KEY = "__prim_parent"
+    PRIM_PRIORITY_KEY = "__prim_priority"
 
     if graph.is_directed_graph():
-        raise ValueError('graph must be undirected; see spanning_arborescence_ggst')
+        raise ValueError("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
         r: Vertex = graph[root]
         if r is None:
-            raise ValueError('root vertex not found in the graph')
+            raise ValueError("root vertex not found in the graph")
     else:
         if len(graph.vertices) > 0:
             r = next(iter(graph.vertices))

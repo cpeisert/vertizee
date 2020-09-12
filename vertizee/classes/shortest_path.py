@@ -29,8 +29,9 @@ INFINITY = float("inf")
 
 
 def reconstruct_path(
-        source: VertexKeyType, destination: VertexKeyType,
-        paths: Union[VertexDict['ShortestPath'], VertexDict[VertexDict['ShortestPath']]]
+    source: VertexKeyType,
+    destination: VertexKeyType,
+    paths: Union[VertexDict["ShortestPath"], VertexDict[VertexDict["ShortestPath"]]],
 ) -> List[Vertex]:
     """Reconstructs the path between two vertices based on the predecessors stored in the shortest
     paths dictionary (or a dictionary of shortest paths dictionaries).
@@ -63,8 +64,10 @@ def reconstruct_path(
         if path_v is None:
             break
         if path_v.source != source:
-            raise AlgorithmError('the ShortestPath object in the paths dictionary for '
-                                 f'vertex "{v}" does not have source vertex "{source}"')
+            raise AlgorithmError(
+                "the ShortestPath object in the paths dictionary for "
+                f'vertex "{v}" does not have source vertex "{source}"'
+            )
         path.append(v)
         v = path_v.predecessor
 
@@ -146,12 +149,19 @@ class ShortestPath:
             length is less than infinity and there exists an edge connecting source to
             destination, the edge is added to the path. Defaults to True.
     """
-    def __init__(self, source: Vertex, destination: Vertex, initial_length: float = INFINITY,
-                 store_full_paths: bool = False, add_edge_to_destination_if_exists: bool = True):
+
+    def __init__(
+        self,
+        source: Vertex,
+        destination: Vertex,
+        initial_length: float = INFINITY,
+        store_full_paths: bool = False,
+        add_edge_to_destination_if_exists: bool = True,
+    ):
         if source is None:
-            raise ValueError('source was NoneType')
+            raise ValueError("source was NoneType")
         if destination is None:
-            raise ValueError('destination was NoneType')
+            raise ValueError("destination was NoneType")
         self._source: Vertex = source
         self._destination: Vertex = destination
 
@@ -201,8 +211,9 @@ class ShortestPath:
     def predecessor(self) -> Optional[Vertex]:
         return self._predecessor
 
-    def reinitialize(self, initial_length: float = INFINITY,
-                     add_edge_to_destination_if_exists: bool = True):
+    def reinitialize(
+        self, initial_length: float = INFINITY, add_edge_to_destination_if_exists: bool = True
+    ):
         """Reinitializes the shortest path by setting the initial length and clears intermediate
         vertices between the source and destination.
 
@@ -223,9 +234,12 @@ class ShortestPath:
         if add_edge_to_destination_if_exists:
             self._init_edge_to_destination()
 
-    def relax_edge(self, predecessor_path: ShortestPath,
-                   weight_function: Callable[[Vertex, Vertex, bool], float],
-                   reverse_graph: bool = False) -> bool:
+    def relax_edge(
+        self,
+        predecessor_path: ShortestPath,
+        weight_function: Callable[[Vertex, Vertex, bool], float],
+        reverse_graph: bool = False,
+    ) -> bool:
         """Test whether there is a shorter path from source through `predecessor_path` connected
         to this destination vertex via an edge (predecessor_path.destination, self.destination),
         and if so, update this path to go through the predecessor path.

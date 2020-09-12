@@ -92,7 +92,7 @@ Development Workflow
  * **Pytype**: If you use Linux, MacOSX, or WSL, we also recommend using `Pytype <https://github.com/google/pytype>`_
    (included in requirements/developer.txt). Run with::
 
-     pytype
+     pytype --config pytype.cfg
 
 2. **Develop your contribution, including appropriate test cases:**
 
@@ -384,14 +384,15 @@ i.e., statement coverage should be at 100%.
 
 To measure the test coverage, run::
 
-  $ PYTHONPATH=. pytest --cov=vertizee vertizee
+  $ PYTHONPATH=. pytest --cov-config=.coveragerc --cov=vertizee
 
 This will print a report with one line for each file in Vertizee,
 detailing the test coverage::
 
-  Name                                                 Stmts   Miss Branch BrPart  Cover
-  --------------------------------------------------------------------------------------
-  vertizee/__init__.py                                    33      2      2      1    91%
-  vertizee/algorithms/__init__.py                        114      0      0      0   100%
-  vertizee/algorithms/components/strongly_connected.py    12      0      0      0   100%
+Name                                                   Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------------------------------------
+vertizee/__init__.py                                      12      0      0      0   100%
+vertizee/algorithms/__init__.py                            5      0      0      0   100%
+vertizee/algorithms/components/strongly_connected.py      38      1     18      2    95%
+vertizee/algorithms/search/depth_first_search.py         178      4     76      9    95%
   ...

@@ -25,11 +25,11 @@ from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.shortest_path import ShortestPath
 from vertizee.classes.vertex import Vertex, VertexKeyType
 
-INFINITY = float('inf')
+INFINITY = float("inf")
 
 
 def get_weight_function(
-        weight: Union[Callable, str] = 'Edge__weight'
+    weight: Union[Callable, str] = "Edge__weight"
 ) -> Callable[[VertexKeyType, VertexKeyType, bool], float]:
     """Returns a function that accepts two vertices and a boolean indicating if the graph should be
     treated as if it were reversed (i.e. edges of directed graphs in the opposite direction) and
@@ -82,19 +82,19 @@ def get_weight_function(
         return weight
 
     if not isinstance(weight, str):
-        raise ValueError('`weight` must be a callable function or a string')
+        raise ValueError("`weight` must be a callable function or a string")
 
     def get_min_weight(v1: VertexKeyType, v2: VertexKeyType, reverse_graph: bool) -> float:
         graph = v1._parent_graph
         if reverse_graph:
             edge: EdgeType = graph[v2][v1]
-            edge_str = f'({v2.key}, {v1.key})'
+            edge_str = f"({v2.key}, {v1.key})"
         else:
             edge: EdgeType = graph[v1][v2]
-            edge_str = f'({v1.key}, {v2.key})'
+            edge_str = f"({v1.key}, {v2.key})"
         if edge is None:
-            raise vertizee.AlgorithmError(f'graph does not have edge {edge_str}')
-        if weight == 'Edge__weight':
+            raise vertizee.AlgorithmError(f"graph does not have edge {edge_str}")
+        if weight == "Edge__weight":
             min_weight = edge.weight
         else:
             min_weight = edge.attr.get(weight, 1.0)
@@ -108,7 +108,8 @@ def get_weight_function(
 
 
 def get_weight_function_all_pairs_shortest_paths(
-        weight: str = 'Edge__weight') -> Callable[[EdgeType], float]:
+    weight: str = "Edge__weight",
+) -> Callable[[EdgeType], float]:
     """Returns a function that accepts an Edge and returns the corresponding edge weight.
 
     If there is no edge weight, then the edge weight is assumed to be one.  If `graph` is a
@@ -122,6 +123,7 @@ def get_weight_function_all_pairs_shortest_paths(
         Callable[[EdgeType], float]: A function that accepts an edge and returns the corresponding
         edge weight.
     """
+
     def default_weight_function(edge: EdgeType):
         w = edge.weight
         if len(edge.parallel_edge_weights) > 0:
@@ -136,15 +138,15 @@ def get_weight_function_all_pairs_shortest_paths(
             w = min(w, min_parallel)
         return w
 
-    if weight == 'Edge__weight':
+    if weight == "Edge__weight":
         return default_weight_function
     else:
         return attr_weight_function
 
 
 def all_pairs_shortest_paths_floyd_warshall(
-        graph: GraphBase, weight: str = 'Edge__weight',
-        find_path_lengths_only: bool = True) -> VertexDict[VertexDict[ShortestPath]]:
+    graph: GraphBase, weight: str = "Edge__weight", find_path_lengths_only: bool = True
+) -> VertexDict[VertexDict[ShortestPath]]:
     """Finds the shortest paths between all pairs of vertices in a graph using the Floyd-Warshall
     algorithm.
 
@@ -218,18 +220,21 @@ def all_pairs_shortest_paths_floyd_warshall(
         source_and_destination_to_path[i] = VertexDict()
         for j in graph:
             if i == j:
-                source_and_destination_to_path[i][j] = \
-                    ShortestPath(i, j, initial_length=0, store_full_paths=store_paths)
+                source_and_destination_to_path[i][j] = ShortestPath(
+                    i, j, initial_length=0, store_full_paths=store_paths
+                )
                 continue
 
             edge = graph.get_edge(i, j)
             if edge is None:
-                source_and_destination_to_path[i][j] = \
-                    ShortestPath(i, j, initial_length=INFINITY, store_full_paths=store_paths)
+                source_and_destination_to_path[i][j] = ShortestPath(
+                    i, j, initial_length=INFINITY, store_full_paths=store_paths
+                )
             else:
                 w = weight_function(edge)
-                source_and_destination_to_path[i][j] = \
-                    ShortestPath(i, j, initial_length=w, store_full_paths=store_paths)
+                source_and_destination_to_path[i][j] = ShortestPath(
+                    i, j, initial_length=w, store_full_paths=store_paths
+                )
 
     for k in graph:
         for i in graph:
@@ -241,12 +246,13 @@ def all_pairs_shortest_paths_floyd_warshall(
 
     for v in graph:
         if source_and_destination_to_path[v][v].length < 0:
-            raise vertizee.NegativeWeightCycle('found a negative weight cycle')
+            raise vertizee.NegativeWeightCycle("found a negative weight cycle")
 
     return source_and_destination_to_path
 
+
 def all_pairs_shortest_paths_johnson(
-        graph: GraphBase, weight: str = 'Edge__weight', find_path_lengths_only: bool = True
+    graph: GraphBase, weight: str = "Edge__weight", find_path_lengths_only: bool = True
 ) -> VertexDict[VertexDict[ShortestPath]]:
     """Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm.
@@ -317,7 +323,7 @@ def all_pairs_shortest_paths_johnson(
     weight_function = get_weight_function_all_pairs_shortest_paths(weight)
 
     g_prime: GraphBase = graph.deepcopy()
-    G_PRIME_SOURCE = '__g_prime_src'
+    G_PRIME_SOURCE = "__g_prime_src"
     for v in g_prime.vertices:
         g_prime.add_edge(G_PRIME_SOURCE, v, weight=0)
 
@@ -332,18 +338,20 @@ def all_pairs_shortest_paths_johnson(
 
     for i in graph:
         source_and_destination_to_path[i] = VertexDict()
-        dijkstra_paths: VertexDict[ShortestPath] = \
-            shortest_paths_dijkstra(graph, source=i, weight=new_weight,
-                                    find_path_lengths_only=find_path_lengths_only)
+        dijkstra_paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(
+            graph, source=i, weight=new_weight, find_path_lengths_only=find_path_lengths_only
+        )
         for j in graph:
             source_and_destination_to_path[i][j] = dijkstra_paths[j]
-            source_and_destination_to_path[i][j]._length += \
+            source_and_destination_to_path[i][j]._length += (
                 bellman_paths[j].length - bellman_paths[i].length
+            )
 
     return source_and_destination_to_path
 
+
 def all_pairs_shortest_paths_johnson_fibonacci(
-        graph: GraphBase, weight: str = 'Edge__weight', find_path_lengths_only: bool = True
+    graph: GraphBase, weight: str = "Edge__weight", find_path_lengths_only: bool = True
 ) -> VertexDict[VertexDict[ShortestPath]]:
     """Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm implemented with a Fibonacci heap version of Dijkstra's algorithm.
@@ -385,7 +393,7 @@ def all_pairs_shortest_paths_johnson_fibonacci(
     weight_function = get_weight_function_all_pairs_shortest_paths(weight)
 
     g_prime: GraphBase = graph.deepcopy()
-    G_PRIME_SOURCE = '__g_prime_src'
+    G_PRIME_SOURCE = "__g_prime_src"
     for v in g_prime.vertices:
         g_prime.add_edge(G_PRIME_SOURCE, v, weight=0)
 
@@ -401,17 +409,23 @@ def all_pairs_shortest_paths_johnson_fibonacci(
     for i in graph:
         source_and_destination_to_path[i] = VertexDict()
         dijkstra_paths: VertexDict[ShortestPath] = shortest_paths_dijkstra_fibonacci(
-            graph, source=i, weight=new_weight, find_path_lengths_only=find_path_lengths_only)
+            graph, source=i, weight=new_weight, find_path_lengths_only=find_path_lengths_only
+        )
         for j in graph:
             source_and_destination_to_path[i][j] = dijkstra_paths[j]
-            source_and_destination_to_path[i][j]._length += \
+            source_and_destination_to_path[i][j]._length += (
                 bellman_paths[j].length - bellman_paths[i].length
+            )
 
     return source_and_destination_to_path
 
+
 def shortest_paths_bellman_ford(
-        graph: GraphBase, source: VertexKeyType, weight: Union[Callable, str] = 'Edge__weight',
-        reverse_graph: bool = False, find_path_lengths_only: bool = True
+    graph: GraphBase,
+    source: VertexKeyType,
+    weight: Union[Callable, str] = "Edge__weight",
+    reverse_graph: bool = False,
+    find_path_lengths_only: bool = True,
 ) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices of a weighted graph using the Bellman-Ford algorithm.
@@ -490,14 +504,15 @@ def shortest_paths_bellman_ford(
     """
     s: Vertex = graph[source]
     if s is None:
-        raise vertizee.VertexNotFound('source vertex not found in graph')
+        raise vertizee.VertexNotFound("source vertex not found in graph")
     weight_function = get_weight_function(weight)
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
     store_paths = not find_path_lengths_only
 
     for v in graph:
-        vertex_to_path_map[v] = \
-            ShortestPath(s, v, initial_length=INFINITY, store_full_paths=store_paths)
+        vertex_to_path_map[v] = ShortestPath(
+            s, v, initial_length=INFINITY, store_full_paths=store_paths
+        )
     vertex_to_path_map[s].reinitialize(initial_length=0)
 
     for _ in range(graph.vertex_count):
@@ -509,8 +524,9 @@ def shortest_paths_bellman_ford(
                 u_path, w_path = w_path, u_path
             w_path.relax_edge(u_path, weight_function=weight_function, reverse_graph=reverse_graph)
             if not graph.is_directed_graph():
-                u_path.relax_edge(w_path, weight_function=weight_function,
-                                  reverse_graph=reverse_graph)
+                u_path.relax_edge(
+                    w_path, weight_function=weight_function, reverse_graph=reverse_graph
+                )
 
     for e in graph.edges:
         u = e.vertex1
@@ -522,14 +538,17 @@ def shortest_paths_bellman_ford(
             u, w = w, u
         weight_u_w = weight_function(u, w, reverse_graph)
         if w_path.length > u_path.length + weight_u_w:
-            raise vertizee.NegativeWeightCycle('found a negative weight cycle')
+            raise vertizee.NegativeWeightCycle("found a negative weight cycle")
 
     return vertex_to_path_map
 
 
 def shortest_paths_dijkstra(
-        graph: GraphBase, source: VertexKeyType, weight: Union[Callable, str] = 'Edge__weight',
-        reverse_graph: bool = False, find_path_lengths_only: bool = True
+    graph: GraphBase,
+    source: VertexKeyType,
+    weight: Union[Callable, str] = "Edge__weight",
+    reverse_graph: bool = False,
+    find_path_lengths_only: bool = True,
 ) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices of a graph with positive edge weights using Dijkstra's algorithm.
@@ -611,7 +630,7 @@ def shortest_paths_dijkstra(
     """
     s: Vertex = graph[source]
     if s is None:
-        raise vertizee.VertexNotFound('source vertex not found in graph')
+        raise vertizee.VertexNotFound("source vertex not found in graph")
     weight_function = get_weight_function(weight)
     store_paths = not find_path_lengths_only
 
@@ -645,8 +664,11 @@ def shortest_paths_dijkstra(
 
 
 def shortest_paths_dijkstra_fibonacci(
-        graph: GraphBase, source: VertexKeyType, weight: Union[Callable, str] = 'Edge__weight',
-        reverse_graph: bool = False, find_path_lengths_only: bool = True
+    graph: GraphBase,
+    source: VertexKeyType,
+    weight: Union[Callable, str] = "Edge__weight",
+    reverse_graph: bool = False,
+    find_path_lengths_only: bool = True,
 ) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices of a graph with positive edge weights using Dijkstra's algorithm.
@@ -707,7 +729,7 @@ def shortest_paths_dijkstra_fibonacci(
     #
     s: Vertex = graph[source]
     if s is None:
-        raise vertizee.VertexNotFound('source vertex not found in graph')
+        raise vertizee.VertexNotFound("source vertex not found in graph")
     weight_function = get_weight_function(weight)
     store_paths = not find_path_lengths_only
 

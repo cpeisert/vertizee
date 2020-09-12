@@ -26,7 +26,7 @@ from typing import List, Optional, TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from vertizee.classes.vertex import Vertex
 
-EdgeType = Union['DiEdge', 'Edge']
+EdgeType = Union["DiEdge", "Edge"]
 
 DEFAULT_WEIGHT = 1
 
@@ -63,24 +63,42 @@ class Edge:
         with references to the new edge. This process is handled automatically as long as vertices
         and edges are not initialized outside of the `GraphBase` API.
     """
+
     # Limit initialization to protected method `_create`.
     _create_key = object()
 
     @classmethod
-    def _create(cls, v1: Vertex, v2: Vertex,
-                weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
-                parallel_edge_weights: Optional[List[float]] = None):
+    def _create(
+        cls,
+        v1: Vertex,
+        v2: Vertex,
+        weight: Optional[float] = DEFAULT_WEIGHT,
+        parallel_edge_count: Optional[int] = 0,
+        parallel_edge_weights: Optional[List[float]] = None,
+    ):
         """Initializes a new Edge."""
-        return Edge(cls._create_key, v1=v1, v2=v2, weight=weight,
-                    parallel_edge_count=parallel_edge_count,
-                    parallel_edge_weights=parallel_edge_weights)
+        return Edge(
+            cls._create_key,
+            v1=v1,
+            v2=v2,
+            weight=weight,
+            parallel_edge_count=parallel_edge_count,
+            parallel_edge_weights=parallel_edge_weights,
+        )
 
-    def __init__(self, create_key, v1: Vertex, v2: Vertex,
-                 weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
-                 parallel_edge_weights: Optional[List[float]] = None):
+    def __init__(
+        self,
+        create_key,
+        v1: Vertex,
+        v2: Vertex,
+        weight: Optional[float] = DEFAULT_WEIGHT,
+        parallel_edge_count: Optional[int] = 0,
+        parallel_edge_weights: Optional[List[float]] = None,
+    ):
         if create_key != Edge._create_key:
-            raise ValueError(f'{self._runtime_type()} objects must be initialized using '
-                             '`_create`.')
+            raise ValueError(
+                f"{self._runtime_type()} objects must be initialized using " "`_create`."
+            )
 
         # IMPORTANT: vertex1 and vertex2 are used in Edge.__hash__, and must therefore be
         # treated as immutable (read-only). If the vertex keys need to change, first delete the
@@ -99,14 +117,17 @@ class Edge:
         else:
             self._parallel_edge_weights: List[float] = [float(x) for x in parallel_edge_weights]
 
-        self._parent_graph: 'GraphBase' = self.vertex1._parent_graph
+        self._parent_graph: "GraphBase" = self.vertex1._parent_graph
 
         # Don't raise warning, unless edge has non-default weight.
-        if self._weight != DEFAULT_WEIGHT and \
-                self._parallel_edge_count != len(self._parallel_edge_weights):
-            raise RuntimeWarning(f'The parallel edge count ({self._parallel_edge_count})'
-                                 f' is not equal to the number of parallel edge weight entries '
-                                 f'({len(self._parallel_edge_weights)}).')
+        if self._weight != DEFAULT_WEIGHT and self._parallel_edge_count != len(
+            self._parallel_edge_weights
+        ):
+            raise RuntimeWarning(
+                f"The parallel edge count ({self._parallel_edge_count})"
+                f" is not equal to the number of parallel edge weight entries "
+                f"({len(self._parallel_edge_weights)})."
+            )
 
     def __eq__(self, other):
         if not isinstance(other, Edge):
@@ -122,9 +143,12 @@ class Edge:
                 v1, v2 = v2, v1
             if o_v1.key > o_v2.key:
                 o_v1, o_v2 = o_v2, o_v1
-        if v1 != o_v1 or v2 != o_v2 or \
-                self._parallel_edge_count != other._parallel_edge_count or \
-                self._weight != other._weight:
+        if (
+            v1 != o_v1
+            or v2 != o_v2
+            or self._parallel_edge_count != other._parallel_edge_count
+            or self._weight != other._weight
+        ):
             return False
         return True
 
@@ -155,12 +179,12 @@ class Edge:
     def __str__(self):
         directed_graph = self.vertex1._parent_graph.is_directed_graph()
         if directed_graph:
-            return f'({self.vertex1.key}, {self.vertex2.key})'
+            return f"({self.vertex1.key}, {self.vertex2.key})"
         else:  # Undirected edge
             if self.vertex1.key <= self.vertex2.key:
-                return f'({self.vertex1.key}, {self.vertex2.key})'
+                return f"({self.vertex1.key}, {self.vertex2.key})"
             else:
-                return f'({self.vertex2.key}, {self.vertex1.key})'
+                return f"({self.vertex2.key}, {self.vertex1.key})"
 
     def is_loop(self) -> bool:
         """Returns True if this edge is a loop back to itself."""
@@ -245,27 +269,46 @@ class DiEdge(Edge):
         parallel_edge_weights: Optional; List of weights for the parallel edges.
             Defaults to None.
     """
+
     # Limit initialization to protected method `_create`.
     __create_key = object()
 
     # pylint: disable=arguments-differ
     @classmethod
-    def _create(cls, tail: Vertex, head: Vertex,
-                weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
-                parallel_edge_weights: Optional[List[float]] = None) -> 'DiEdge':
+    def _create(
+        cls,
+        tail: Vertex,
+        head: Vertex,
+        weight: Optional[float] = DEFAULT_WEIGHT,
+        parallel_edge_count: Optional[int] = 0,
+        parallel_edge_weights: Optional[List[float]] = None,
+    ) -> "DiEdge":
         """Initializes a new Edge."""
-        return DiEdge(cls.__create_key, tail=tail, head=head, weight=weight,
-                      parallel_edge_count=parallel_edge_count,
-                      parallel_edge_weights=parallel_edge_weights)
+        return DiEdge(
+            cls.__create_key,
+            tail=tail,
+            head=head,
+            weight=weight,
+            parallel_edge_count=parallel_edge_count,
+            parallel_edge_weights=parallel_edge_weights,
+        )
 
-    def __init__(self, create_key, tail: Vertex, head: Vertex,
-                 weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
-                 parallel_edge_weights: Optional[List[float]] = None):
+    def __init__(
+        self,
+        create_key,
+        tail: Vertex,
+        head: Vertex,
+        weight: Optional[float] = DEFAULT_WEIGHT,
+        parallel_edge_count: Optional[int] = 0,
+        parallel_edge_weights: Optional[List[float]] = None,
+    ):
         if create_key != DiEdge.__create_key:
-            raise ValueError(f'{self._runtime_type()} objects must be initialized using '
-                             '`_create`.')
+            raise ValueError(
+                f"{self._runtime_type()} objects must be initialized using " "`_create`."
+            )
         super().__init__(
-            Edge._create_key, tail, head, weight, parallel_edge_count, parallel_edge_weights)
+            Edge._create_key, tail, head, weight, parallel_edge_count, parallel_edge_weights
+        )
 
     @property
     def head(self) -> Vertex:

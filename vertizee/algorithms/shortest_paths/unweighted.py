@@ -22,11 +22,11 @@ from vertizee.classes.shortest_path import ShortestPath
 from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex, VertexKeyType
 
-INFINITY = float('inf')
+INFINITY = float("inf")
 
 
 def breadth_first_search_shortest_paths(
-        graph: GraphBase, source: VertexKeyType, find_path_lengths_only: bool = True
+    graph: GraphBase, source: VertexKeyType, find_path_lengths_only: bool = True
 ) -> VertexDict[ShortestPath]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices.
@@ -68,7 +68,7 @@ def breadth_first_search_shortest_paths(
     """
     s: Vertex = graph[source]
     if s is None:
-        raise ValueError('source vertex was not found in the graph')
+        raise ValueError("source vertex was not found in the graph")
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
     store_paths = not find_path_lengths_only
 

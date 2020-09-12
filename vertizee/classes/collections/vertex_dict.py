@@ -20,7 +20,7 @@ from typing import Dict, TypeVar
 
 from vertizee.classes.vertex import Vertex, VertexKeyType
 
-VT = TypeVar('VT')
+VT = TypeVar("VT")
 
 
 class VertexDict(dict, Dict[VertexKeyType, VT]):
@@ -48,6 +48,7 @@ class VertexDict(dict, Dict[VertexKeyType, VT]):
         >>> print(d[3])
         'three'
     """
+
     def __init__(self, iterable_or_mapping=None, **kwargs):
         if iterable_or_mapping is None:
             super().__init__(kwargs)
@@ -69,7 +70,7 @@ class VertexDict(dict, Dict[VertexKeyType, VT]):
 
     def __repr__(self):
         dictrepr = super().__repr__()
-        return f'{type(self).__name__}({dictrepr})'
+        return f"{type(self).__name__}({dictrepr})"
 
     def update(self, iterable_or_mapping):
         parsed_arg = parse_iterable_or_mapping_arg(iterable_or_mapping)
@@ -85,8 +86,10 @@ def parse_iterable_or_mapping_arg(iterable_or_mapping) -> dict:
     elif isinstance(iterable_or_mapping, Iterable):
         for i in iterable_or_mapping:
             if len(i) != 2:
-                raise ValueError('Each item in the iterable must itself be an iterable '
-                                 f'with exactly two objects. Found {len(i)} objects.')
+                raise ValueError(
+                    "Each item in the iterable must itself be an iterable "
+                    f"with exactly two objects. Found {len(i)} objects."
+                )
             key = None
             for obj in i:
                 if key is None:

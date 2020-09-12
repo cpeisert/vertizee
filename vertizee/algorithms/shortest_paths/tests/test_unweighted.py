@@ -18,29 +18,34 @@ import pytest
 
 from vertizee.classes.collections.vertex_dict import VertexDict
 from vertizee.classes.graph import Graph
-from vertizee.algorithms.shortest_paths.unweighted \
-    import breadth_first_search_shortest_paths, ShortestPath
+from vertizee.algorithms.shortest_paths.unweighted import (
+    breadth_first_search_shortest_paths,
+    ShortestPath,
+)
 
 pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip.")
+    False, reason="Set first param to False to run tests, or True to skip."
+)
+
+INFINITY = float("inf")
 
 
 @pytest.mark.usefixtures()
 class TestUnweighted:
-
     def test_shortest_paths(self):
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         paths: VertexDict[ShortestPath] = breadth_first_search_shortest_paths(g, 0)
 
-        assert len(paths) == 8, 'Shortest paths dictionary should have length equal to number ' \
-            'of vertices.'
-        assert not paths[6].is_destination_reachable(), \
-            'Vertex 6 should be unreachable from vertex 0.'
-        assert paths[6].length == float('inf'), \
-            'Unreachable vertex should have path length infinity.'
-        assert paths[4].length == 3, 'Length of shortest path from 0 -> 4 should be 3'
-        assert paths[3].length == 2, 'Length of shortest path from 0 -> 3 should be 2'
+        assert len(paths) == 8, (
+            "Shortest paths dictionary should have length equal to number of vertices."
+        )
+        assert not paths[
+            6
+        ].is_destination_reachable(), "Vertex 6 should be unreachable from vertex 0."
+        assert paths[6].length == INFINITY, "Unreachable vertex should have path length infinity."
+        assert paths[4].length == 3, "Length of shortest path from 0 -> 4 should be 3"
+        assert paths[3].length == 2, "Length of shortest path from 0 -> 3 should be 2"
 
         # with open('DEBUG.txt', mode='w') as f:
         #     f.write(f'{paths[4].path}')

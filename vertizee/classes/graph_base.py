@@ -36,6 +36,7 @@ from vertizee.classes.edge import DEFAULT_WEIGHT
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
     from vertizee.classes.edge import EdgeType
+    from vertizee.classes.graph_primitives import ParsedPrimitives
     from vertizee.classes.vertex import Vertex, VertexKeyType
 
 
@@ -54,21 +55,31 @@ class GraphBase:
             be simple graph (i.e. no parallel edges and no self loops). Attempting to add a
             parallel edge or a self loop raises an error. Defaults to False.
     """
+
     _create_key = object()
 
     @classmethod
-    def _create(cls, is_directed_graph: bool, is_multigraph: bool,
-                is_simple_graph: bool = False) -> 'GraphBase':
+    def _create(
+        cls, is_directed_graph: bool, is_multigraph: bool, is_simple_graph: bool = False
+    ) -> "GraphBase":
         """Initializes a new graph. Subclasses should enable initialization using the standard
         `__init__` method."""
         return GraphBase(
-            cls._create_key, is_directed_graph=is_directed_graph,
-            is_multigraph=is_multigraph, is_simple_graph=is_simple_graph)
+            cls._create_key,
+            is_directed_graph=is_directed_graph,
+            is_multigraph=is_multigraph,
+            is_simple_graph=is_simple_graph,
+        )
 
-    def __init__(self, create_key, is_directed_graph: bool, is_multigraph: bool,
-                 is_simple_graph: bool = False):
+    def __init__(
+        self,
+        create_key,
+        is_directed_graph: bool,
+        is_multigraph: bool,
+        is_simple_graph: bool = False,
+    ):
         if create_key != GraphBase._create_key:
-            raise ValueError('Graph objects must be initialized using `_create`.')
+            raise ValueError("Graph objects must be initialized using `_create`.")
 
         self._edges: Set[EdgeType] = set()
         self._edges_with_freq_weight: Dict[EdgeType, int] = {}
@@ -89,11 +100,12 @@ class GraphBase:
     def __contains__(self, vertex: VertexKeyType) -> bool:
         parsed_primitives = graph_primitives.parse_graph_primitives(vertex)
         if len(parsed_primitives.vertex_keys) == 0:
-            raise ValueError('Must specify a vertex when checking for Graph membership with `in`'
-                             'operator.')
+            raise ValueError(
+                "Must specify a vertex when checking for Graph membership with `in`" "operator."
+            )
         return parsed_primitives.vertex_keys[0] in self._vertices
 
-    def __getitem__(self, vertex_key: VertexKeyType) -> Vertex:
+    def __getitem__(self, vertex_key: VertexKeyType) -> Optional[Vertex]:
         """Support index accessor notation to retrieve vertices.
 
         Example::
@@ -116,9 +128,14 @@ class GraphBase:
         """Returns the number of vertices in the graph when the `len` function is applied."""
         return len(self._vertices)
 
-    def add_edge(self, v1: VertexKeyType, v2: VertexKeyType,
-                 weight: Optional[float] = DEFAULT_WEIGHT, parallel_edge_count: Optional[int] = 0,
-                 parallel_edge_weights: Optional[List[float]] = None) -> EdgeType:
+    def add_edge(
+        self,
+        v1: VertexKeyType,
+        v2: VertexKeyType,
+        weight: Optional[float] = DEFAULT_WEIGHT,
+        parallel_edge_count: Optional[int] = 0,
+        parallel_edge_weights: Optional[List[float]] = None,
+    ) -> EdgeType:
         """Adds a new edge to the graph.
 
         If there is already an edge with matching vertices, then the internal Edge object is
@@ -153,28 +170,39 @@ class GraphBase:
         existing_v1v2 = self.get_edge(vertex1, vertex2)
 
         if parallel_edge_count > 0 or existing_v1v2 is not None:
-            error_msg = 'parallel edge'
+            error_msg = "parallel edge"
         elif vertex1.key == vertex2.key:
-            error_msg = 'edge with a loop'
+            error_msg = "edge with a loop"
 
         if error_msg is not None:
             if self._is_simple_graph:
-                raise ValueError(f'Attempted to add {error_msg}. This graph was initialized as '
-                                 'a simple graph (i.e. no loops and no parallel edges).')
-            if error_msg == 'parallel edge' and not self._is_multigraph:
                 raise ValueError(
-                    f'Attempted to add {error_msg}. This graph is not a multigraph and therefore '
-                    'does not support parallel edges.')
+                    f"Attempted to add {error_msg}. This graph was initialized as "
+                    "a simple graph (i.e. no loops and no parallel edges)."
+                )
+            if error_msg == "parallel edge" and not self._is_multigraph:
+                raise ValueError(
+                    f"Attempted to add {error_msg}. This graph is not a multigraph and therefore "
+                    "does not support parallel edges."
+                )
             self._graph_state_is_simple_graph = False
 
         if self._is_directed_graph:
             new_edge = DiEdge._create(
-                vertex1, vertex2, weight=weight, parallel_edge_count=parallel_edge_count,
-                parallel_edge_weights=parallel_edge_weights)
+                vertex1,
+                vertex2,
+                weight=weight,
+                parallel_edge_count=parallel_edge_count,
+                parallel_edge_weights=parallel_edge_weights,
+            )
         else:
             new_edge = Edge._create(
-                vertex1, vertex2, weight=weight, parallel_edge_count=parallel_edge_count,
-                parallel_edge_weights=parallel_edge_weights)
+                vertex1,
+                vertex2,
+                weight=weight,
+                parallel_edge_count=parallel_edge_count,
+                parallel_edge_weights=parallel_edge_weights,
+            )
         if existing_v1v2 is not None:
             _merge_parallel_edges(existing_v1v2, new_edge=new_edge)
             self._edges_with_freq_weight[existing_v1v2] = 1 + existing_v1v2.parallel_edge_count
@@ -209,8 +237,10 @@ class GraphBase:
             elif len(edge_tuple) == 3:
                 self.add_edge(edge_tuple[0], edge_tuple[1], weight=edge_tuple[2])
             else:
-                raise ValueError(f'Expected `edge_tuple` to have either 2 or 3 elements. Actual '
-                                 f' length {len(edge_tuple)}.')
+                raise ValueError(
+                    f"Expected `edge_tuple` to have either 2 or 3 elements. Actual "
+                    f" length {len(edge_tuple)}."
+                )
 
         return len(edge_tuples)
 
@@ -235,7 +265,7 @@ class GraphBase:
 
         parsed_primitives = graph_primitives.parse_graph_primitives(vertex_key)
         if len(parsed_primitives.vertex_keys) == 0:
-            raise ValueError('Must specify a valid vertex key.')
+            raise ValueError("Must specify a valid vertex key.")
         new_key = parsed_primitives.vertex_keys[0]
 
         if new_key not in self._vertices:
@@ -331,7 +361,8 @@ class GraphBase:
         return vertex.get_edge(edge_tuple[0], edge_tuple[1])
 
     def get_all_graph_edges_from_parsed_primitives(
-            self, parsed_primitives: 'ParsedPrimitives') -> Set[EdgeType]:
+        self, parsed_primitives: "ParsedPrimitives"
+    ) -> List[EdgeType]:
         """Gets edges from the graph matching vertex keys in `parsed_primitives`.
 
         Args:
@@ -357,8 +388,7 @@ class GraphBase:
             else:
                 vertex_prev = vertex_current
 
-        graph_edges = [x for x in graph_edges if x is not None]
-        return graph_edges
+        return [x for x in graph_edges if x is not None]
 
     def get_random_edge(self) -> Optional[EdgeType]:
         """Returns a randomly selected edge from the graph, or None if there are no edges.
@@ -373,7 +403,7 @@ class GraphBase:
             sample = random.choices(
                 population=list(self._edges_with_freq_weight.keys()),
                 weights=list(self._edges_with_freq_weight.values()),
-                k=1
+                k=1,
             )
             return sample[0]
         else:
@@ -431,11 +461,15 @@ class GraphBase:
         """
         parsed_primitives = graph_primitives.parse_graph_primitives(v1, v2)
         if len(parsed_primitives.vertex_keys) < 2 or parsed_primitives.vertex_keys[1] is None:
-            raise ValueError('Must specify two vertices to complete vertex merge operation.')
-        if parsed_primitives.vertex_keys[0] not in self._vertices \
-                or parsed_primitives.vertex_keys[1] not in self._vertices:
-            raise ValueError('Both vertices must be existing members of the graph to complete '
-                             'a merge operation.')
+            raise ValueError("Must specify two vertices to complete vertex merge operation.")
+        if (
+            parsed_primitives.vertex_keys[0] not in self._vertices
+            or parsed_primitives.vertex_keys[1] not in self._vertices
+        ):
+            raise ValueError(
+                "Both vertices must be existing members of the graph to complete "
+                "a merge operation."
+            )
 
         vertex1 = self._vertices[parsed_primitives.vertex_keys[0]]
         vertex2 = self._vertices[parsed_primitives.vertex_keys[1]]
@@ -454,14 +488,20 @@ class GraphBase:
             else:
                 if edge.vertex1 == vertex2:
                     self.add_edge(
-                        vertex1, edge.vertex2, weight=edge.weight,
+                        vertex1,
+                        edge.vertex2,
+                        weight=edge.weight,
                         parallel_edge_count=edge.parallel_edge_count,
-                        parallel_edge_weights=edge.parallel_edge_weights)
+                        parallel_edge_weights=edge.parallel_edge_weights,
+                    )
                 else:
                     self.add_edge(
-                        edge.vertex1, vertex1, weight=edge.weight,
+                        edge.vertex1,
+                        vertex1,
+                        weight=edge.weight,
                         parallel_edge_count=edge.parallel_edge_count,
-                        parallel_edge_weights=edge.parallel_edge_weights)
+                        parallel_edge_weights=edge.parallel_edge_weights,
+                    )
 
         # Incident loops on vertex2 become loops on vertex1.
         if len(vertex2.loops) > 0:
@@ -469,9 +509,12 @@ class GraphBase:
             edges_to_delete.append(v2_loop_edge)
             if len(vertex1.loops) == 0:
                 self.add_edge(
-                    vertex1, vertex1, weight=v2_loop_edge.weight,
+                    vertex1,
+                    vertex1,
+                    weight=v2_loop_edge.weight,
                     parallel_edge_count=v2_loop_edge.parallel_edge_count,
-                    parallel_edge_weights=v2_loop_edge.parallel_edge_weights)
+                    parallel_edge_weights=v2_loop_edge.parallel_edge_weights,
+                )
             else:
                 v1_loop_edge, *_ = vertex1.loops
                 _merge_parallel_edges(v1_loop_edge, v2_loop_edge)
@@ -554,15 +597,16 @@ class GraphBase:
         """
         parsed_primitives = graph_primitives.parse_graph_primitives(vertex_key)
         if len(parsed_primitives.vertex_keys) == 0:
-            raise ValueError('Must specify a valid vertex key or Vertex.')
+            raise ValueError("Must specify a valid vertex key or Vertex.")
 
         lookup_key = parsed_primitives.vertex_keys[0]
         if lookup_key in self._vertices:
             graph_vertex = self._vertices[lookup_key]
             if len(graph_vertex.edges) > 0:
                 raise ValueError(
-                    f'Vertex {{{lookup_key}}} has incident edges. All incident edges (excluding '
-                    'loops) must be deleted prior to deleting a vertex.')
+                    f"Vertex {{{lookup_key}}} has incident edges. All incident edges (excluding "
+                    "loops) must be deleted prior to deleting a vertex."
+                )
             self._vertices.pop(lookup_key)
 
     @property
@@ -574,7 +618,7 @@ class GraphBase:
         """The set of graph vertices."""
         return set(self._vertices.values())
 
-    def _deepcopy_into(self, graph_copy: 'GraphBase'):
+    def _deepcopy_into(self, graph_copy: "GraphBase"):
         """Initializes a `GraphBase` instance `graph_copy` with a deep copy of this graph's
         properties.
 
@@ -588,9 +632,12 @@ class GraphBase:
             graph_copy.add_vertex(vertex_key)
         for edge in self._edges:
             graph_copy.add_edge(
-                edge.vertex1, edge.vertex2, weight=edge.weight,
+                edge.vertex1,
+                edge.vertex2,
+                weight=edge.weight,
                 parallel_edge_count=edge.parallel_edge_count,
-                parallel_edge_weights=edge.parallel_edge_weights)
+                parallel_edge_weights=edge.parallel_edge_weights,
+            )
 
     def _get_or_add_vertex(self, vertex_key: VertexKeyType) -> Vertex:
         """Helper method to get a vertex, or if not found, add a new vertex.
@@ -604,7 +651,7 @@ class GraphBase:
         """
         parsed_primitives = graph_primitives.parse_graph_primitives(vertex_key)
         if len(parsed_primitives.vertex_keys) == 0:
-            raise ValueError('Must specify a valid vertex key or Vertex.')
+            raise ValueError("Must specify a valid vertex key or Vertex.")
         key = parsed_primitives.vertex_keys[0]
         if key in self._vertices:
             return self._vertices[key]
@@ -615,14 +662,14 @@ class GraphBase:
         """Returns the vertex specified by the given `vertex_key`, or None if not found."""
         parsed_primitives = graph_primitives.parse_graph_primitives(vertex_key)
         if len(parsed_primitives.vertex_keys) == 0:
-            raise ValueError('Must specify a valid vertex key or Vertex.')
+            raise ValueError("Must specify a valid vertex key or Vertex.")
         lookup_key = parsed_primitives.vertex_keys[0]
         if lookup_key in self._vertices:
             return self._vertices[lookup_key]
         else:
             return None
 
-    def _reverse_graph_into(self, reverse_graph: 'GraphBase'):
+    def _reverse_graph_into(self, reverse_graph: "GraphBase"):
         """Initializes `reverse_graph` with the reverse of this graph (i.e. all directed edges
         pointing in the opposite direction).
 
@@ -634,16 +681,19 @@ class GraphBase:
                 graph.
         """
         if not self._is_directed_graph or not reverse_graph._is_directed_graph:
-            raise ValueError('Reverse graphs may only be created for directed graphs.')
+            raise ValueError("Reverse graphs may only be created for directed graphs.")
         reverse_graph.clear()
 
         for vertex_key in self._vertices:
             reverse_graph.add_vertex(vertex_key)
         for edge in self.edges:
             reverse_graph.add_edge(
-                edge.vertex2, edge.vertex1, weight=edge.weight,
+                edge.vertex2,
+                edge.vertex1,
+                weight=edge.weight,
                 parallel_edge_count=edge.parallel_edge_count,
-                parallel_edge_weights=edge.parallel_edge_weights)
+                parallel_edge_weights=edge.parallel_edge_weights,
+            )
 
 
 def _merge_parallel_edges(existing: EdgeType, new_edge: EdgeType):

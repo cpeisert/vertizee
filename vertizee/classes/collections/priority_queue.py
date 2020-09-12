@@ -20,8 +20,8 @@ import heapq
 import itertools
 from typing import Callable, Dict, Generic, List, TypeVar, Union
 
-ITEM_REMOVED = '<item-removed>'
-T = TypeVar('T')
+ITEM_REMOVED = "<item-removed>"
+T = TypeVar("T")
 
 
 class _PriorityQueueItem(Generic[T]):
@@ -30,51 +30,51 @@ class _PriorityQueueItem(Generic[T]):
         self.insertion_count = insertion_count
         self.item: T = item
 
-    def __compare(self, other: '_PriorityQueueItem', operator: str) -> bool:
+    def __compare(self, other: "_PriorityQueueItem", operator: str) -> bool:
         if not isinstance(other, _PriorityQueueItem):
             return False
-        if operator == '==':
+        if operator == "==":
             if self.priority == other.priority and self.insertion_count == other.insertion_count:
                 return True
-        elif operator == '<':
+        elif operator == "<":
             if self.priority < other.priority:
                 return True
             elif self.priority == other.priority and self.insertion_count < other.insertion_count:
                 return True
-        elif operator == '<=':
+        elif operator == "<=":
             if self.priority <= other.priority:
                 return True
             elif self.priority == other.priority and self.insertion_count <= other.insertion_count:
                 return True
-        elif operator == '>':
+        elif operator == ">":
             if self.priority > other.priority:
                 return True
             elif self.priority == other.priority and self.insertion_count > other.insertion_count:
                 return True
-        elif operator == '>=':
+        elif operator == ">=":
             if self.priority >= other.priority:
                 return True
             elif self.priority == other.priority and self.insertion_count >= other.insertion_count:
                 return True
         return False
 
-    def __eq__(self, other: '_PriorityQueueItem'):
-        return self.__compare(other, '==')
+    def __eq__(self, other: "_PriorityQueueItem"):
+        return self.__compare(other, "==")
 
-    def __ge__(self, other: '_PriorityQueueItem'):
-        return self.__compare(other, '>=')
+    def __ge__(self, other: "_PriorityQueueItem"):
+        return self.__compare(other, ">=")
 
-    def __gt__(self, other: '_PriorityQueueItem'):
-        return self.__compare(other, '>')
+    def __gt__(self, other: "_PriorityQueueItem"):
+        return self.__compare(other, ">")
 
     def __hash__(self):
         return hash((self.priority, self.insertion_count))
 
-    def __le__(self, other: '_PriorityQueueItem'):
-        return self.__compare(other, '<=')
+    def __le__(self, other: "_PriorityQueueItem"):
+        return self.__compare(other, "<=")
 
-    def __lt__(self, other: '_PriorityQueueItem'):
-        return self.__compare(other, '<')
+    def __lt__(self, other: "_PriorityQueueItem"):
+        return self.__compare(other, "<")
 
 
 class PriorityQueue(Generic[T]):
@@ -116,13 +116,15 @@ class PriorityQueue(Generic[T]):
         >>> pq.pop()
         1
     """
-    def __init__(self, priority_function: Callable[[T], Union[float, int]],
-                 minimum: bool = True):
+
+    def __init__(self, priority_function: Callable[[T], Union[float, int]], minimum: bool = True):
         if minimum:
             self._priority_function: Callable[[T], Union[float, int]] = priority_function
         else:
+
             def max_priority_func(item: T):
                 return priority_function(item) * -1
+
             self._priority_function: Callable[[T], Union[float, int]] = max_priority_func
         self._priority_queue: List[_PriorityQueueItem[T]] = []
 
@@ -149,7 +151,8 @@ class PriorityQueue(Generic[T]):
         insertion_count = next(self._insertion_counter)
         priority = self._priority_function(item)
         queue_item = _PriorityQueueItem(
-            priority=priority, insertion_count=insertion_count, item=item)
+            priority=priority, insertion_count=insertion_count, item=item
+        )
         self._heap_item_finder[item] = queue_item
         heapq.heappush(self._priority_queue, queue_item)
 
@@ -161,7 +164,7 @@ class PriorityQueue(Generic[T]):
                 self._length = self._length - 1
                 self._heap_item_finder.pop(item.item)
                 return item.item
-        raise KeyError('pop from an empty priority queue')
+        raise KeyError("pop from an empty priority queue")
 
     def _mark_item_removed(self, item: T):
         """Mark an existing item as removed."""

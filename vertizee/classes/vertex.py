@@ -30,10 +30,11 @@ from vertizee.classes import graph_primitives
 if TYPE_CHECKING:
     from vertizee.classes.edge import EdgeType
     from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.graph_primitives import GraphPrimitive
 
 
 # Type alias
-VertexKeyType = Union[int, str, 'Vertex']
+VertexKeyType = Union[int, str, "Vertex"]
 
 
 def get_vertex_key(other: VertexKeyType) -> str:
@@ -69,19 +70,18 @@ class Vertex:
         key_label (Union[int, str]): The key label for this vertex. Must be unique to the graph.
         parent_graph (GraphBase): The parent graph to which this vertex belongs.
     """
+
     # Limit initialization to protected method `_create`.
     __create_key = object()
 
     @classmethod
-    def _create(cls, key_label: Union[int, str],
-                parent_graph: GraphBase) -> 'Vertex':
+    def _create(cls, key_label: Union[int, str], parent_graph: GraphBase) -> "Vertex":
         """Initializes a new Vertex object."""
         return Vertex(cls.__create_key, key_label, parent_graph)
 
-    def __init__(self, create_key, key_label: Union[int, str],
-                 parent_graph: GraphBase) -> 'Vertex':
+    def __init__(self, create_key, key_label: Union[int, str], parent_graph: GraphBase):
         if create_key != Vertex.__create_key:
-            raise ValueError('must initialize using `_create`; do not use `__init__`')
+            raise ValueError("must initialize using `_create`; do not use `__init__`")
         self._key = str(key_label)
 
         self.attr: dict = {}
@@ -95,25 +95,25 @@ class Vertex:
             return False
         other_key = get_vertex_key(other)
         compare = False
-        if operator == '==':
+        if operator == "==":
             if self.key == other_key:
                 compare = True
-        elif operator == '<':
+        elif operator == "<":
             if self.key < other_key:
                 compare = True
-        elif operator == '<=':
+        elif operator == "<=":
             if self.key <= other_key:
                 compare = True
-        elif operator == '>':
+        elif operator == ">":
             if self.key > other_key:
                 compare = True
-        elif operator == '>=':
+        elif operator == ">=":
             if self.key >= other_key:
                 compare = True
         return compare
 
     def __eq__(self, other: VertexKeyType):
-        return self.__compare(other, '==')
+        return self.__compare(other, "==")
 
     def __getitem__(self, vertex_key: VertexKeyType) -> EdgeType:
         """Support index accessor notation to retrieve edges.
@@ -132,10 +132,10 @@ class Vertex:
         return self._parent_graph.get_edge(self.key, vertex_key)
 
     def __ge__(self, other: VertexKeyType):
-        return self.__compare(other, '>=')
+        return self.__compare(other, ">=")
 
     def __gt__(self, other: VertexKeyType):
-        return self.__compare(other, '>')
+        return self.__compare(other, ">")
 
     def __hash__(self):
         return hash(self.key)
@@ -144,28 +144,28 @@ class Vertex:
         return self._edges.__iter__()
 
     def __le__(self, other: VertexKeyType):
-        return self.__compare(other, '<=')
+        return self.__compare(other, "<=")
 
     def __lt__(self, other: VertexKeyType):
-        return self.__compare(other, '<')
+        return self.__compare(other, "<")
 
     def __repr__(self):
-        return f'{self.key}'
+        return f"{self.key}"
 
     def __str__(self):
-        return f'{self.key}'
+        return f"{self.key}"
         # return f'{self._runtime_type()} {{{self.key}}} with {self._edges}'
 
     @property
-    def adjacent_vertices(self) -> Set['Vertex']:
+    def adjacent_vertices(self) -> Set["Vertex"]:
         return self._edges._adj_vertices.copy()
 
     @property
-    def adjacent_vertices_incoming(self) -> Set['Vertex']:
+    def adjacent_vertices_incoming(self) -> Set["Vertex"]:
         return self._edges._adj_vertices_incoming.copy()
 
     @property
-    def adjacent_vertices_outgoing(self) -> Set['Vertex']:
+    def adjacent_vertices_outgoing(self) -> Set["Vertex"]:
         return self._edges._adj_vertices_outgoing.copy()
 
     @property
@@ -195,8 +195,9 @@ class Vertex:
             self._edges.remove_edge_from(loop)
         return deletion_count
 
-    def get_adj_for_search(self, parent: Optional['Vertex'] = None,
-                           reverse_graph: Optional[bool] = False) -> Set['Vertex']:
+    def get_adj_for_search(
+        self, parent: Optional["Vertex"] = None, reverse_graph: Optional[bool] = False
+    ) -> Set["Vertex"]:
         """Method designed for search algorithms to retrieve the correct list of adjacent vertices
         based on the graph type.
 
@@ -227,7 +228,7 @@ class Vertex:
                 adj_vertices = adj_vertices - {parent}
             return adj_vertices
 
-    def get_edge(self, *args: graph_primitives.GraphPrimitive) -> Optional[EdgeType]:
+    def get_edge(self, *args: GraphPrimitive) -> Optional[EdgeType]:
         """Retrieves edge incident to this vertex by specifying a second vertex in args.
 
         Args:
@@ -272,7 +273,7 @@ class Vertex:
         """
         return self._edges.outgoing
 
-    def is_incident_edge(self, *args: graph_primitives.GraphPrimitive) -> bool:
+    def is_incident_edge(self, *args: GraphPrimitive) -> bool:
         return self._edges.get_edge(*args) is not None
 
     @property
@@ -313,8 +314,10 @@ class Vertex:
             ValueError: If the new edge does not include this vertex.
         """
         if edge.vertex1.key != self.key and edge.vertex2.key != self.key:
-            raise ValueError(f'Edge ({{{edge.vertex1.key}, {edge.vertex2.key}}}) did not '
-                             f'have a vertex matching this vertex {{{self.key}}}')
+            raise ValueError(
+                f"Edge ({{{edge.vertex1.key}, {edge.vertex2.key}}}) did not "
+                f"have a vertex matching this vertex {{{self.key}}}"
+            )
         self._edges.add_edge(edge)
 
     def _remove_edge(self, edge: EdgeType) -> int:
@@ -324,8 +327,10 @@ class Vertex:
             int: Number of edges removed (more than one for parallel edges).
         """
         if edge.vertex1.key != self.key and edge.vertex2.key != self.key:
-            raise ValueError(f'Edge ({{{edge.vertex1.key}, {edge.vertex2.key}}}) did not '
-                             f'have a vertex matching this vertex {{{self.key}}}')
+            raise ValueError(
+                f"Edge ({{{edge.vertex1.key}, {edge.vertex2.key}}}) did not "
+                f"have a vertex matching this vertex {{{self.key}}}"
+            )
         self._edges.remove_edge_from(edge)
         return 1 + edge.parallel_edge_count
 
@@ -345,17 +350,18 @@ class IncidentEdges:
         shared_vertex_key (str): The vertex key of the vertex shared by the incident edges.
         parent_graph (GraphBase): The graph to which the incident edges belong.
     """
+
     def __init__(self, shared_vertex_key: str, parent_graph: GraphBase):
         self._parent_graph = parent_graph
 
-        self._adj_vertices: Set['Vertex'] = set()
+        self._adj_vertices: Set["Vertex"] = set()
         """The set of all nodes adjacent to the shared vertex."""
 
-        self._adj_vertices_incoming: Set['Vertex'] = set()
+        self._adj_vertices_incoming: Set["Vertex"] = set()
         """Directed graphs only: the set of all nodes adjacent to the shared vertex from incoming
         edges."""
 
-        self._adj_vertices_outgoing: Set['Vertex'] = set()
+        self._adj_vertices_outgoing: Set["Vertex"] = set()
         """Directed graphs only: the set of all nodes adjacent to the shared vertex from outgoing
         edges."""
 
@@ -384,8 +390,9 @@ class IncidentEdges:
     def __eq__(self, other):
         if not isinstance(other, IncidentEdges):
             return False
-        if self._shared_vertex_key != other._shared_vertex_key \
-                or len(self._edges) != len(other._edges):
+        if self._shared_vertex_key != other._shared_vertex_key or len(self._edges) != len(
+            other._edges
+        ):
             return False
         if self._edges != other._edges:
             return False
@@ -395,8 +402,8 @@ class IncidentEdges:
         return iter(self._edges.values())
 
     def __str__(self):
-        str_edges = ', '.join(self._edges.keys())
-        return f'IncidentEdges: {{{str_edges}}}'
+        str_edges = ", ".join(self._edges.keys())
+        return f"IncidentEdges: {{{str_edges}}}"
 
     def add_edge(self, edge: EdgeType):
         """Adds an edge incident to the vertex specified by `_shared_vertex_key`.
@@ -406,14 +413,18 @@ class IncidentEdges:
         Args:
             edge (EdgeType): The edge to add.
         """
-        if edge.vertex1.key != self._shared_vertex_key and \
-                edge.vertex2.key != self._shared_vertex_key:
+        if (
+            edge.vertex1.key != self._shared_vertex_key
+            and edge.vertex2.key != self._shared_vertex_key
+        ):
             raise ValueError(
-                f'Cannot add edge ({edge.vertex1.key}, {edge.vertex2.key}) since it does not'
-                f' share vertex {{{self._shared_vertex_key}}}.')
+                f"Cannot add edge ({edge.vertex1.key}, {edge.vertex2.key}) since it does not"
+                f" share vertex {{{self._shared_vertex_key}}}."
+            )
 
         edge_key = _create_edge_key(
-            edge.vertex1.key, edge.vertex2.key, self._parent_graph._is_directed_graph)
+            edge.vertex1.key, edge.vertex2.key, self._parent_graph._is_directed_graph
+        )
         if edge.vertex1 == edge.vertex2:
             self._loops = edge
             self._edges[edge_key] = edge
@@ -439,22 +450,22 @@ class IncidentEdges:
                 self._adj_vertices_incoming.add(adj_vertex)
 
     @property
-    def adjacent_vertices(self) -> Set['Vertex']:
+    def adjacent_vertices(self) -> Set["Vertex"]:
         return self._adj_vertices.copy()
 
     @property
-    def adjacent_vertices_incoming(self) -> Set['Vertex']:
+    def adjacent_vertices_incoming(self) -> Set["Vertex"]:
         return self._adj_vertices_incoming.copy()
 
     @property
-    def adjacent_vertices_outgoing(self) -> Set['Vertex']:
+    def adjacent_vertices_outgoing(self) -> Set["Vertex"]:
         return self._adj_vertices_outgoing.copy()
 
     @property
     def edges(self) -> Set[EdgeType]:
         return set(self._edges.values())
 
-    def get_edge(self, *args: graph_primitives.GraphPrimitive) -> Optional[EdgeType]:
+    def get_edge(self, *args: GraphPrimitive) -> Optional[EdgeType]:
         """Gets the incident edge specified by `args`, or None if no such edge exists.
 
         Args:
@@ -469,7 +480,8 @@ class IncidentEdges:
             return None
 
         edge_key = _create_edge_key(
-            edge_tuple[0], edge_tuple[1], self._parent_graph._is_directed_graph)
+            edge_tuple[0], edge_tuple[1], self._parent_graph._is_directed_graph
+        )
         if edge_key in self._edges:
             return self._edges[edge_key]
         else:
@@ -480,7 +492,7 @@ class IncidentEdges:
         return self._incoming.copy()
 
     @property
-    def incoming_edge_vertices(self) -> Set['Vertex']:
+    def incoming_edge_vertices(self) -> Set["Vertex"]:
         vertices = set()
         for edge in self._incoming:
             vertices.add(edge.vertex1)
@@ -499,8 +511,9 @@ class IncidentEdges:
 
     def remove_edge_from(self, edge: EdgeType):
         """Remove an edge."""
-        edge_key = _create_edge_key(edge.vertex1.key, edge.vertex2.key,
-                                    is_directed=self._parent_graph._is_directed_graph)
+        edge_key = _create_edge_key(
+            edge.vertex1.key, edge.vertex2.key, is_directed=self._parent_graph._is_directed_graph
+        )
         if edge_key in self._edges:
             self._edges.pop(edge_key)
 
@@ -529,9 +542,9 @@ def _create_edge_key(v1_key: str, v2_key: str, is_directed: bool) -> str:
         str: The edge key.
     """
     if is_directed:
-        return f'({v1_key}, {v2_key})'
+        return f"({v1_key}, {v2_key})"
     else:  # Undirected edge
         if v1_key <= v2_key:
-            return f'({v1_key}, {v2_key})'
+            return f"({v1_key}, {v2_key})"
         else:
-            return f'({v2_key}, {v1_key})'
+            return f"({v2_key}, {v1_key})"

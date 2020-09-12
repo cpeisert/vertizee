@@ -36,6 +36,7 @@ max-line-length=100
 # --disable=W"
 disable=invalid-name,
         anomalous-backslash-in-string,
+        bad-continuation,
         missing-docstring,
         no-else-return,
         no-self-use,

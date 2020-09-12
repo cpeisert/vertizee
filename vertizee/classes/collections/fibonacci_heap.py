@@ -15,11 +15,13 @@
 """Fibonacci heap data structure that serves the lowest priority item as defined by a priority
 function."""
 
+# pytype: disable=not-supported-yet
+
 import math
 from typing import Callable, Dict, Generic, Optional, Set, TypeVar, Union
 
-NEG_INFINITY = float('-inf')
-T = TypeVar('T')
+NEG_INFINITY = float("-inf")
+T = TypeVar("T")
 
 
 class _FibonacciNode(Generic[T]):
@@ -95,6 +97,7 @@ class FibonacciHeap(Generic[T]):
             uses in improved network optimization algorithms." Journal of the Association of
             Computing Machinery, pages 596-615.
     """
+
     def __init__(self, priority_function: Callable[[T], Union[float, int]] = None):
         self._item_to_node: Dict[T, _FibonacciNode[T]] = dict()
         """Maintain a mapping between items and their _FibonacciNode wrappers to facilitate
@@ -150,11 +153,12 @@ class FibonacciHeap(Generic[T]):
         else:
             return None
 
-    def union(self, other: 'FibonacciHeap'):
+    def union(self, other: "FibonacciHeap"):
         """Merge `other` Fibonacci heap into this heap."""
         self._roots.update(other._roots)
-        if self._min is None or \
-                (other._min is not None and other._min.priority < self._min.priority):
+        if self._min is None or (
+            other._min is not None and other._min.priority < self._min.priority
+        ):
             self._min = other._min
         self._length += other._length
 
@@ -178,7 +182,7 @@ class FibonacciHeap(Generic[T]):
             new_priority = self._priority_function(item)
         x: _FibonacciNode[T] = self._item_to_node[item]
         if new_priority > x.priority:
-            raise ValueError('new priority is greater than current priority')
+            raise ValueError("new priority is greater than current priority")
         x.priority = new_priority
         y: _FibonacciNode[T] = x.parent
         if y is not None and x.priority < y.priority:

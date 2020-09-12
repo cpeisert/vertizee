@@ -50,6 +50,7 @@ apps/**/coverage/
 /libpeerconnection.log
 npm-debug.log
 Pipfile*
+/.pytype
 testem.log
 /typings
 .venv/

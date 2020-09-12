@@ -32,8 +32,13 @@ class KargerResults:
         cut_edge: The final edge comprising the minimum cut.
         karger_contract_run_count: Count of algorithm iterations.
     """
-    def __init__(self, contracted_graph: GraphBase = None, cut_edge: EdgeType = None,
-                 karger_contract_run_count: int = 0):
+
+    def __init__(
+        self,
+        contracted_graph: GraphBase = None,
+        cut_edge: EdgeType = None,
+        karger_contract_run_count: int = 0,
+    ):
         self.contracted_graph: GraphBase = contracted_graph
         self.cut_edge: EdgeType = cut_edge
         self.karger_contract_run_count = karger_contract_run_count
@@ -79,6 +84,7 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
         other vertices have been merged through the edge contraction process.
     """
 
+
 def fast_min_cut(graph: GraphBase) -> KargerResults:
     """Uses the Karger-Stein algorithm to find the minimum cut of the graph.
 
@@ -100,14 +106,17 @@ def fast_min_cut(graph: GraphBase) -> KargerResults:
     results2: KargerResults = karger_contract(graph, t)
     fmc_results1 = fast_min_cut(results1.contracted_graph)
     fmc_results2 = fast_min_cut(results2.contracted_graph)
-    total_contract_runs = 2 + fmc_results1.karger_contract_run_count \
-        + fmc_results2.karger_contract_run_count
+    total_contract_runs = (
+        2 + fmc_results1.karger_contract_run_count + fmc_results2.karger_contract_run_count
+    )
     if fmc_results1.cut_edge.parallel_edge_count <= fmc_results2.cut_edge.parallel_edge_count:
         return KargerResults(
-            cut_edge=fmc_results1.cut_edge, karger_contract_run_count=total_contract_runs)
+            cut_edge=fmc_results1.cut_edge, karger_contract_run_count=total_contract_runs
+        )
     else:
         return KargerResults(
-            cut_edge=fmc_results2.cut_edge, karger_contract_run_count=total_contract_runs)
+            cut_edge=fmc_results2.cut_edge, karger_contract_run_count=total_contract_runs
+        )
 
 
 def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResults:

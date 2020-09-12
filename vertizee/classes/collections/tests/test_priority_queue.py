@@ -21,9 +21,10 @@ from vertizee.classes.vertex import Vertex
 from vertizee.classes.collections.priority_queue import PriorityQueue
 
 pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip.")
+    False, reason="Set first param to False to run tests, or True to skip."
+)
 
-PRIORITY = 'priority_key'
+PRIORITY = "priority_key"
 
 
 def priority_function(vertex: Vertex) -> float:
@@ -32,7 +33,6 @@ def priority_function(vertex: Vertex) -> float:
 
 @pytest.mark.usefixtures()
 class TestPriorityQueue:
-
     def test_basic_operations(self):
         g = Graph([(1, 2), (2, 3), (3, 4), (4, 5)])
         g[1].attr[PRIORITY] = 100
@@ -48,35 +48,37 @@ class TestPriorityQueue:
         vpq.add_or_update(g[2])
         vpq.add_or_update(g[3])
 
-        assert len(vpq) == 5, 'Priority queue should contain 5 vertices.'
+        assert len(vpq) == 5, "Priority queue should contain 5 vertices."
         next_v = vpq.pop()
-        assert next_v == g[5], 'First lowest priority vertex should be vertex 5.'
+        assert next_v == g[5], "First lowest priority vertex should be vertex 5."
 
         next_v = vpq.pop()
-        assert next_v == g[4], 'Second lowest priority vertex should be vertex 4, since 4 ' \
-                               ' was inserted after 5.'
+        assert next_v == g[4], (
+            "Second lowest priority vertex should be vertex 4, since 4 " " was inserted after 5."
+        )
         g[1].attr[PRIORITY] = 0
         vpq.add_or_update(g[1])
-        assert len(vpq) == 3, 'Priority queue should contain 3 vertices after popping and ' \
-                              ' updating.'
+        assert len(vpq) == 3, (
+            "Priority queue should contain 3 vertices after popping and " " updating."
+        )
         next_v = vpq.pop()
-        assert next_v == g[1], 'Lowest priority vertex should be 1 after setting priority to 0.'
+        assert next_v == g[1], "Lowest priority vertex should be 1 after setting priority to 0."
 
         next_v = vpq.pop()
-        assert next_v == g[3], 'Lowest priority vertex should be 3.'
+        assert next_v == g[3], "Lowest priority vertex should be 3."
 
         g.add_vertex(10)
         g[10].attr[PRIORITY] = 200
         vpq.add_or_update(g[10])
 
         next_v = vpq.pop()
-        assert next_v == g[2], 'Lowest priority vertex should be 2.'
+        assert next_v == g[2], "Lowest priority vertex should be 2."
 
-        assert len(vpq) == 1, 'Priority queue should contain 1 vertex.'
+        assert len(vpq) == 1, "Priority queue should contain 1 vertex."
         next_v = vpq.pop()
-        assert next_v == g[10], 'Lowest priority vertex should be 10.'
+        assert next_v == g[10], "Lowest priority vertex should be 10."
 
-        assert len(vpq) == 0, 'Priority queue should be empty.'
+        assert len(vpq) == 0, "Priority queue should be empty."
 
         # Attempting to pop an item from an empty priority queue should raise KeyError.
         with pytest.raises(KeyError):

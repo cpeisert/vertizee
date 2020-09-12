@@ -16,7 +16,7 @@
 
 from typing import Callable, Dict, Generic, List, TypeVar, Union
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 GC_DEFAULT_THRESHOLD = 0.3  # % of deleted nodes relative to tree size prior to garbage collection
 GC_MIN_TREE_SIZE = 1000  # minimum tree size required before performing garbage collection
@@ -41,12 +41,12 @@ class BKNode(Generic[T]):
     def __contains__(self, distance: int) -> bool:
         return distance in self.children
 
-    def __eq__(self, other: 'BKNode'):
+    def __eq__(self, other: "BKNode"):
         if not isinstance(other, BKNode):
             return False
         return self.key_value == other.key_value
 
-    def __getitem__(self, distance: int) -> 'BKNode':
+    def __getitem__(self, distance: int) -> "BKNode":
         return self.children[distance]
 
     def __hash__(self):
@@ -59,16 +59,16 @@ class BKNode(Generic[T]):
         return len(self.children)
 
     def __repr__(self):
-        return f'BKNode({self.key_value})'
+        return f"BKNode({self.key_value})"
 
-    def __setitem__(self, distance: int, child_node: 'BKNode'):
+    def __setitem__(self, distance: int, child_node: "BKNode"):
         self.children[distance] = child_node
 
     def __str__(self):
-        return f'BKNode({self.key_value})'
+        return f"BKNode({self.key_value})"
 
 
-class BKNodeLabeled(BKNode):
+class BKNodeLabeled(BKNode[T]):
     def __init__(self, key_value: T, key_label: str):
         """Initializes a labeled BK tree node, where each node has a unique string label as well
         as a value used to calculate the distance between other nodes in the metric space.
@@ -80,29 +80,29 @@ class BKNodeLabeled(BKNode):
                 graph).
         """
         if key_label is None:
-            raise KeyError('key_label was None')
+            raise KeyError("key_label was None")
         self.key_label: str = str(key_label)
         super().__init__(key_value)
 
-    def __eq__(self, other: 'BKNodeLabeled'):
+    def __eq__(self, other: "BKNodeLabeled"):
         if not isinstance(other, BKNodeLabeled):
             return False
         return self.key_label == other.key_label
 
-    def __getitem__(self, distance: int) -> 'BKNodeLabeled':
+    def __getitem__(self, distance: int) -> "BKNodeLabeled":
         return self.children[distance]
 
     def __hash__(self):
         return hash(self.key_label)
 
     def __repr__(self):
-        return f'BKNodeLabeled(key_label={self.key_label}, key_value={self.key_value})'
+        return f"BKNodeLabeled(key_label={self.key_label}, key_value={self.key_value})"
 
-    def __setitem__(self, distance: int, child_node: 'BKNodeLabeled'):
+    def __setitem__(self, distance: int, child_node: "BKNodeLabeled"):
         self.children[distance] = child_node
 
     def __str__(self):
-        return f'BKNodeLabeled(key_label={self.key_label}, key_value={self.key_value})'
+        return f"BKNodeLabeled(key_label={self.key_label}, key_value={self.key_value})"
 
 
 class BKTree(Generic[T]):
@@ -132,8 +132,13 @@ class BKTree(Generic[T]):
             with the non-deleted nodes. Defaults to 30%.
 
     """
-    def __init__(self, distance_function: Callable[[T, T], int], labeled_nodes: bool = False,
-                 garbage_collection_threshold: float = GC_DEFAULT_THRESHOLD):
+
+    def __init__(
+        self,
+        distance_function: Callable[[T, T], int],
+        labeled_nodes: bool = False,
+        garbage_collection_threshold: float = GC_DEFAULT_THRESHOLD,
+    ):
         self.root: Union[BKNode, BKNodeLabeled] = None
         self._dist_func: Callable[[T, T], int] = distance_function
         self._deleted_item_count = 0
@@ -182,8 +187,9 @@ class BKTree(Generic[T]):
                 current_node[distance] = new_node
                 break
 
-    def search(self, key_value: int, radius: int,
-               key_label: str = None) -> Union[List[BKNode], List[BKNodeLabeled]]:
+    def search(
+        self, key_value: int, radius: int, key_label: str = None
+    ) -> Union[List[BKNode], List[BKNodeLabeled]]:
         if self._length == 0:
             return []
         if key_label is not None:
@@ -195,8 +201,10 @@ class BKTree(Generic[T]):
             node_qualifies = False
             distance = self._dist_func(node.key_value, key_value)
             if distance <= radius:
-                if self._labeled_nodes and key_label is not None and node.key_label != key_label:
-                    node_qualifies = True
+                if self._labeled_nodes:
+                    labeled_node: BKNodeLabeled = node
+                    if key_label is not None and labeled_node.key_label != key_label:
+                        node_qualifies = True
                 elif not self._labeled_nodes:
                     node_qualifies = True
                 if node_qualifies and not node._deleted:
@@ -204,8 +212,9 @@ class BKTree(Generic[T]):
 
             min_dist = distance - radius
             max_dist = distance + radius
-            candidates = [node for dist, node in node.children.items()
-                          if min_dist <= dist <= max_dist]
+            candidates = [
+                node for dist, node in node.children.items() if min_dist <= dist <= max_dist
+            ]
             remaining += candidates
 
         # Is it time to run garbage collector?

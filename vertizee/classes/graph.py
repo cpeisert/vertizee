@@ -46,13 +46,17 @@ from vertizee.classes.graph_primitives import GraphPrimitive
 
 class Graph(GraphBase):
     """A graph is an undirected graph without parallel edges. Self loops are allowed."""
-    def __init__(self, *args: 'GraphPrimitive'):
+
+    def __init__(self, *args: "GraphPrimitive"):
         super().__init__(
-            GraphBase._create_key, is_directed_graph=False, is_multigraph=False,
-            is_simple_graph=False)
+            GraphBase._create_key,
+            is_directed_graph=False,
+            is_multigraph=False,
+            is_simple_graph=False,
+        )
         super().add_edges_from(*args)
 
-    def deepcopy(self) -> 'Graph':
+    def deepcopy(self) -> "Graph":
         graph_copy = Graph()
         super()._deepcopy_into(graph_copy)
         return graph_copy
@@ -60,13 +64,17 @@ class Graph(GraphBase):
 
 class MultiGraph(GraphBase):
     """A multigraph is an undirected graph that allows parallel edges and self loops."""
-    def __init__(self, *args: 'GraphPrimitive'):
+
+    def __init__(self, *args: "GraphPrimitive"):
         super().__init__(
-            GraphBase._create_key, is_directed_graph=False, is_multigraph=True,
-            is_simple_graph=False)
+            GraphBase._create_key,
+            is_directed_graph=False,
+            is_multigraph=True,
+            is_simple_graph=False,
+        )
         super().add_edges_from(*args)
 
-    def deepcopy(self) -> 'MultiGraph':
+    def deepcopy(self) -> "MultiGraph":
         graph_copy = MultiGraph()
         super()._deepcopy_into(graph_copy)
         return graph_copy
@@ -77,13 +85,17 @@ class MultiGraph(GraphBase):
 
 class SimpleGraph(GraphBase):
     """A simple graph is an undirected graph with no parallel edges and no self loops."""
-    def __init__(self, *args: 'GraphPrimitive'):
+
+    def __init__(self, *args: "GraphPrimitive"):
         super().__init__(
-            GraphBase._create_key, is_directed_graph=False, is_multigraph=False,
-            is_simple_graph=True)
+            GraphBase._create_key,
+            is_directed_graph=False,
+            is_multigraph=False,
+            is_simple_graph=True,
+        )
         super().add_edges_from(*args)
 
-    def deepcopy(self) -> 'SimpleGraph':
+    def deepcopy(self) -> "SimpleGraph":
         graph_copy = SimpleGraph()
         super()._deepcopy_into(graph_copy)
         return graph_copy

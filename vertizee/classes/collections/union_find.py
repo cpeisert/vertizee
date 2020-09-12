@@ -15,10 +15,12 @@
 """Union-find data structure (a.k.a. disjoint-set data structure) for maintaining a collection of
 disjoint, dynamic sets."""
 
+# pytype: disable=not-supported-yet
+
 from collections import defaultdict
 from typing import Dict, Generic, Iterator, Set, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class UnionFind(Generic[T]):
@@ -86,6 +88,7 @@ class UnionFind(Generic[T]):
         [3] Carlson, Josiah. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/215912
         [4] Eppstein, D. http://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
     """
+
     def __init__(self, *args: T):
         self._parents: Dict[T, T] = dict()
         """A dictionary mapping an object to its parent. If the parent of an object is itself,

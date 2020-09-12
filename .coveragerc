@@ -1,0 +1,4 @@
+[run]
+branch = True
+source = vertizee
+omit = */tests/*, conftest.py, *version.py
