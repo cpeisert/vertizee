@@ -1,5 +1,5 @@
-# Make certain functions available to the user as direct imports from the `vertizee.algorithms`
-# namespace.
+"""Make certain functions available to the user as direct imports from the ``vertizee.algorithms``
+namespace."""
 
 from vertizee.algorithms.components.strongly_connected import kosaraju_strongly_connected_components
 from vertizee.algorithms.search.depth_first_search import (

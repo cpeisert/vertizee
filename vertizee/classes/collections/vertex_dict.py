@@ -12,41 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""VertexDict is a dictionary mapping VertexKeyValue (int, str, Vertex) keys to arbitrary generic
-type values."""
+"""A dictionary mapping vertices to values."""
 
+from __future__ import annotations
 from collections.abc import Iterable, Mapping
-from typing import Dict, TypeVar
+from typing import Dict, TYPE_CHECKING, TypeVar
 
-from vertizee.classes.vertex import Vertex, VertexKeyType
+from vertizee.classes.vertex import Vertex
+
+if TYPE_CHECKING:
+    from vertizee.classes.vertex import VertexType
 
 VT = TypeVar("VT")
 
 
-class VertexDict(dict, Dict[VertexKeyType, VT]):
-    """VertexDict is a dictionary mapping VertexKeyValue (int, str, Vertex) keys to arbitrary
-    generic type values.
+class VertexDict(dict, Dict["VertexType", VT]):
+    """A dictionary mapping vertices to values.
 
-    The dictionary keys are stored internally as strings, but when getting and setting dictionary
-    values, keys may be given as any one of int, str, or Vertex.
+    The dictionary keys are of type :mod:`VertexType <vertizee.classes.vertex>`, which is an
+    alias for ``int``, ``str``, or :class:`Vertex <vertizee.classes.vertex.Vertex>`. Internally,
+    all dictionary vertex keys are coverted to ``str``. The dictionary values may be of any type,
+    and can be explicitly specified using type hints, such as::
 
-    Example::
+        vertex_to_path: VertexDict[ShortestPath] = VertexDict()
 
-        >>> v1 = Vertex(1)
-        >>> v2 = Vertex('2')
-        >>> v3 = Vertex(3)
+    Args:
+        iterable_or_mapping: If a positional argument is given and it is a mapping object, a
+            dictionary is created with the same key-value pairs as the mapping object. Otherwise,
+            the positional argument must be an iterable object. Each item in the iterable must
+            itself be an iterable with exactly two objects.
+        **kwargs: Keyword arguments and their values to be added to the dictionary.
 
-        >>> d = VertexDict()
-        >>> d['1'] = 'one'
+    Example:
+        >>> import vertizee as vz
+        >>> g = vz.Graph()
+        >>> g.add_vertex(1)
+        >>> g.add_vertex('2')
+        >>> d: vz.VertexDict[str] = vz.VertexDict()
+        >>> d[g[1]] = 'one'
         >>> d[2] = 'two'
-        >>> d[v3] = 'three'
-
-        >>> print(d[v1])
-        'one'
-        >>> print(d['2'])
-        'two'
+        >>> d['3'] = 'three'
+        >>> print(d['1'])
+        one
+        >>> print(d[g[2]])
+        two
         >>> print(d[3])
-        'three'
+        three
     """
 
     def __init__(self, iterable_or_mapping=None, **kwargs):
@@ -59,30 +70,50 @@ class VertexDict(dict, Dict[VertexKeyType, VT]):
             else:
                 super().__init__(kwargs.update(parsed_arg))
 
-    def __contains__(self, key: VertexKeyType) -> bool:
-        return super().__contains__(_normalize_key(key))
+    def __contains__(self, vertex: "VertexType") -> bool:
+        return super().__contains__(_normalize_vertex(vertex))
 
-    def __getitem__(self, key: VertexKeyType):
-        return super().__getitem__(_normalize_key(key))
+    def __getitem__(self, vertex: "VertexType"):
+        """Supports index accessor notation to retrieve items.
 
-    def __setitem__(self, key: VertexKeyType, val):
-        super().__setitem__(_normalize_key(key), val)
+        Example:
+            x.__getitem__(y) :math:`\\Longleftrightarrow` x[y]
+        """
+        return super().__getitem__(_normalize_vertex(vertex))
+
+    def __setitem__(self, vertex: "VertexType", val):
+        super().__setitem__(_normalize_vertex(vertex), val)
 
     def __repr__(self):
         dictrepr = super().__repr__()
         return f"{type(self).__name__}({dictrepr})"
 
     def update(self, iterable_or_mapping):
+        """Updates the dictionary from an iterable or mapping object.
+
+        Args:
+            iterable_or_mapping: An iterable or mapping object over key-value pairs, where the keys
+                represent vertices.
+        """
         parsed_arg = parse_iterable_or_mapping_arg(iterable_or_mapping)
         super().update(parsed_arg)
 
 
 def parse_iterable_or_mapping_arg(iterable_or_mapping) -> dict:
+    """Helper method to parse initialization arguments given in the form of an iterable or mapping
+    object.
+
+    Args:
+        iterable_or_mapping: An iterable or mapping object (e.g. a dictionary).
+
+    Returns:
+        dict: A dictionary containing the parsed arguments.
+    """
     parsed_arg = dict()
 
     if isinstance(iterable_or_mapping, Mapping):
         for k, v in iterable_or_mapping.items():
-            parsed_arg[_normalize_key(k)] = v
+            parsed_arg[_normalize_vertex(k)] = v
     elif isinstance(iterable_or_mapping, Iterable):
         for i in iterable_or_mapping:
             if len(i) != 2:
@@ -90,19 +121,18 @@ def parse_iterable_or_mapping_arg(iterable_or_mapping) -> dict:
                     "Each item in the iterable must itself be an iterable "
                     f"with exactly two objects. Found {len(i)} objects."
                 )
-            key = None
+            vertex = None
             for obj in i:
-                if key is None:
-                    key = obj
+                if vertex is None:
+                    vertex = obj
                 else:
-                    parsed_arg[_normalize_key(key)] = obj
+                    parsed_arg[_normalize_vertex(vertex)] = obj
     else:
         raise TypeError(f"{type(iterable_or_mapping).__name__} object is not iterable")
     return parsed_arg
 
 
-def _normalize_key(key: VertexKeyType) -> str:
-    if isinstance(key, Vertex):
-        return key.key
-    else:
-        return str(key)
+def _normalize_vertex(vertex: "VertexType") -> str:
+    if isinstance(vertex, Vertex):
+        return vertex.label
+    return str(vertex)

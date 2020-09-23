@@ -1,5 +1,3 @@
-.. _contents:
-
 ===============================
 Vertizee Graph Library
 ===============================
@@ -62,10 +60,18 @@ Documentation
 
 .. toctree::
    :maxdepth: 1
+   :caption: General Information
+
+   installation
+   license
+   release_log
+
+.. toctree::
+   :maxdepth: 1
    :caption: Tutorials
 
    tutorials/getting_started
-   tutorials/bfs_dfs
+   tutorials/search
    tutorials/connected_components
    tutorials/shortest_paths
 
@@ -73,10 +79,10 @@ Documentation
    :maxdepth: 1
    :caption: API Reference
 
-   api/classes/index
    api/algorithms/index
-   api/io/index
+   api/classes/index
    api/exceptions
+   api/io/index
 
 .. toctree::
    :maxdepth: 1
@@ -86,17 +92,8 @@ Documentation
    developer/contributor_guide
    developer/core_dev
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Additional Information
 
-   license
-   release_log
-
-
-Indices and tables
+Indices
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

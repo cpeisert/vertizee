@@ -15,61 +15,82 @@
 """
 Subroutines for reading and writing graph adjacency lists.
 
-Adjacency List
+Function summary:
+    * :func:`read_adj_list` - Reads an adjacency list from a text file and populates ``new_graph``.
+    * :func:`read_weighted_adj_list` - Reads an adjacency list from a text file and populates
+      ``new_graph``.
+    * :func:`write_adj_list_to_file` - Writes a graph to file as an adjacency list.
 
-The adjacency list format consists of lines with vertex labels. The first label in a line is the
-source vertex. Further labels in the line are considered destination vertices and are added to the
-graph along with an edge between the source vertex and destination vertex.
+Adjacency List
+##############
+
+The adjacency list format consists of lines containing vertex labels. The first label in a line
+is the source vertex. Further labels in the line are considered destination vertices and are added
+to the graph along with an edge between the source vertex and destination vertex.
 
 In the case of undirected graphs, potential edges are first checked against the graph, and only
 added if the edge is not present.
 
-Example::
+**Example: Undirected Graph Adjacency List**
 
-    UNDIRECTED GRAPH ADJACENCY LIST
+.. code-block:: none
+
     1 2 2 3
     2 1 1
     3 1
 
-    Represents undirected edges:
-    (1, 2) - two parallel edges
-    (1, 3) - one edge
+Represents undirected edges:
+
+* :math:`(1, 2)` - two parallel edges
+* :math:`(1, 3)` - one edge
 
 
-    DIRECTED GRAPH ADJACENCY LIST
+**Example: Directed Graph Adjacency List**
+
+.. code-block:: none
+
     1 2 2 3
     2 1
     3
 
-    Represents directed edges:
-    (1, 2) - two parallel edges
-    (2, 1) - one edge [parallel to the two edges from (1, 2)]
-    (1, 3) - one edge
+Represents directed edges:
 
-    Note that directed edges (1, 2) and (2, 1) would be stored as separate DiEdge
-    objects. In the case if DiEdge(1, 2), the `parallel_edge_count` would be 1. In the case of
-    DiEdge(2, 1), the `parallel_edge_count` would be 0, since there is only one directed edge with
-    tail 2 and head 1.
+* :math:`(1,\\ 2)` - two parallel edges
+* :math:`(2,\\ 1)` - one edge [parallel to the two edges from :math:`(1,\\ 2)`, but a separate
+  :class:`DiEdge <vertizee.classes.edge.DiEdge>` object]
+* :math:`(1,\\ 3)` - one edge
+
+Note that directed edges :math:`(1,\\ 2)` and :math:`(2,\\ 1)` would be stored as separate
+:class:`DiEdge <vertizee.classes.edge.DiEdge>` objects. In the case of ``DiEdge(1, 2)``, the
+``parallel_edge_count`` would be 1. In the case of
+``DiEdge(2, 1)``, the ``parallel_edge_count`` would be 0, since there is only one directed edge
+with ``tail`` 2 and ``head`` 1.
 
 
 Weighted Adjacency List
+#######################
 
-The weighted adjacency list format consists of lines starting with a source vertex label followed
-by pairs of destination vertex labels and associated edge weights.
+The weighted adjacency list format consists of lines starting with a source vertex followed
+by pairs of destination vertices and their associated edge weights.
 
-Example::
+**Example: Undirected Graph Adjacency List**
 
-    UNDIRECTED GRAPH ADJACENCY LIST
+.. code-block:: none
+
     1   2,100   3,50
     2   3,25
     3
 
-    Represents undirected edges:
-    (1, 2, 100) - edge between vertices 1 and 2 with weight 100
-    (1, 3, 50) - edge between vertices 1 and 3 with weight 50
-    (2, 3, 25) - edge between vertices 2 and 3 with weight 25
+Represents undirected edges:
 
-    Alternatively, the same graph could be represented with the following adjacency list:
+* :math:`(1,\\ 2,\\ 100)` - edge between vertices 1 and 2 with weight 100
+* :math:`(1,\\ 3,\\ 50)` - edge between vertices 1 and 3 with weight 50
+* :math:`(2,\\ 3,\\ 25)` - edge between vertices 2 and 3 with weight 25
+
+Alternatively, the same graph could be represented with the following adjacency list:
+
+.. code-block:: none
+
     1   2,100   3,50
     2   1,100   3,25
     3   1,50    2,25
@@ -79,6 +100,8 @@ from collections import Counter
 import re
 from typing import List, Set, TYPE_CHECKING, Tuple
 
+from vertizee.exception import GraphTypeNotSupported
+
 if TYPE_CHECKING:
     from vertizee.classes.edge import EdgeType
     from vertizee.classes.graph_base import GraphBase
@@ -86,17 +109,19 @@ if TYPE_CHECKING:
 
 
 def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s+"):
-    """Reads an adjacency list from a text file and populates `new_graph`.
+    """Reads an adjacency list from a text file and populates ``new_graph``.
 
-    The `new_graph` is cleared and then vertices and edges are added from the adjacency list.
-    The adjacency list is interpreted as either directed or undirected edges to match the type of
-    `new_graph` (e.g. Graph, DiGraph, MultiDiGraph).
+    The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
+    The adjacency list is interpreted as either directed or undirected based on the type of
+    ``new_graph`` (e.g. :class:`Graph <vertizee.classes.graph.Graph>`,
+    :class:`DiGraph <vertizee.classes.digraph.DiGraph>`,
+    :class:`MultiDiGraph <vertizee.classes.digraph.MultiDiGraph>`).
 
     Args:
-        path (str): The adjacency list file path.
-        new_graph (GraphBase): The new graph to create from the adjacency list.
-        delimiters (str, optional): File delimiters. Defaults to optional commas and Unicode
-            whitespace characters.
+        path: The adjacency list file path.
+        new_graph: The new graph to create from the adjacency list.
+        delimiters: Optional; Delimiters used to separate values. Defaults to commas and/or
+            Unicode whitespace characters.
     """
     new_graph.clear()
     with open(path, mode="r") as f:
@@ -126,15 +151,17 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
 
 
 def read_weighted_adj_list(path: str, new_graph: "GraphBase"):
-    """Reads an adjacency list from a text file and populates `new_graph`.
+    """Reads an adjacency list from a text file and populates ``new_graph``.
 
-    The `new_graph` is cleared and then vertices and edges are added from the adjacency list.
-    The adjacency list is interpreted as either directed or undirected edges to match the type of
-    `new_graph` (e.g. Graph, DiGraph, MultiDiGraph).
+    The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
+    The adjacency list is interpreted as either directed or undirected based on the type of
+    ``new_graph`` (e.g. :class:`Graph <vertizee.classes.graph.Graph>`,
+    :class:`DiGraph <vertizee.classes.digraph.DiGraph>`,
+    :class:`MultiDiGraph <vertizee.classes.digraph.MultiDiGraph>`).
 
     Args:
-        path (str): The adjacency list file path.
-        new_graph (GraphBase): The new graph to create from the adjacency list.
+        path: The adjacency list file path.
+        new_graph: The new graph to create from the adjacency list.
     """
     new_graph.clear()
     with open(path, mode="r") as f:
@@ -168,33 +195,32 @@ def write_adj_list_to_file(
     include_weights: bool = False,
     weights_are_integers: bool = False,
 ):
-    """Writes a graph as an adjacency list to a file.
+    """Writes a graph to a file as an adjacency list.
 
-    If `include_weights` is True, then the adjacency list output format is:
-    source1     destination1,weight1     destination2,weight2
-    source2     destination3,weight3     destination4,weight4
-    ...
+    If ``include_weights`` is True, then the adjacency list output format is::
+
+        source1     destination1,weight1     destination2,weight2
+        source2     destination3,weight3     destination4,weight4
+        ...
 
     Args:
-        path (str): Path to the output file.
-        graph (GraphBase): The graph to write out.
-        delimiter (str, optional): The delimiter to use to separate vertex-weight pairs in the
-            output file. Defaults to '\t' (tab).
-        include_weights (bool, optional): If True, write out the edge weights with the vertices.
-            See
-        weights_are_integers (bool, optional): If True, floating point weights are converted to int.
+        path: Path to the output file.
+        graph: The graph to write out.
+        delimiter: Optional; The delimiter to use. Defaults to the tab character.
+        include_weights: Optional; If True, write out the edge weights with the vertices.
+        weights_are_integers: Optional; If True, floating point weights are converted to int.
     """
     lines = []
 
     vertices = graph.vertices
-    if all([x.key.isdecimal() for x in vertices]):
-        vertices = sorted(vertices, key=lambda v: int(v.key))
+    if all([x.label.isdecimal() for x in vertices]):
+        vertices = sorted(vertices, key=lambda v: int(v.label))
     else:
-        vertices = sorted(vertices, key=lambda v: v.key)
+        vertices = sorted(vertices, key=lambda v: v.label)
 
     for vertex in vertices:
-        source_vertex_key = vertex.key
-        line = f"{source_vertex_key}"
+        source_vertex_label = vertex.label
+        line = f"{source_vertex_label}"
         if len(vertex.loops) > 0:
             loop_edge: "EdgeType" = next(iter(vertex.loops))
             line = _add_loop_edges_to_line(
@@ -229,16 +255,16 @@ def _add_edge_to_line(
 ) -> str:
 
     if edge.vertex1 == source_vertex:
-        destination_key = edge.vertex2.key
+        destination_label = edge.vertex2.label
     else:
-        destination_key = edge.vertex1.key
+        destination_label = edge.vertex1.label
 
     if include_weights:
         if weights_are_integers:
             weight = int(edge.weight)
         else:
             weight = edge.weight
-        line += f"{delimiter}{destination_key},{weight}"
+        line += f"{delimiter}{destination_label},{weight}"
         while len(edge._parallel_edge_weights) < edge.parallel_edge_count:
             edge._parallel_edge_weights.append(1)
         for i in range(0, edge.parallel_edge_count):
@@ -246,11 +272,11 @@ def _add_edge_to_line(
                 weight = int(edge._parallel_edge_weights[i])
             else:
                 weight = edge._parallel_edge_weights[i]
-            line += f"{delimiter}{destination_key},{weight}"
+            line += f"{delimiter}{destination_label},{weight}"
     else:  # Exclude edge weights.
-        line += f"{delimiter}{destination_key}"
+        line += f"{delimiter}{destination_label}"
         for i in range(0, edge.parallel_edge_count):
-            line += f"{delimiter}{destination_key}"
+            line += f"{delimiter}{destination_label}"
     return line
 
 
@@ -262,14 +288,14 @@ def _add_loop_edges_to_line(
     weights_are_integers: bool = False,
 ) -> str:
 
-    source_vertex_key = loop_edge.vertex1.key
+    source_vertex_label = loop_edge.vertex1.label
 
     if include_weights:
         if weights_are_integers:
             weight = int(loop_edge.weight)
         else:
             weight = loop_edge.weight
-        line += f"{delimiter}{source_vertex_key},{weight}"
+        line += f"{delimiter}{source_vertex_label},{weight}"
 
         # If parallel self-loops are missing weights, set to default weight 1.
         while len(loop_edge._parallel_edge_weights) < loop_edge.parallel_edge_count:
@@ -279,11 +305,11 @@ def _add_loop_edges_to_line(
                 weight = int(loop_edge._parallel_edge_weights[i])
             else:
                 weight = loop_edge._parallel_edge_weights[i]
-            line += f"{delimiter}{source_vertex_key},{weight}"
+            line += f"{delimiter}{source_vertex_label},{weight}"
     else:
-        line += f"{delimiter}{source_vertex_key}"
+        line += f"{delimiter}{source_vertex_label}"
         for i in range(0, loop_edge.parallel_edge_count):
-            line += f"{delimiter}{source_vertex_key}"
+            line += f"{delimiter}{source_vertex_label}"
     return line
 
 
@@ -306,16 +332,15 @@ def _get_adj_edges_excluding_loops(
     if graph.is_directed_graph():
         if reverse_graph:
             return vertex.edges_incoming
-        else:
-            return vertex.edges_outgoing
-    else:  # undirected graph
-        if len(vertex.loops) > 0:
-            loop_edges = next(iter(vertex.loops))
-            edges = vertex.edges
-            edges.remove(loop_edges)
-            return edges
-        else:
-            return vertex.edges
+        return vertex.edges_outgoing
+
+    # undirected graph
+    if len(vertex.loops) > 0:
+        loop_edges = next(iter(vertex.loops))
+        edges = vertex.edges
+        edges.remove(loop_edges)
+        return edges
+    return vertex.edges
 
 
 def _remove_duplicate_edges(graph: "GraphBase", edge_tuples: List[Tuple]) -> List[Tuple]:
@@ -330,7 +355,9 @@ def _remove_duplicate_edges(graph: "GraphBase", edge_tuples: List[Tuple]) -> Lis
     duplicates.
     """
     if graph.is_directed_graph():
-        raise ValueError("graph was a directed graph; function only defined for undirected graphs")
+        raise GraphTypeNotSupported(
+            "graph was a directed graph; function only defined for undirected graphs"
+        )
     cnt = Counter()
     for t in edge_tuples:
         cnt[t] += 1

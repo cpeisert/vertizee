@@ -32,6 +32,11 @@ class Unfeasible(VertizeeException):
     instance that has no feasible solution."""
 
 
+class GraphTypeNotSupported(Unfeasible):
+    """Exception raised if an algorithm does not support (or is undefined) for a particular type
+    of graph (e.g. DiGraph, Graph, MultiGraph, MultiDiGraph)."""
+
+
 class NegativeWeightCycle(Unfeasible):
     """Exception raised if a negative weight cycle is found that precludes a solution. For example,
     see the Bellman-Ford algorithm for solving the single-source shortest-paths problem."""

@@ -12,45 +12,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data structure for working with shortest paths."""
+"""Data structures and functions for working with shortest paths.
+
+See Also:
+    * :func:`all_pairs_shortest_paths_floyd_warshall
+      <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_floyd_warshall>`
+    * :func:`all_pairs_shortest_paths_johnson
+      <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson>`
+    * :func:`all_pairs_shortest_paths_johnson_fibonacci
+      <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson_fibonacci>`
+    * :func:`breadth_first_search_shortest_paths
+      <vertizee.algorithms.shortest_paths.unweighted.breadth_first_search_shortest_paths>`
+    * :func:`shortest_paths_bellman_ford
+      <vertizee.algorithms.shortest_paths.weighted.shortest_paths_bellman_ford>`
+    * :func:`shortest_paths_dijkstra
+      <vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra>`
+    * :func:`shortest_paths_dijkstra_fibonacci
+      <vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra_fibonacci>`
+"""
 
 from __future__ import annotations
 from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
-from vertizee import AlgorithmError
+from vertizee.exception import AlgorithmError
 from vertizee.classes.collections.vertex_dict import VertexDict
 
 if TYPE_CHECKING:
     from vertizee.classes.graph_base import GraphBase
-    from vertizee.classes.vertex import Vertex, VertexKeyType
+    from vertizee.classes.vertex import Vertex, VertexType
 
 INFINITY = float("inf")
 
 
 def reconstruct_path(
-    source: VertexKeyType,
-    destination: VertexKeyType,
+    source: VertexType,
+    destination: VertexType,
     paths: Union[VertexDict["ShortestPath"], VertexDict[VertexDict["ShortestPath"]]],
 ) -> List[Vertex]:
-    """Reconstructs the path between two vertices based on the predecessors stored in the shortest
-    paths dictionary (or a dictionary of shortest paths dictionaries).
+    """Reconstructs the shortest path between two vertices based on the predecessors stored in the
+    shortest paths dictionary (or a dictionary of shortest paths dictionaries).
+
+    Results from algorithms solving the single-source-shortest-paths problem produce a dictionary
+    mapping vertices to :class:`ShortestPath` objects. Results from algorithms solving the
+    all-pairs-shortest-paths problem produce a dictionary mapping source vertices to dictionaries
+    mapping destination vertices to :class:`ShortestPath` objects.
 
     Args:
-        source (Vertex): The first vertex in the path to be reconstructed.
-        destination (Vertex): The last vertex in the path to be reconstructed.
-        paths (Union[VertexDict['ShortestPath'], VertexDict[VertexDict['ShortestPath']]]): A
-            dictionary of shortest paths (e.g. results from the single-source-shortest-paths
+        source: The starting vertex in the path to be reconstructed.
+        destination: The last vertex in the path to be reconstructed.
+        paths: A dictionary of shortest paths (e.g. results from the single-source-shortest-paths
             problem) or a dictionary of dictionaries of shortest paths (e.g. results from the
             all-pairs-shortest-paths problem).
 
     Raises:
-        AlgorithmError: an algorithm error is raised if one of the shortest path objects does not
-            have a source vertex matching `source`.
+        AlgorithmError: An algorithm error is raised if one of the shortest path objects does not
+            have a source vertex matching ``source``.
 
     Returns:
-        List[Vertex]: The list of vertices comprising the path source ~> destination, or an empty
-        list if no such path exists.
+        List[Vertex]: The list of vertices comprising the path ``source`` :math:`\\leadsto`
+        ``destination``, or an empty list if no such path exists.
     """
     path_dict = paths
     if source in paths:
@@ -79,35 +100,36 @@ def reconstruct_path(
 
 
 class ShortestPath:
-    """Data structure representing a shortest path between some source vertex and a destination
+    """Data structure representing a shortest path between a source vertex and a destination
     vertex.
 
-    At a minimum, a shortest path is represented by:
-        1) source vertex (s)
-        2) destination vertex (d)
-        3) predecessor (i.e. the vertex in the path immediately preceding the destination)
-        4) length of the path from the source to destination (path_len(s, d))
+    At a minimum, a shortest path includes:
 
-    In addition, a shortest path may optionally include the list of vertices comprising a path
-    from the source to the destination. The default is to save space and to instead call the
-    function `reconstruct_path` as needed to calculate a given path based on the predecessor
-    vertices.
+        1) source - the starting vertex, designated as :math:`s`
+        2) destination - the last vertex, designated as :math:`d`
+        3) predecessor - the vertex immediately preceding the destination vertex, designated as
+           :math:`d.predecessor`
+        4) length - the path length from source to destination, designated :math:`d.length`
 
-    The convention in graph theory is to set the initial path length to infinity, indicating that
-    the destination is not reachable from the source (that is, until/unless a path is found).
-    During the execution of a shortest-path algorithm, the path length serves as an upper bound on
-    a potential shortest path length.
+    In addition, a shortest path may optionally include the list of vertices comprising the path.
+    The default is to save memory space by not storing the path. When paths are not saved, they
+    can be calculated as needed by calling :func:`reconstruct_path`.
 
-    Let s be the source, d be the destination, path_len(s, d) be the current path length (i.e. the
-    current upper bound of a shortest-path estimate), and w(u, v) be the weight/length of some
-    arbitrary edge (u, v). Furthermore, define delta(s, d) as the shortest-path distance from
-    s to d.
+    The convention in graph theory is to set the initial path length, :math:`d.length`, to
+    infinity (:math:`\\infty`), indicating that the destination is not reachable from the source
+    (that is, unless a path is found). During the execution of a shortest-path algorithm,
+    :math:`d.length` serves as an upper bound on a potential shortest path.
 
-    The upper-bound property states:
-        path_len(s, d) >= delta(s, d) for all vertices d in G(V), and once path_len(s, d) achieves
-        the value delta(s, d), it never changes
+    Let :math:`\\delta(s,\\ d)` be the shortest-path distance from the source :math:`s` to
+    destination :math:`d`.
 
-    The two fundamental operations that update a shortest path are:
+    **Upper-bound property**:
+
+        :math:`\\forall d \\in G(V),\\ d.length \\geq \\delta(s,\\ d)`, and once
+        :math:`d.length` achieves the value :math:`\\delta(s,\\ d)` it never changes.
+
+    **Operations that update a shortest path**:
+
         1) edge relaxation
         2) subpath relaxation
 
@@ -115,39 +137,39 @@ class ShortestPath:
         The process of edge relaxation is testing whether one of the destination's incoming edges
         provides a shorter path from the source to the destination than the current estimate.
 
-        Formally, let (c, d) be one of the destination's incoming edges.
+        Formally, let :math:`s` be the source vertex and :math:`(c,\\ d)` be an incoming edge
+        to the destination vertex :math:`d`. Define :math:`w` to be a weight function, such that
+        :math:`w(u,\\ v)` returns the weight (i.e. length) of some :math:`(u,\\ v)` edge.
 
-        relax_edge:
-            if path_len(s, d) > path_len(s, c) + w(c, d):
-                path_len(s, d) = path_len(s, c) + w(c, d)
-                d.predecessor = c
+        Then edge relaxation is defined as:
+
+        | RELAX :math:`(c,\\ d,\\ w)`
+        | |emsp| :math:`if\\ d.length \\gt c.length + w(c,\\ d)`
+        | |emsp| |emsp| :math:`d.length = c.length + w(c,\\ d)`
+        | |emsp| |emsp| :math:`d.predecessor = c`
 
     Subpath Relaxation
-        Subpath relaxation is the process of testing whether some vertex k yields two subpaths,
-        that when combined, provide a shorter path from the source to destination than the
-        current estimate.
+        Subpath relaxation is the process of testing whether some intermediate vertex :math:`k`
+        yields two subpaths, that when combined, provide a shorter path from the source to
+        destination than the current estimate :math:`d.length`.
 
-        Formally, let s ~> k be a path connecting the source to some vertex k, and let k ~> d be a
-        path connecting k to the destination. Initially, the predecessors are defined as follows:
+        Formally, let :math:`s \\leadsto k` be a path connecting the source :math:`s` to some vertex
+        :math:`k`, and let :math:`k \\leadsto d` be a path from :math:`k` to the destination
+        :math:`d`. Define the path length function :math:`\\ell(x \\leadsto y)` (script 'L') to be
+        the function returning the length of some path from :math:`x` to :math:`y`.
 
-        Initialize predecessors:
-            if s == d or w(s, d) == infinity:
-                predecessor = None
-            elif s != d and w(s, d) < infinity:
-                predecessor = s
-
-        relax_subpaths:
-            if path_len(s, d) > path_len(s, k) + path_len(k, d):
-                path_len(s, d) = path_len(s, k) + path_len(k, d)
-                predecessor = predecessor(k, d)
+        | RELAX-SUBPATHS :math:`(s \\leadsto k,\\ k \\leadsto d)`
+        | |emsp| :math:`if\\ d.length \\gt \\ell(s,\\ k) + \\ell(k,\\ d)`
+        | |emsp| |emsp| :math:`d.length = \\ell(s,\\ k) + \\ell(k,\\ d)`
+        | |emsp| |emsp| :math:`d.predecessor = predecessor(k \\leadsto d)`
 
     Args:
-        source (Vertex): The source vertex of the path.
-        destination (Vertex): The destination vertex to which a path is to be found.
-        initial_length (float, optional): Sets the initial path length. Defaults to infinity.
-        add_edge_to_destination_if_exists(bool, optional): If True, then if the initial
-            length is less than infinity and there exists an edge connecting source to
-            destination, the edge is added to the path. Defaults to True.
+        source: The source vertex of the path.
+        destination: The destination vertex to which a path is to be found.
+        initial_length: Optional; Sets the initial path length. Defaults to infinity.
+        add_initial_s_d_edge: Optional; If True, then if the initial length is less than
+            infinity and there exists an edge connecting source to destination, the edge is
+            added to the path. Defaults to True.
     """
 
     def __init__(
@@ -156,7 +178,7 @@ class ShortestPath:
         destination: Vertex,
         initial_length: float = INFINITY,
         store_full_paths: bool = False,
-        add_edge_to_destination_if_exists: bool = True,
+        add_initial_s_d_edge: bool = True,
     ):
         if source is None:
             raise ValueError("source was NoneType")
@@ -175,53 +197,59 @@ class ShortestPath:
         else:
             self._path: List[Vertex] = []
 
-        if add_edge_to_destination_if_exists:
-            self._init_edge_to_destination()
+        if add_initial_s_d_edge:
+            self._add_s_d_edge_if_exists()
 
     @property
     def destination(self) -> Vertex:
+        """The destination vertex of the path."""
         return self._destination
 
     @property
     def edge_count(self) -> int:
+        """The number of edges comprising the path."""
         return self._edge_count
 
     def is_destination_reachable(self) -> bool:
-        """Returns True if the destination vertex is unreachable from the source vertex."""
+        """Returns True if the destination vertex is reachable from the source vertex."""
         return self._length < INFINITY
 
     @property
     def length(self) -> float:
-        """The length of this path from the source vertex to the destination vertex. If there is no
-        path connecting source to destination, then the length should be infinity. The default
-        value is infinity."""
+        """The length of this path from the source to the destination vertex. If there is no
+        path connecting source to destination, then the length is infinity."""
         return self._length
 
     @property
     def path(self) -> List[Vertex]:
-        """If the destination is reachable from the source, then the list of vertices of
-        the path is returned. Note that if `store_full_paths` was set to False upon initialization,
-        then the path returned will always be empty. See `~shortest_path.reconstruct_path`."""
+        """The list of vertices comprising the path (only set if ``store_full_paths`` is
+        initialized to True).
+
+        If ``store_full_paths`` was set to False upon initialization (the default), then this list
+        will always be empty. However, the path can be calculated using the function
+        :func:`reconstruct_path`.
+
+        See Also:
+            :func:`reconstruct_path`
+        """
         if self._length == INFINITY:
             return []
-        else:
-            return self._path.copy()
+        return self._path.copy()
 
     @property
     def predecessor(self) -> Optional[Vertex]:
+        """The vertex immediately preceding the destination vertex."""
         return self._predecessor
 
-    def reinitialize(
-        self, initial_length: float = INFINITY, add_edge_to_destination_if_exists: bool = True
-    ):
-        """Reinitializes the shortest path by setting the initial length and clears intermediate
-        vertices between the source and destination.
+    def reinitialize(self, initial_length: float = INFINITY, add_initial_s_d_edge: bool = True):
+        """Reinitializes the shortest path by setting the initial length and clearing the
+        ``path`` vertex list.
 
         Args:
-            initial_length (float, optional): Sets the initial path length. Defaults to infinity.
-            add_edge_to_destination_if_exists(bool, optional): If True, then if the initial
-                length is less than infinity and there exists and edge connecting source to
-                destination, then edge edge is added to the path. Defaults to True.
+            initial_length: Optional; Sets the initial path length. Defaults to infinity.
+            add_initial_s_d_edge: Optional; If True, then if the initial length is less than
+                infinity and there exists an edge connecting source to destination, the edge is
+                added to the path. Defaults to True.
         """
         self._length: float = initial_length
         self._edge_count: int = 0
@@ -231,38 +259,40 @@ class ShortestPath:
         else:
             self._path: List[Vertex] = []
 
-        if add_edge_to_destination_if_exists:
-            self._init_edge_to_destination()
+        if add_initial_s_d_edge:
+            self._add_s_d_edge_if_exists()
 
     def relax_edge(
         self,
-        predecessor_path: ShortestPath,
+        predecessor_path: "ShortestPath",
         weight_function: Callable[[Vertex, Vertex, bool], float],
         reverse_graph: bool = False,
     ) -> bool:
-        """Test whether there is a shorter path from source through `predecessor_path` connected
+        """Tests whether there is a shorter path from the source vertex through ``predecessor_path``
         to this destination vertex via an edge (predecessor_path.destination, self.destination),
-        and if so, update this path to go through the predecessor path.
+        and if so, updates this path to go through the predecessor path.
 
         This method returns False unless the following conditions are met:
+
          - This path and the predecessor path share the same source vertex.
          - There exists an edge (predecessor_path.destination, self.destination), or if
-               `reverse_graph` is True, there exists an edge
-               (self.destination, predecessor_path.destination)
+           ``reverse_graph`` is True, there exists an edge
+           (self.destination, predecessor_path.destination)
 
-        For more details, see the class description for `~shortest_path.ShortestPath`.
+        See Also:
+            :class:`ShortestPath`
 
         Args:
-            predecessor_path (ShortestPath): A graph path from the source to some vertex, such
+            predecessor_path: A graph path from the source to some vertex, such
                 that there exists and edge (predecessor_path.destination, self.destination).
-            weight_function (Callable[[Vertex, Vertex, bool], float]): A function that accepts
-                two vertices and a boolean indicating if the graph is reversed (i.e. edges of
-                directed graphs in the opposite direction) and returns the corresponding edge
-                weight. If not provided, then the default `Edge.weight` property is used. For
-                multigraphs, the lowest edge weight among the parallel edges is used.
-            reverse_graph (bool, optional): For directed graphs, setting to True will yield a
-                traversal as if the graph were reversed (i.e. the reverse/transpose/converse
-                graph). Defaults to False.
+            weight_function: A function that accepts two vertices and a boolean indicating if the
+                graph is reversed (i.e. edges of directed graphs in the opposite direction) and
+                returns the corresponding edge weight. If not provided, then the default
+                ``Edge.weight`` property is used. For multigraphs, the lowest edge weight among the
+                parallel edges is used.
+            reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
+                as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults
+                to False.
 
         Returns:
             bool: Returns True if the path was relaxed (i.e. shortened).
@@ -296,20 +326,23 @@ class ShortestPath:
 
         return False
 
-    def relax_subpaths(self, path_s_k: ShortestPath, path_k_d: ShortestPath) -> bool:
-        """Test whether some vertex k yields two subpaths, that when combined, provide a shorter
-        path from the source to destination than the current estimate, and if so, update the path
-        by combing the two subpaths.
+    def relax_subpaths(self, path_s_k: "ShortestPath", path_k_d: "ShortestPath") -> bool:
+        """Tests whether some vertex :math:`k` yields two subpaths, that when combined, provide a
+        shorter path from the source :math:`s` to destination :math:`d` than the current estimate
+        :math:`d.length`, and if so, updates the path by combing the two subpaths.
 
         This method returns False unless the following conditions are met:
-         - The source of path_s_k is equal to self._source.
-         - The destination of path_s_k is equal to the source of path_k_d.
 
-        For more details, see the class description for `~shortest_path.ShortestPath`.
+         - The source of path :math:`s \\leadsto k` is equal to ``self.source``.
+         - The destination of path :math:`s \\leadsto k` is equal to the source of path
+           :math:`k \\leadsto d`
+
+        See Also:
+            :class:`ShortestPath`
 
         Args:
-            path_s_k (ShortestPath): A graph path from the source to some vertex k.
-            path_k_d (ShortestPath): A graph path from some vertex k to the destination vertex.
+            path_s_k: A graph path from the source to some vertex :math:`k`.
+            path_k_d: A graph path from some vertex :math:`k` to the destination vertex.
 
         Returns:
             bool: Returns True if the path was relaxed (i.e. shortened).
@@ -335,9 +368,10 @@ class ShortestPath:
 
     @property
     def source(self) -> Vertex:
+        """The source vertex of the path."""
         return self._source
 
-    def _init_edge_to_destination(self):
+    def _add_s_d_edge_if_exists(self):
         """If the length is less then infinity and there exists an edge connecting source to
         destination, then the edge is added to the path and predecessor is set to source."""
         if self._length < INFINITY and self._source != self._destination:

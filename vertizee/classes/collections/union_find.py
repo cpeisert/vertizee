@@ -30,29 +30,30 @@ class UnionFind(Generic[T]):
     The dynamic sets are comprised of objects of generic type 'T'.
     IMPORTANT: The objects stored in UnionFind must be hashable.
 
-    Traditional operations:
-        * find_set(x) - returns the representative item of the set containing x.
-            Implemented as `__getitem__()` to enable index accessor notation.
-        * make_set(x) - creates a new set containing x.
-        * union(x, y) - unites the dynamic sets that contain elements x and y.
+    **Traditional operations:**
 
-    Bonus operations:
-        * __iter__() - returns an iterator over all items in the data structure.
-        * __len__() - returns the number of items in the data structure.
-        * in_same_set(x, y) - returns True if x and y are elements of the same set.
-        * set_count - returns the number of sets
-        * to_sets() - returns an iterator over the sets contained in the data structure.
+        * :func:`find_set` - Returns the representative item of the set containing the given item.
+          Implemented as :func:`__getitem__` to enable index accessor notation.
+        * :func:`make_set` - Creates a new set containing the given item.
+        * :func:`union` - Unites the dynamic sets that contain the given items.
 
-    This implementation is based on the "disjoint-set forest" presented by Cormen, Leiserson,
-    Rivest, and Stein [1] as well as the NetworkX [2] UnionFind implementation, which was in turn
-    based on work by Josiah Carlson [3] and D. Eppstein [4].
+    **Bonus operations:**
+
+        * :func:`__iter__` - Returns an iterator over all items in the data structure.
+        * :func:`__len__` - Returns the number of items in the data structure.
+        * :func:`in_same_set` - Returns True if the given items are in the same set.
+        * :func:`set_count` - Returns the number of sets.
+        * :func:`to_sets` - Returns an iterator over the sets.
+
+    This implementation is based on the **disjoint-set forest** presented by Cormen, Leiserson,
+    Rivest, and Stein [CLRS2009_7]_ as well as the NetworkX [N2020_2]_ UnionFind implementation,
+    which was in turn based on work by Josiah Carlson [CAR]_ and D. Eppstein [E2004_2]_.
 
     Args:
-        *args (T, optional): Items to initialize as disjoint sets. Each item is added to its own
-            set.
+        *args (Generic[T]): Optional; Items to initialize as disjoint sets. Each item is added to
+            its own set.
 
-    Example::
-
+    Example:
         >>> uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5)
         >>> len(uf)
         5
@@ -81,12 +82,15 @@ class UnionFind(Generic[T]):
         False
 
     References:
-        [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-            Introduction to Algorithms: Third Edition, pages 568-571. The MIT Press, 2009.
-        [2] NetworkX Python package: networkx.utils.union_find.py
-            https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
-        [3] Carlson, Josiah. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/215912
-        [4] Eppstein, D. http://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
+     .. [CAR] Carlson, Josiah. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/215912
+
+     .. [CLRS2009_7] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+                     Introduction to Algorithms: Third Edition, pages 568-571. The MIT Press, 2009.
+
+     .. [E2004_2] Eppstein, D. http://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
+
+     .. [N2020_2] NetworkX Python package: networkx.utils.union_find.py
+                  https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
     """
 
     def __init__(self, *args: T):
@@ -107,8 +111,8 @@ class UnionFind(Generic[T]):
             self.make_set(arg)
 
     def __getitem__(self, item: T) -> T:
-        """Returns the representative item of the set containing item. The representative item may
-        change after a `union` operation.
+        """Returns the representative item of the set containing specified item. The representative
+        item may change after a ``union`` operation.
 
         Args:
             item (T): The item whose set is to be found.
@@ -146,13 +150,15 @@ class UnionFind(Generic[T]):
 
     @property
     def set_count(self) -> int:
+        """The number of sets. This value is decremented after calling ``union``
+        on disjoint sets."""
         return self._set_count
 
     def to_sets(self) -> Iterator[Set[T]]:
         """Returns an iterator over all the sets contained in the data structure. Warning: This
         is the most computationally expensive operation of UnionFind."""
         # Compress all tree paths, so that every item's parent is the root of its tree.
-        for item in self._parents.keys():
+        for item in self._parents:
             _ = self[item]  # Evaluate for path-compression side-effect.
 
         dict_of_sets: Dict[T, Set[T]] = defaultdict(set)
@@ -161,7 +167,7 @@ class UnionFind(Generic[T]):
         return iter(dict_of_sets.values())
 
     def union(self, item1: T, item2: T):
-        """Unites the dynamic sets that contain elements item1 and item2."""
+        """Unites the dynamic sets that contain ``item1`` and ``item2``."""
         x = self[item1]
         y = self[item2]
         if x != y:

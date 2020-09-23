@@ -1,17 +1,18 @@
 ============================================================================
-Breadth-First and Depth-First Search
+Search
 ============================================================================
 
-.. autoclass:: vertizee.algorithms.search.depth_first_search.DFSResults
-    :members:
 
-.. autoclass:: vertizee.algorithms.search.depth_first_search.DepthFirstSearchTree
-    :members:
+Tutorial
+========
 
-.. autofunction:: vertizee.algorithms.search.depth_first_search.depth_first_search
+:doc:`../../tutorials/search`
 
-.. autofunction:: vertizee.algorithms.search.depth_first_search.dfs_labeled_edge_traversal
+.. image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb
 
-.. autofunction:: vertizee.algorithms.search.depth_first_search.dfs_postorder_traversal
 
-.. autofunction:: vertizee.algorithms.search.depth_first_search.dfs_preorder_traversal
+Depth-First Search
+==================
+
+.. automodule:: vertizee.algorithms.search.depth_first_search

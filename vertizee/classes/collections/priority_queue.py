@@ -25,6 +25,8 @@ T = TypeVar("T")
 
 
 class _PriorityQueueItem(Generic[T]):
+    """Generic item wrapper for objects stored in a priority queue."""
+
     def __init__(self, priority: Union[float, int], insertion_count: int, item: T):
         self.priority = priority
         self.insertion_count = insertion_count
@@ -81,23 +83,24 @@ class PriorityQueue(Generic[T]):
     """A priority queue that always serves the item with the lowest (or highest) priority based on
     the priority returned by a priority function.
 
-    A PriorityQueue may be initialized as a minimum (default) or maximum priority queue.
+    ``PriorityQueue`` may be initialized as a minimum (default) or maximum priority queue.
 
-    IMPORTANT: Items stored in a PriorityQueue must be hashable.
-
-    The priority function accepts an item of generic type 'T' and returns a numeric priority
+    The priority function accepts an item of generic type ``T`` and returns a numeric priority
     (int or float). If two items have the same priority, they are served in the order inserted
     (first in first out).
 
-    This implementation uses the Python standard library heapq, which is a list-based binary heap.
+    This implementation uses the Python standard library ``heapq``, which is a list-based binary
+    heap.
+
+    Note:
+        Items stored in a priority queue must be hashable.
 
     Args:
-        priority_function (Callable[[T], Union[float, int]]): The item priority function.
-        minimum (bool, optional): If True, priority queue is a minimum priority queue,
+        priority_function: The item priority function.
+        minimum: Optional; If True, priority queue is a minimum priority queue,
             otherwise a maximum priority queue. Default value is True.
 
-    Example::
-
+    Example:
         >>> PRIORITY = 'priority_key'
         >>> def priority_function(vertex: Vertex) -> int:
         >>>     return vertex.attr[PRIORITY]
@@ -140,7 +143,7 @@ class PriorityQueue(Generic[T]):
         """Adds a new item or updates an existing item with a new priority.
 
         Args:
-            item (T): The item to add or update.
+            item: The item to add or update.
         """
         # If already in heap, mark as removed and re-add to maintain heap structure invariants.
         if item in self._heap_item_finder:
@@ -157,7 +160,8 @@ class PriorityQueue(Generic[T]):
         heapq.heappush(self._priority_queue, queue_item)
 
     def pop(self) -> T:
-        """Remove and return the lowest (or highest) priority item. Raise KeyError if empty."""
+        """Removes and returns the lowest (or highest) priority item. Raises ``KeyError`` if
+        empty."""
         while self._priority_queue:
             item: _PriorityQueueItem = heapq.heappop(self._priority_queue)
             if item.item is not ITEM_REMOVED:

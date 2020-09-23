@@ -50,15 +50,15 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
     Note that for the Karger algorithm to be guaranteed of finding a minimum cut on a graph with
     n vertices, it must be run at least n^2 * log(n) iterations.
 
-    See Also:
-        `Karger algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
-
     Args:
         graph: The multigraph in which to find the minimum cut.
 
     Returns:
         The minimum cut, which is the final EdgeType object containing the last two vertices after
         all other vertices have been merged through the edge contraction process.
+
+    See Also:
+        `Karger algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
     """
     n = graph.vertex_count
     run_iterations = 4
@@ -88,15 +88,15 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
 def fast_min_cut(graph: GraphBase) -> KargerResults:
     """Uses the Karger-Stein algorithm to find the minimum cut of the graph.
 
-    See Also:
-        `Karger-Stein algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
-
     Args:
         graph: The multigraph in which to find the minimum cut.
 
     Returns:
         The minimum cut, which is the final EdgeType object containing the last two vertices after
         all other vertices have been merged through the edge contraction process.
+
+    See Also:
+        `Karger-Stein algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
     """
     if graph.vertex_count <= 6:
         return brute_force_min_cut(graph)
@@ -123,7 +123,7 @@ def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResult
     """Use the Karger algorithm to contract the graph by repeatedly selecting a random edge,
     removing the edge, and merging the vertices of the deleted edge.
 
-    This process is continued until the number of vertices \|V\| <= minimum_vertices.
+    This process is continued until the number of vertices <= minimum_vertices.
 
     Args:
         graph: The multigraph for which a minimum cut is to be found. A deep copy is made such that

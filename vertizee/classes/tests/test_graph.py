@@ -33,12 +33,12 @@ class TestUndirectedGraphs:
     def test_vertex(self):
         g = Graph()
         v0 = g.add_vertex("0")
-        assert v0.key == "0", f'Vertex v0 should have key "0", but had key "{v0.key}"'
+        assert v0.label == "0", f'Vertex v0 should have label "0", but had label "{v0.label}"'
         assert v0.degree == 0, f"Vertex v0 should have degree 0, but had degree {v0.degree}"
         assert len(v0.edges) == 0, "Vertex v0 should have no incoming edges."
 
         v1 = g.add_vertex("1")
-        assert v1.key == "1", f'Vertex v1 should have key "1", but had key "{v1.key}"'
+        assert v1.label == "1", f'Vertex v1 should have label "1", but had label "{v1.label}"'
         assert v1.degree == 0, f"Vertex v1 should have degree 0, but had degree {v1.degree}"
 
     def test_edge(self):
@@ -56,16 +56,16 @@ class TestUndirectedGraphs:
         assert e1.parallel_edge_count == 0, "Edge e1 should have zero parallel edges."
         assert (
             e1.vertex1 == v0
-        ), f"Edge e1 should have vertex1 ({v0.key}), but it was ({e1.vertex1.key})"
+        ), f"Edge e1 should have vertex1 ({v0.label}), but it was ({e1.vertex1.label})"
         assert (
             e1.vertex2 == v1
-        ), f"Edge e1 should have vertex2 ({v1.key}), but it was ({e1.vertex2.key})"
+        ), f"Edge e1 should have vertex2 ({v1.label}), but it was ({e1.vertex2.label})"
         assert e_loop.is_loop(), "Edge e_loop should be a loop."
         assert v0.degree == 3, "Vertex v0 should have degree 3."
         assert len(v0.non_loop_edges) == 1, "Vertex v0 should have 1 non-loop edge."
         assert len(v0.adjacent_vertices) == 1, "Vertex v0 should have 1 adjacent vertex."
         adj_vertex = v0.adjacent_vertices.pop()
-        assert adj_vertex.key == "1", "Vertex v0 should be adjacent to vertex 1."
+        assert adj_vertex.label == "1", "Vertex v0 should be adjacent to vertex 1."
 
         v2 = g.add_vertex("2")
         e2 = g.add_edge(v1, v2, weight=1.5, parallel_edge_count=1, parallel_edge_weights=[3])
@@ -117,8 +117,8 @@ class TestUndirectedGraphs:
             v4 not in g
         ), "Graph should not contain isolated vertex v4 after deleting vertices with degree 0."
 
-        assert v0 in g, "Graph should contain vertex with key 0."
-        assert g.has_vertex(v0), "Graph should contain vertex with key 0."
+        assert v0 in g, "Graph should contain vertex with label 0."
+        assert g.has_vertex(v0), "Graph should contain vertex with label 0."
 
         edge00 = v0[0]  # Test accessor notation. Same as: g.get_edge(v0, v0)
         assert edge00.is_loop(), "Edge (0, 0) should be a loop."
@@ -350,6 +350,6 @@ def _build_parallel_weighted_graph(g: MultiGraph, v: List[Vertex]) -> MultiGraph
     # (3, 2, 1.9)
     g.add_edge(v[3], v[2], weight=1.9)
     # Isolated vertex
-    g.add_vertex(v[4].key)
+    g.add_vertex(v[4].label)
 
     return g

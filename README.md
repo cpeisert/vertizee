@@ -26,6 +26,8 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 set()
 >>> g['s'].edges_outgoing
 {<vertizee.classes.edge.DiEdge object at 0x7f9f35c4b070>, <vertizee.classes.edge.DiEdge object at 0x7f9f35bbc9d0>}
+>>> [str(edge) for edge in g['s'].edges_outgoing]
+['(s, t)', '(s, y)']
 >>> g['s']['y'].weight
 5.0
 >>> from vertizee.algorithms import shortest_paths_dijkstra
@@ -46,7 +48,7 @@ set()
 * Object-oriented API: vertices and edges are first-class objects
 * Graph theory greatest-hits including:
   * Breadth-first-search (BFS) and depth-first search (DFS)
-  * Cuts: Karger minimum cut
+  * Cuts: Karger and Karger-Stein algorithms
   * Shortest-paths: the Bellman-Ford algorithm and Dijkstra's algorithm
   * All-pairs-shortest paths: the Floyd-Warshall algorithm and Johnson's algorithm
   * Spanning trees: Kruskal's and Prim's algorithms
@@ -61,8 +63,7 @@ set()
 
 ## Installation
 
-You should install Vertizee in a [virtual environment](https://docs.python.org/3/library/venv.html)
-or a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html). If you're unfamiliar with Python virtual environments, check out the [user guide](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+For detailed instructions, see the [Installation documentation]().
 
 
 ### With pip
@@ -88,7 +89,7 @@ Vertizee documentation: https://cpeisert.github.io/vertizee
 | Notebook     |      Description      |   |
 |:----------|:-------------|------:|
 | [Getting Started](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb)  | How to create and work with graphs  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb) |
-| [Breadth-First and Depth-First Search](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/bfs_dfs.ipynb)  | BFS and DFS graph search and traversal  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/bfs_dfs.ipynb) |
+| [Breadth-First and Depth-First Search](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb)  | BFS and DFS graph search and traversal  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb) |
 | [Shortest paths](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb)  | Finding shortest paths and all-pairs shortest paths  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb) |
 | [Connected Components](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb)  | Finding strongly-connected components  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb) |
 

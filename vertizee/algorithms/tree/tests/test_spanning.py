@@ -21,6 +21,7 @@ from vertizee.algorithms.tree.spanning import spanning_tree_prim
 from vertizee.algorithms.tree.spanning import spanning_tree_prim_fibonacci
 from vertizee.classes.digraph import DiGraph
 from vertizee.classes.graph import Graph
+from vertizee.exception import GraphTypeNotSupported
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."
@@ -47,7 +48,7 @@ class TestSpanningTrees:
         g = DiGraph([("s", "t", 10), ("s", "y", 5), ("t", "y", 2)])
 
         # Kruskal algorithm does not work on directed graphs.
-        with pytest.raises(ValueError):
+        with pytest.raises(GraphTypeNotSupported):
             for _ in spanning_tree_kruskal(g):
                 pass
 

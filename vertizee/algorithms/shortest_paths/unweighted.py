@@ -14,46 +14,51 @@
 
 """Algorithms for calculating shortest paths for unweighted graphs."""
 
+from __future__ import annotations
 from collections import deque
-from typing import Set
+from typing import Set, TYPE_CHECKING
 
 from vertizee.classes.collections.vertex_dict import VertexDict
 from vertizee.classes.shortest_path import ShortestPath
-from vertizee.classes.graph_base import GraphBase
-from vertizee.classes.vertex import Vertex, VertexKeyType
+from vertizee.classes.vertex import Vertex
+
+if TYPE_CHECKING:
+    from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.vertex import VertexType
 
 INFINITY = float("inf")
 
 
 def breadth_first_search_shortest_paths(
-    graph: GraphBase, source: VertexKeyType, find_path_lengths_only: bool = True
-) -> VertexDict[ShortestPath]:
+    graph: "GraphBase", source: "VertexType", find_path_lengths_only: bool = True
+) -> "VertexDict[ShortestPath]":
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices.
 
+    Running time: :math:`O(|V| + |E|)`
+
     Unreachable vertices will have an empty list of vertices for their path and a length of
-    infinity (`math.inf`). In additional, `ShortestPath.is_unreachable` will return True.
+    infinity (``float("inf")``). In additional, ``ShortestPath.is_unreachable()`` will return True.
 
     Args:
-        graph (GraphBase): The graph to search.
-        source (VertexKeyType): The source vertex from which to find shortest paths to all other
+        graph: The graph to search.
+        source: The source vertex from which to find shortest paths to all other
             reachable vertices.
-        find_path_lengths_only(bool, optional): If True, only calculates the shortest path lengths,
+        find_path_lengths_only: Optional; If True, only calculates the shortest path lengths,
             but does not determine the actual vertex sequences comprising each path. To reconstruct
-            specific shortest paths, see `~shortest_path.reconstruct_path`. If set to False, then
-            the ShortestPath.path property will contain the sequence of vertices comprising the
-            shortest path. Defaults to True.
+            specific shortest paths, see :func:`vertizee.classes.shortest_path.reconstruct_path`.
+            If set to False, then the ``ShortestPath.path`` property will contain the sequence of
+            vertices comprising the shortest path. Defaults to True.
 
     Returns:
-        VertexDict[VertexKeyType, ShortestPath]: A dictionary mapping vertices to their shortest
-            paths and associated path lengths.
+        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths and
+        associated path lengths.
 
     See Also:
-        `~shortest_path.ShortestPath`
-        `~vertex_dict.VertexDict`
+        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
+        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
 
-    Example::
-
+    Example:
         >>> g = Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         >>> paths = breadth_first_search_shortest_paths(g, 0)

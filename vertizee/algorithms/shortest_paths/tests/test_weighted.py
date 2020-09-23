@@ -740,10 +740,10 @@ class TestWeightedSingleSourceShortestPaths:
             graph = v1._parent_graph
             if reverse_graph:
                 edge: EdgeType = graph[v2][v1]
-                edge_str = f"({v2.key}, {v1.key})"
+                edge_str = f"({v2.label}, {v1.label})"
             else:
                 edge: EdgeType = graph[v1][v2]
-                edge_str = f"({v1.key}, {v2.key})"
+                edge_str = f"({v1.label}, {v2.label})"
             if edge is None:
                 raise ValueError(f"graph does not have edge {edge_str}")
             if edge.attr.get(COLOR, "RED") == "BLUE":

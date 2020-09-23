@@ -37,9 +37,9 @@ class TestUnweighted:
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         paths: VertexDict[ShortestPath] = breadth_first_search_shortest_paths(g, 0)
 
-        assert len(paths) == 8, (
-            "Shortest paths dictionary should have length equal to number of vertices."
-        )
+        assert (
+            len(paths) == 8
+        ), "Shortest paths dictionary should have length equal to number of vertices."
         assert not paths[
             6
         ].is_destination_reachable(), "Vertex 6 should be unreachable from vertex 0."
