@@ -21,6 +21,8 @@ import itertools
 from typing import Callable, Dict, Generic, List, TypeVar, Union
 
 ITEM_REMOVED = "<item-removed>"
+
+#:Type variable for values in a generic PriorityQueue data structure.
 T = TypeVar("T")
 
 

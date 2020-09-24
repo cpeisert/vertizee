@@ -22,6 +22,8 @@ import math
 from typing import Callable, Dict, Generic, Optional, Set, TypeVar, Union
 
 NEG_INFINITY = float("-inf")
+
+#:Type variable for values in a generic FibonacciHeap data structure.
 T = TypeVar("T")
 
 

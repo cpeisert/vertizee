@@ -20,6 +20,7 @@ disjoint, dynamic sets."""
 from collections import defaultdict
 from typing import Dict, Generic, Iterator, Set, TypeVar
 
+#:Type variable for values in a generic UnionFind data structure.
 T = TypeVar("T")
 
 
@@ -27,7 +28,7 @@ class UnionFind(Generic[T]):
     """Union-find data structure (a.k.a. disjoint-set data structure) for maintaining a collection
     of disjoint, dynamic sets.
 
-    The dynamic sets are comprised of objects of generic type 'T'.
+    The dynamic sets are comprised of objects of generic type :class:`T`.
     IMPORTANT: The objects stored in UnionFind must be hashable.
 
     **Traditional operations:**

@@ -23,6 +23,7 @@ from vertizee.classes.vertex import Vertex
 if TYPE_CHECKING:
     from vertizee.classes.vertex import VertexType
 
+#:Type variable for values in a generic VertexDict.
 VT = TypeVar("VT")
 
 

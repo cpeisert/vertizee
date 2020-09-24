@@ -17,7 +17,7 @@
 from __future__ import annotations
 from typing import Callable, Dict, Generic, List, TypeVar, Union
 
-
+#:Type variable for values in a generic BKTree data structure.
 T = TypeVar("T")
 
 GC_DEFAULT_THRESHOLD = 0.3  # % of deleted nodes relative to tree size prior to garbage collection

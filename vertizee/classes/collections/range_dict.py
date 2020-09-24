@@ -19,7 +19,10 @@
 import bisect
 from typing import Any, List, MutableMapping, Optional, TypeVar, Union
 
+#:TypeVar("KT"): Type variable for keys in a generic RangeDict data structure.
 KT = TypeVar("KT")
+
+#:TypeVar("VT"): Type variable for values in a generic RangeDict data structure.
 VT = TypeVar("VT")
 
 

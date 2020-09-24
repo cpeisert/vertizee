@@ -20,10 +20,10 @@ Features
 * Input/output routines for reading and writing unweighted and weighted graphs
 * Data structures:
 
-  * `BK Tree <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/bk_tree.py>`_
-  * `Fibonacci Heap <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/fibonacci_heap.py>`_
-  * `Priority Queue <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/priority_queue.py>`_
-  * `Union Find (a.k.a. Disjoint Set) <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/union_find.py>`_
+  * :doc:`api/classes/bk_tree`
+  * :doc:`api/classes/fibonacci_heap`
+  * :doc:`api/classes/priority_queue`
+  * :doc:`api/classes/union_find`
 
 
 Python
@@ -52,9 +52,10 @@ Roughgarden's excellent series *Algorithms Illuminated*, many of the Vertizee im
 are based on the modern-classic
 *Introduction to Algorithms: Third Edition* by Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
 The `NetworkX <https://networkx.github.io/>`_ library was used as a template for the package
-structure and inspired many ideas for improved algorithms and documentation.
+structure and inspired many ideas for improved documentation and algorithms.
 
 
+=======================
 Documentation
 =======================
 
