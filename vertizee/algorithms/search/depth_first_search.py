@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms depth-first graph search."""
+"""Algorithms for depth-first graph search."""
 
 from __future__ import annotations
 from typing import Iterator, List, Optional, Set, Tuple, TYPE_CHECKING

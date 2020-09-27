@@ -21,8 +21,8 @@ See Also:
       <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson>`
     * :func:`all_pairs_shortest_paths_johnson_fibonacci
       <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson_fibonacci>`
-    * :func:`breadth_first_search_shortest_paths
-      <vertizee.algorithms.shortest_paths.unweighted.breadth_first_search_shortest_paths>`
+    * :func:`shortest_paths_breadth_first_search
+      <vertizee.algorithms.shortest_paths.unweighted.shortest_paths_breadth_first_search>`
     * :func:`shortest_paths_bellman_ford
       <vertizee.algorithms.shortest_paths.weighted.shortest_paths_bellman_ford>`
     * :func:`shortest_paths_dijkstra
@@ -177,7 +177,7 @@ class ShortestPath:
         source: Vertex,
         destination: Vertex,
         initial_length: float = INFINITY,
-        store_full_paths: bool = False,
+        save_paths: bool = False,
         add_initial_s_d_edge: bool = True,
     ):
         if source is None:
@@ -190,7 +190,7 @@ class ShortestPath:
         self._edge_count: int = 0
         self._length: float = initial_length
         self._predecessor: Vertex = None
-        self._store_full_path = store_full_paths
+        self._store_full_path = save_paths
 
         if self._store_full_path:
             self._path: List[Vertex] = [self.source]
@@ -222,10 +222,10 @@ class ShortestPath:
 
     @property
     def path(self) -> List[Vertex]:
-        """The list of vertices comprising the path (only set if ``store_full_paths`` is
+        """The list of vertices comprising the path (only set if ``save_paths`` is
         initialized to True).
 
-        If ``store_full_paths`` was set to False upon initialization (the default), then this list
+        If ``save_paths`` was set to False upon initialization (the default), then this list
         will always be empty. However, the path can be calculated using the function
         :func:`reconstruct_path`.
 

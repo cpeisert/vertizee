@@ -19,7 +19,7 @@ import pytest
 from vertizee.classes.collections.vertex_dict import VertexDict
 from vertizee.classes.graph import Graph
 from vertizee.algorithms.shortest_paths.unweighted import (
-    breadth_first_search_shortest_paths,
+    shortest_paths_breadth_first_search,
     ShortestPath,
 )
 
@@ -35,7 +35,7 @@ class TestUnweighted:
     def test_shortest_paths(self):
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        paths: VertexDict[ShortestPath] = breadth_first_search_shortest_paths(g, 0)
+        paths: VertexDict[ShortestPath] = shortest_paths_breadth_first_search(g, 0)
 
         assert (
             len(paths) == 8

@@ -42,6 +42,7 @@ var/
 !.vscode/extensions.json
 
 # misc
+spell_check_local.py
 .coverage
 /.sass-cache
 /connect.lock

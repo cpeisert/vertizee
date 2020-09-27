@@ -110,7 +110,8 @@ class Edge:
     ):
         if create_key != Edge._create_key:
             raise ValueError(
-                f"{self._runtime_type()} objects must be initialized using " "`_create`."
+                f"{self._runtime_type()} objects should be created using method "
+                "GraphBase.add_edge(); do not use __init__"
             )
 
         # IMPORTANT: _vertex1 and _vertex2 are used in Edge.__hash__, and must therefore be
@@ -188,16 +189,22 @@ class Edge:
 
         return hash((self.vertex1, self.vertex2))
 
+    def __repr__(self):
+        return self.__str__()
+
     def __str__(self):
         directed_graph = self.vertex1._parent_graph.is_directed_graph()
         if directed_graph:
-            return f"({self.vertex1.label}, {self.vertex2.label})"
+            edge_str = f"({self.vertex1.label}, {self.vertex2.label})"
+        else:
+            # undirected edge
+            if self.vertex1.label > self.vertex2.label:
+                edge_str = f"({self.vertex2.label}, {self.vertex1.label})"
+            else:
+                edge_str = f"({self.vertex1.label}, {self.vertex2.label})"
 
-        # undirected edge
-        if self.vertex1.label > self.vertex2.label:
-            return f"({self.vertex2.label}, {self.vertex1.label})"
-
-        return f"({self.vertex1.label}, {self.vertex2.label})"
+        edges = [edge_str for _ in range(self.parallel_edge_count + 1)]
+        return ", ".join(edges)
 
     def is_loop(self) -> bool:
         """Returns True if this edge is a loop back to itself."""

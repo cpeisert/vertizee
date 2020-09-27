@@ -8,7 +8,7 @@ from vertizee.algorithms.search.depth_first_search import (
     dfs_postorder_traversal,
     dfs_labeled_edge_traversal,
 )
-from vertizee.algorithms.shortest_paths.unweighted import breadth_first_search_shortest_paths
+from vertizee.algorithms.shortest_paths.unweighted import shortest_paths_breadth_first_search
 from vertizee.algorithms.shortest_paths.weighted import (
     shortest_paths_bellman_ford,
     shortest_paths_dijkstra,

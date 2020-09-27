@@ -10,12 +10,20 @@ Features
 * Object-oriented API: vertices and edges are first-class objects
 * Graph theory greatest-hits including:
 
-  * Breadth-first-search (BFS) and depth-first search (DFS)
-  * Cuts: Karger minimum cut
-  * All-pairs-shortest paths: the Floyd-Warshall algorithm and Johnson's algorithm
-  * Shortest-paths: the Bellman-Ford algorithm and Dijkstra's algorithm
-  * Spanning trees: Kruskal's and Prim's algorithms
-  * Strongly-connected components: Kosaraju's algorithm
+  * :doc:`Breadth-first-search (BFS) and depth-first search (DFS) <api/algorithms/search>`
+  * :doc:`Karger and Karger-Stein minimum cuts <api/algorithms/cuts>`
+  * All-pairs-shortest paths: the :func:`Floyd-Warshall algorithm
+    <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_floyd_warshall>` and
+    :func:`Johnson's algorithm
+    <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson>`
+  * Shortest-paths: the :func:`Bellman-Ford algorithm
+    <vertizee.algorithms.shortest_paths.weighted.shortest_paths_bellman_ford>` and :func:`Dijkstra's
+    algorithm <vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra>`
+  * Spanning trees: :func:`Kruskal's algorithm
+    <vertizee.algorithms.tree.spanning.spanning_tree_kruskal>` and :func:`Prim's algorithm
+    <vertizee.algorithms.tree.spanning.spanning_tree_prim>`
+  * Strongly-connected components: :func:`Kosaraju's algorithm
+    <vertizee.algorithms.components.strongly_connected.kosaraju_strongly_connected_components>`
 
 * Input/output routines for reading and writing unweighted and weighted graphs
 * Data structures:

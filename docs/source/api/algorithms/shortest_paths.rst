@@ -6,7 +6,7 @@ Shortest Paths
 Tutorial
 ========
 
-:doc:`../../tutorials/shortest_paths`
+:doc:`Shortest Paths Tutorial <../../tutorials/shortest_paths>`
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb

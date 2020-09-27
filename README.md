@@ -25,13 +25,14 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 >>> g['s'].edges_incoming
 set()
 >>> g['s'].edges_outgoing
-{<vertizee.classes.edge.DiEdge object at 0x7f9f35c4b070>, <vertizee.classes.edge.DiEdge object at 0x7f9f35bbc9d0>}
->>> [str(edge) for edge in g['s'].edges_outgoing]
-['(s, t)', '(s, y)']
+{(s, t), (s, y)}
 >>> g['s']['y'].weight
 5.0
 >>> from vertizee.algorithms import shortest_paths_dijkstra
->>> s_paths: vz.VertexDict[vz.ShortestPath] = shortest_paths_dijkstra(g, source='s', find_path_lengths_only=False)
+>>> # `s_paths` is a dictionary mapping vertices to ShortestPath objects. In
+>>> # this case, the ShortestPath objects contain information about shortest
+>>> # paths from source vertex `s` to all other vertices in the graph.
+>>> s_paths: vz.VertexDict[vz.ShortestPath] = shortest_paths_dijkstra(g, source='s', save_paths=True)
 >>> s_paths['t'].path
 [s, y, t]
 >>> s_paths['t'].length
@@ -55,10 +56,10 @@ set()
   * Strongly-connected components: Kosaraju's algorithm
 * Input/output routines for reading and writing unweighted and weighted graphs
 * Data structures:
-  * BK Tree ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/bk_tree.py))
-  * Fibonacci Heap ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/fibonacci_heap.py))
-  * Priority Queue ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/priority_queue.py))
-  * Union Find (a.k.a. Disjoint Set) ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/union_find.py))
+  * BK Tree
+  * Fibonacci Heap
+  * Priority Queue
+  * Union Find (a.k.a. Disjoint Set)
 
 
 ## Installation
@@ -83,6 +84,8 @@ conda install --channel conda-forge vertizee
 
 Vertizee documentation: https://cpeisert.github.io/vertizee
 
+
+# TODO(cpeisert): Update tutorial hyperlinks to online documentation.
 
 ## Tutorials
 

@@ -48,8 +48,7 @@ from typing import Iterable, List, Optional, Set, Tuple, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
-    from vertizee.classes.edge import Edge
-    from vertizee.classes.vertex import Vertex
+    from vertizee.classes.edge import EdgeType
     from vertizee.classes.vertex import VertexType
 
 # Type aliases
@@ -57,7 +56,7 @@ EdgeWeight = float
 EdgeVertexPair = Tuple["VertexType", "VertexType"]
 EdgeTupleWeighted = Tuple["VertexType", "VertexType", EdgeWeight]
 EdgeTuple = Union[EdgeVertexPair, EdgeTupleWeighted]
-GraphPrimitiveTerminal = Union["Edge", EdgeTuple, "Vertex", "VertexType"]
+GraphPrimitiveTerminal = Union["EdgeType", EdgeTuple, "VertexType"]
 GraphPrimitive = Union[GraphPrimitiveTerminal, Iterable[GraphPrimitiveTerminal]]
 
 

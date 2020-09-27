@@ -29,11 +29,11 @@ if TYPE_CHECKING:
 INFINITY = float("inf")
 
 
-def breadth_first_search_shortest_paths(
-    graph: "GraphBase", source: "VertexType", find_path_lengths_only: bool = True
+def shortest_paths_breadth_first_search(
+    graph: "GraphBase", source: "VertexType", save_paths: bool = False
 ) -> "VertexDict[ShortestPath]":
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices.
+    vertices in an unweighted graph.
 
     Running time: :math:`O(|V| + |E|)`
 
@@ -42,17 +42,14 @@ def breadth_first_search_shortest_paths(
 
     Args:
         graph: The graph to search.
-        source: The source vertex from which to find shortest paths to all other
-            reachable vertices.
-        find_path_lengths_only: Optional; If True, only calculates the shortest path lengths,
-            but does not determine the actual vertex sequences comprising each path. To reconstruct
-            specific shortest paths, see :func:`vertizee.classes.shortest_path.reconstruct_path`.
-            If set to False, then the ``ShortestPath.path`` property will contain the sequence of
-            vertices comprising the shortest path. Defaults to True.
+        source: The source vertex from which to find shortest paths to all other reachable vertices.
+        save_paths: Optional; If True, saves the actual vertex sequences comprising each
+            path. To reconstruct specific shortest paths, see
+            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
 
     Returns:
-        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths and
-        associated path lengths.
+        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
+        the ``source`` vertex.
 
     See Also:
         * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
@@ -61,7 +58,7 @@ def breadth_first_search_shortest_paths(
     Example:
         >>> g = Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        >>> paths = breadth_first_search_shortest_paths(g, 0)
+        >>> paths = shortest_paths_breadth_first_search(g, 0)
         >>> paths[4].path
         [0, 1, 3, 4]
         >>> paths[4].length
@@ -75,10 +72,9 @@ def breadth_first_search_shortest_paths(
     if s is None:
         raise ValueError("source vertex was not found in the graph")
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
-    store_paths = not find_path_lengths_only
 
     for v in graph:
-        vertex_path = ShortestPath(s, v, initial_length=INFINITY, store_full_paths=store_paths)
+        vertex_path = ShortestPath(s, v, initial_length=INFINITY, save_paths=save_paths)
         vertex_to_path_map[v] = vertex_path
     vertex_to_path_map[s].reinitialize(initial_length=0)
 

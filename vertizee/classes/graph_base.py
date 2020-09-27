@@ -569,7 +569,8 @@ class GraphBase:
 
         For example, if ``args`` specifies vertices :math:`u` and :math:`w`, then if there are two
         parallel edges between :math:`(u, w)`, only one of the parallel edges will be removed. For
-        edges without parallel edges, this method is the same as :meth:`remove_all_edges_from`.
+        edge objects without parallel edges, this method is the same as
+        :meth:`remove_all_edges_from`.
 
         Args:
             *args: Graph primitives specifying edges from which exactly one edge will be removed.

@@ -69,11 +69,14 @@ class Vertex:
         graph.add_vertex(1)
         graph.add_vertex("1")
 
-    Vertices may be retrieved by specifying labels as either strings or integers. For example,
-    the following statements are equivalent and return the :class:`Vertex` object with label "1"::
+    Vertices may be referenced by specifying labels as either strings or integers  (if the label
+    represents an integer), or by using a `Vertex` object directly. For example, the following
+    statements are equivalent and return the :class:`Vertex` object with label "1"::
 
+        one = graph.add_vertex(1)
         graph[1]
         graph["1"]
+        graph[one]
 
     To ensure the integrity of the graph, vertices should never be instantiated directly.
     Attempting to construct a vertex using its ``__init__`` method will raise an error. Instead,
@@ -92,16 +95,19 @@ class Vertex:
     """
 
     # Limit initialization to protected method `_create`.
-    __create_label = object()
+    __create_key = object()
 
     @classmethod
     def _create(cls, label: Union[int, str], parent_graph: GraphBase) -> "Vertex":
         """Initializes a new Vertex object."""
-        return Vertex(cls.__create_label, label, parent_graph)
+        return Vertex(cls.__create_key, label, parent_graph)
 
-    def __init__(self, create_label, label: Union[int, str], parent_graph: GraphBase):
-        if create_label != Vertex.__create_label:
-            raise ValueError("must initialize using `_create`; do not use `__init__`")
+    def __init__(self, create_key, label: Union[int, str], parent_graph: GraphBase):
+        if create_key != Vertex.__create_key:
+            raise ValueError(
+                f"{self._runtime_type()} objects should be created using method "
+                "GraphBase.add_vertex(); do not use __init__"
+            )
         self._label = str(label)
 
         self.attr: dict = {}
@@ -181,7 +187,7 @@ class Vertex:
 
     def __str__(self):
         return f"{self.label}"
-        # return f'{self._runtime_type()} {{{self.label}}} with {self._edges}'
+        # return f"{self._runtime_type()} {{{self.label}}} with {self._edges}"
 
     @property
     def adjacent_vertices(self) -> Set["Vertex"]:
@@ -268,10 +274,11 @@ class Vertex:
         """Retrieves edge incident to this vertex by specifying a second vertex in ``args``.
 
         Args:
-            *args: Any combination of graph primitives yielding a vertex of an incident edge.
+            *args: Any combination of graph primitives yielding an incident vertex.
 
         Returns:
-            EdgeType: The edge specified by this vertex and ``args``.
+            EdgeType: The edge specified by this vertex and ``args``, or None if no such edge
+            exists.
 
         See Also:
             :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
@@ -437,6 +444,9 @@ class IncidentEdges:
     def __iter__(self):
         return iter(self._edges.values())
 
+    def __repr__(self):
+        return self.__str__()
+
     def __str__(self):
         str_edges = ", ".join(self._edges.keys())
         return f"IncidentEdges: {{{str_edges}}}"
@@ -459,7 +469,7 @@ class IncidentEdges:
             )
 
         edge_label = _create_edge_label(
-            edge.vertex1.label, edge.vertex2.label, self._parent_graph._is_directed_graph
+            edge.vertex1.label, edge.vertex2.label, self._parent_graph.is_directed_graph()
         )
         if edge.vertex1 == edge.vertex2:
             self._loops = edge
@@ -477,7 +487,7 @@ class IncidentEdges:
         self._edges[edge_label] = edge
         self._adj_vertices.add(adj_vertex)
 
-        if self._parent_graph._is_directed_graph:
+        if self._parent_graph.is_directed_graph():
             if is_outgoing_edge:
                 self._outgoing.add(edge)
                 self._adj_vertices_outgoing.add(adj_vertex)
@@ -525,7 +535,7 @@ class IncidentEdges:
             return None
 
         edge_label = _create_edge_label(
-            edge_tuple[0], edge_tuple[1], self._parent_graph._is_directed_graph
+            edge_tuple[0], edge_tuple[1], self._parent_graph.is_directed_graph()
         )
         if edge_label in self._edges:
             return self._edges[edge_label]
