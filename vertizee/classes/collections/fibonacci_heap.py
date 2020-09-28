@@ -17,10 +17,13 @@ function."""
 
 # pytype: disable=not-supported-yet
 
+from __future__ import annotations
 import math
 from typing import Callable, Dict, Generic, Optional, Set, TypeVar, Union
 
 NEG_INFINITY = float("-inf")
+
+#:Type variable for values in a generic FibonacciHeap data structure.
 T = TypeVar("T")
 
 
@@ -34,6 +37,7 @@ class _FibonacciNode(Generic[T]):
 
     @property
     def degree(self) -> int:
+        """Returns the degree of the node, which is the number of children it has."""
         return len(self.children)
 
 
@@ -42,33 +46,37 @@ class FibonacciHeap(Generic[T]):
     greater than or equal to the priority of its parent, where priorities are defined by a priority
     function.
 
-    The priority function accepts an item of generic type 'T' and returns a numeric priority
+    The priority function accepts an item of generic type ``T`` and returns a numeric priority
     (int or float). The default is the identity function (i.e. returns its argument), which is
     suitable for heaps of floats or integers.
 
-    IMPORTANT: Items stored in this FibonacciHeap implementation must be hashable.
+    Note:
+        Items stored in the heap must be hashable.
 
-    The Fibonacci heap asymptotic performance compares to a binary heap as follows:
+    The Fibonacci heap asymptotic performance compares to a binary heap as follows::
 
-                  | Binary heap  | Fibonacci heap
-    Procedure     | (worst-case) | (amortized)
-    ---------------------------------------------
-    MAKE-HEAP     | Θ(1)         | Θ(1)
-    INSERT        | Θ(lg n)      | Θ(1)
-    MINIMUM       | Θ(1)         | Θ(1)
-    EXTRACT-MIN   | Θ(lg n)      | Θ(lg n)
-    UNION         | Θ(n)         | Θ(1)
-    DECREASE-KEY  | Θ(lg n)      | Θ(1)
-    DELETE        | Θ(lg n)      | Θ(lg n)
+                    | Binary heap  | Fibonacci heap
+      Procedure     | (worst-case) | (amortized)
+      ---------------------------------------------
+      MAKE-HEAP     | Θ(1)         | Θ(1)
+      INSERT        | Θ(lg n)      | Θ(1)
+      MINIMUM       | Θ(1)         | Θ(1)
+      EXTRACT-MIN   | Θ(lg n)      | Θ(lg n)
+      UNION         | Θ(n)         | Θ(1)
+      DECREASE-KEY  | Θ(lg n)      | Θ(1)
+      DELETE        | Θ(lg n)      | Θ(lg n)
+
+    Note:
+        This implementation is based on *Introduction to Algorithms: Third Edition* [CLRS2009_8]_
+        and the original paper :download:`"Fibonacci heaps and their uses in improved network
+        optimization algorithms." </references/Fibonacci-Heap-Tarjan.pdf>` [FT1987]_
 
     Args:
-        priority_function (Callable[[T], Union[float, int]], optional): The item/node priority
-            function. If omitted, the identity function is used (i.e. returns its argument). If
-            type `T` is not float or integer, then a priority function must be provided to ensure
-            correct operation of the heap. Defaults to None.
+        priority_function: The item/node priority function. If omitted, the identity function is
+            used (i.e. returns its argument). If type ``T`` is not float or integer, then a priority
+            function must be provided to ensure correct operation of the heap. Defaults to None.
 
-    Example::
-
+    Example:
         >>> fh: FibonacciHeap[int] = FibonacciHeap()
         >>> for i in range(10): fh.insert(i)
         >>> fh.minimum
@@ -91,17 +99,19 @@ class FibonacciHeap(Generic[T]):
         18
 
     References:
-        [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-            Introduction to Algorithms: Third Edition, pages 505-526. The MIT Press, 2009.
-        [2] Fredman, Michael Lawrence; Tarjan, Robert E. (July 1987) "Fibonacci heaps and their
-            uses in improved network optimization algorithms." Journal of the Association of
-            Computing Machinery, pages 596-615.
+     .. [CLRS2009_8] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+                     Introduction to Algorithms: Third Edition, pages 505-526. The MIT Press, 2009.
+
+     .. [FT1987] Fredman, Michael Lawrence; Tarjan, Robert E. (July 1987)
+                 :download:`"Fibonacci heaps and their uses in improved network optimization
+                 algorithms." </references/Fibonacci-Heap-Tarjan.pdf>` Journal of the Association of
+                 Computing Machinery, pages 596-615.
     """
 
     def __init__(self, priority_function: Callable[[T], Union[float, int]] = None):
         self._item_to_node: Dict[T, _FibonacciNode[T]] = dict()
         """Maintain a mapping between items and their _FibonacciNode wrappers to facilitate
-        efficient DECREASE-KEY operation (see `update_item_with_decreased_priority`)."""
+        efficient DECREASE-KEY operation (see :meth:`update_item_with_decreased_priority`)."""
 
         self._length = 0
         self._min: _FibonacciNode[T] = None
@@ -115,6 +125,11 @@ class FibonacciHeap(Generic[T]):
         return self._length
 
     def delete(self, item: T):
+        """Deletes the specified item from the heap.
+
+        Args:
+            item: The item to delete.
+        """
         self.update_item_with_decreased_priority(item, NEG_INFINITY)
         self.extract_min()
 
@@ -148,13 +163,14 @@ class FibonacciHeap(Generic[T]):
 
     @property
     def minimum(self) -> Optional[T]:
+        """Returns the minimum item from the heap, or ``None`` if the heap is empty."""
         if self._min is not None:
             return self._min.item
         else:
             return None
 
     def union(self, other: "FibonacciHeap"):
-        """Merge `other` Fibonacci heap into this heap."""
+        """Merge ``other`` Fibonacci heap into this heap."""
         self._roots.update(other._roots)
         if self._min is None or (
             other._min is not None and other._min.priority < self._min.priority
@@ -163,18 +179,19 @@ class FibonacciHeap(Generic[T]):
         self._length += other._length
 
     def update_item_with_decreased_priority(self, item: T, priority: float = None):
-        """If the result of `priority_function(item)` is a lower priority than when item was
+        """If the result of ``priority_function(item)`` is a lower priority than when item was
         first inserted into the heap, then this method must be called in order to update the item's
         position in the data structure.
 
-        Item priorities are only allowed to decrease.
+        Note:
+            Item priorities are only allowed to decrease.
 
-        In the literature, this operation is called: "decrease key" or FIB-HEAP-DECREASE-KEY.
+        In the literature, this operation is called: **decrease key** or **FIB-HEAP-DECREASE-KEY**.
 
         Args:
-            item (T): The item whose priority has decreased.
-            priority (float, optional): The new priority for the item. By default, the
-                `priority_function` is used to get the new priority value. Defaults to None.
+            item: The item whose priority has decreased.
+            priority: Optional; The new priority for the item. By default, the
+                ``priority_function`` is used to get the new priority value. Defaults to None.
         """
         if priority is not None:
             new_priority = priority
@@ -206,6 +223,7 @@ class FibonacciHeap(Generic[T]):
         """Consolidate the root list.
 
         Consolidation works as follows:
+
             * Find any two trees with roots of the same degree (i.e. the same number of
                 children) and link them together. The new root has degree one greater than before.
             * Once there are no two trees with roots of the same degree, find the root with

@@ -7,6 +7,9 @@ Contributor Guide
 Before diving into contribution development, be sure to review the :doc:`Contributor Introduction <contributor_intro>`.
 
  - `Development Workflow`_
+     - `First-time contributor`_
+     - `Develop your contribution, including appropriate test cases`_
+     - `Format and Test your contribution`_
  - `Submission Guidelines`_
  - `Coding Rules`_
  - `Commit Message Format`_
@@ -15,7 +18,8 @@ Before diving into contribution development, be sure to review the :doc:`Contrib
 Development Workflow
 ================================
 
-1. **If you are a first-time contributor:**
+First-time contributor
+----------------------
 
  * Go to the `Vertizee repository <https://github.com/cpeisert/vertizee>`_ and click the
    "fork" button to create your own copy of the project.
@@ -37,7 +41,7 @@ Development Workflow
    Here are instructions for two popular environment managers: **Pip** and **Anaconda**.
 
 
- * **Pip Build Environment: ``venv``**
+   **Pip Build Environment: venv**
 
    * Create a virtualenv named ``vertizee-dev`` that lives in the directory of the same name::
 
@@ -60,9 +64,9 @@ Development Workflow
       PYTHONPATH=. pytest vertizee
 
 
- * **Anaconda Build Environment: ``conda``**
+   **Anaconda Build Environment: conda**
 
-   * Create a conda named ``vertizee-dev``::
+   * Create a conda environment named ``vertizee-dev``::
 
       conda create --name vertizee-dev
 
@@ -73,6 +77,7 @@ Development Workflow
    * Install main development and runtime dependencies of vertizee::
 
        conda install -c conda-forge `for i in requirements/{default,docs,test}.txt; do echo -n " --file $i "; done`
+       conda install pip
        pip install -r requirements/developer.txt
 
    * Build and install vertizee from source::
@@ -94,7 +99,8 @@ Development Workflow
 
      pytype --config pytype.cfg
 
-2. **Develop your contribution, including appropriate test cases:**
+Develop your contribution, including appropriate test cases
+-----------------------------------------------------------
 
    * Pull the latest changes from upstream::
 
@@ -111,7 +117,16 @@ Development Workflow
 
    * Follow our :ref:`Coding Rules <section-coding-rules>` and :ref:`Commit Message Format <section-commit-message_format>`.
 
-3. **Test your contribution:**
+Format and Test your contribution
+---------------------------------
+
+   * Run Black to ensure consistent formatting::
+
+      black vertizee
+
+   * Run pylint::
+
+      pylint vertizee
 
    * Run the test suite locally (see `Testing`_ for details)::
 
@@ -254,9 +269,9 @@ Commit Message Header
     │       │             │
     │       │             └─⫸ summary in present tense; not capitalized; no period at the end
     │       │
-    │       └─⫸ Commit Scope: classes|algorithms|io|changelog|dev-infra
+    │       └─⫸ Commit Scope: classes|algorithms|io|release-log|dev-infra
     │
-    └─⫸ Commit Type: build|ci|docs|feat|fix|perf|refactor|style|test
+    └─⫸ Commit Type: docs|feat|fix|perf|refactor|test
 
 
 The ``<type>`` and ``<summary>`` fields are mandatory, the ``(<scope>)`` field is optional.
@@ -278,9 +293,7 @@ Must be one of the following:
 Scope
 ----------------
 
-The scope should be the name of the package affected.
-
-The following is the list of supported scopes:
+The scope should be the name of the package affected. The following is the list of supported scopes:
 
 * ``classes``
 * ``algorithms``
@@ -288,7 +301,7 @@ The following is the list of supported scopes:
 
 There are currently a few exceptions to the "use package name" rule:
 
-* ``releaselog``: used for updating the release notes in RELEASE_LOG.rst
+* ``release-log``: used for updating the release notes in RELEASE_LOG.rst
 
 * ``dev-infra``: used for development infrastructure related changes such as updating pylintrc or setup.py
 
@@ -389,10 +402,10 @@ To measure the test coverage, run::
 This will print a report with one line for each file in Vertizee,
 detailing the test coverage::
 
-Name                                                   Stmts   Miss Branch BrPart  Cover
-----------------------------------------------------------------------------------------
-vertizee/__init__.py                                      12      0      0      0   100%
-vertizee/algorithms/__init__.py                            5      0      0      0   100%
-vertizee/algorithms/components/strongly_connected.py      38      1     18      2    95%
-vertizee/algorithms/search/depth_first_search.py         178      4     76      9    95%
+  Name                                                   Stmts   Miss Branch BrPart  Cover
+  ----------------------------------------------------------------------------------------
+  vertizee/__init__.py                                      12      0      0      0   100%
+  vertizee/algorithms/__init__.py                            5      0      0      0   100%
+  vertizee/algorithms/components/strongly_connected.py      38      1     18      2    95%
+  vertizee/algorithms/search/depth_first_search.py         178      4     76      9    95%
   ...

@@ -1,5 +1,5 @@
 ============================================================================
-Vertex
+Priority Queue
 ============================================================================
 
-.. automodule:: vertizee.classes.vertex
+.. automodule:: vertizee.classes.collections.priority_queue

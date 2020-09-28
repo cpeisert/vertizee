@@ -14,8 +14,10 @@
 
 """Burkhard-Keller tree data structure."""
 
+from __future__ import annotations
 from typing import Callable, Dict, Generic, List, TypeVar, Union
 
+#:Type variable for values in a generic BKTree data structure.
 T = TypeVar("T")
 
 GC_DEFAULT_THRESHOLD = 0.3  # % of deleted nodes relative to tree size prior to garbage collection
@@ -24,19 +26,23 @@ GC_MIN_TREE_SIZE = 1000  # minimum tree size required before performing garbage 
 
 # TODO(cpeisert): redesign so that internal nodes are not exposed to the end user.
 class BKNode(Generic[T]):
-    def __init__(self, key_value: T):
-        """Initializes a BK tree node.
+    """A BK-tree node.
 
-        Args:
-            key_value (T): the value associated with the node used for calculating distances
-                between other nodes in the metric space.
-        """
+    Args:
+        key_value (:class:`T`): the value associated with the node used for calculating distances
+            between other nodes in the metric space.
+
+    Attributes:
+        key_value (:class:`T`): The value associated with the node used for calculating distances between other
+            nodes in the metric space.
+        children: Dictionary where the keys are the non-negative integer distances between this
+            node and child nodes and the values are the child nodes.
+    """
+
+    def __init__(self, key_value: T):
         self._deleted = False
         self.key_value: T = key_value
-
         self.children: Dict[int, BKNode] = {}
-        """Dictionary where the keys are the non-negative integer distances between this node and
-        child nodes and the values are the child nodes."""
 
     def __contains__(self, distance: int) -> bool:
         return distance in self.children
@@ -47,6 +53,8 @@ class BKNode(Generic[T]):
         return self.key_value == other.key_value
 
     def __getitem__(self, distance: int) -> "BKNode":
+        """Support index accessor notation to retrieve child node based on its distance from this
+        node."""
         return self.children[distance]
 
     def __hash__(self):
@@ -69,16 +77,16 @@ class BKNode(Generic[T]):
 
 
 class BKNodeLabeled(BKNode[T]):
-    def __init__(self, key_value: T, key_label: str):
-        """Initializes a labeled BK tree node, where each node has a unique string label as well
-        as a value used to calculate the distance between other nodes in the metric space.
+    """A labeled BK tree node, where each node has a unique string label as well as a value used
+    to calculate the distance between other nodes in the metric space.
 
-        Args:
-            key_value (T): the value associated with the node used for calculating distances
-                between other nodes in the metric space.
-            key_label (str): a string representing the node name (e.g. the name of a vertex in a
-                graph).
-        """
+    Attributes:
+        key_value (:class:`T`): The value associated with the node used for calculating distances
+            between other nodes in the metric space.
+        key_label: A string representing the node name (e.g. the name of a vertex in a graph).
+    """
+
+    def __init__(self, key_value: T, key_label: str):
         if key_label is None:
             raise KeyError("key_label was None")
         self.key_label: str = str(key_label)
@@ -90,6 +98,8 @@ class BKNodeLabeled(BKNode[T]):
         return self.key_label == other.key_label
 
     def __getitem__(self, distance: int) -> "BKNodeLabeled":
+        """Support index accessor notation to retrieve child node based on its distance from this
+        node."""
         return self.children[distance]
 
     def __hash__(self):
@@ -108,29 +118,44 @@ class BKNodeLabeled(BKNode[T]):
 class BKTree(Generic[T]):
     """A Burkhard-Keller tree data structure.
 
-    A BKTree is designed to perform efficient key queries that determine all keys in the tree that
-    are closest to the query key as defined by some distance function d. The distance function is
-    the "metric" that defines the metric space over the set of possible keys K.
+    A BK-tree is designed to perform efficient key queries that determine all keys in the tree that
+    are closest to the query key as defined by some distance function :math:`d`. The distance
+    function is the "metric" that defines the metric space over the set of possible keys :math:`K`.
 
     The distance function (metric) must satisfy the following properties:
-        - for every x, y in K, d(x, y) = 0 <==> x = y           [identity of indiscernibles]
-        - for every x, y in K, d(x, y) = d(y, x)                [symmetry]
-        - for every x, y, z in K, d(x, z) <= d(x, y) + d(y, z)  [triangle inequality]
+
+        - :math:`\\forall{x,\\ y} \\in K,\\ d(x,\\ y) = 0 \\Longleftrightarrow x = y`
+          |emsp| [identity of indiscernibles]
+        - :math:`\\forall{x,\\ y} \\in K,\\ d(x,\\ y) =\\ d(y,\\ x)` |emsp| [symmetry]
+        - :math:`\\forall{x,\\ y,\\ z} \\in K,\\ d(x,\\ z) \\leq d(x,\\ y) + d(y,\\ z)`
+          |emsp| [triangle inequality]
 
     This implementation supports deletion through marking nodes deleted and then performing
     garbage collection once a minimum threshold is reached.
 
+    Note:
+        This data structure is based on the original paper
+        :download:`"Some approaches to best-match file searching."
+        </references/Burkhard-Keller_BK-Trees.pdf>` by Burkhard and Keller. [BK1973]_
+
     Args:
-        distance_function  (Callable[[T, T], int]): The function to calculate the distance between
+        distance_function: The function to calculate the distance between
             any two keys in the metric space.
-        labeled_nodes (bool, optional): If True, use labeled nodes (BKNodeLabeled objects) that
+        labeled_nodes: Optional; If True, use labeled nodes (BKNodeLabeled objects) that
             use both unique string labels (key_label) for each node as well as node values
             (key_value). If False (default), use unlabeled nodes (BKNode objects). Defaults to
             False.
-        garbage_collection_threshold (float, optional): Percentage of all nodes that must be
+        garbage_collection_threshold: Optional; Percentage of all nodes that must be
             marked deleted before removing them from the tree by rebuilding the tree from scratch
             with the non-deleted nodes. Defaults to 30%.
 
+    Attributes:
+        root: The root node of the BK tree.
+
+    References:
+     .. [BK1973] Burkhard, W.; Keller, R.M.
+                 :download:`"Some approaches to best-match file searching."
+                 </references/Burkhard-Keller_BK-Trees.pdf>`, CACM, 1973.
     """
 
     def __init__(
@@ -153,7 +178,7 @@ class BKTree(Generic[T]):
     def __len__(self):
         return self._length
 
-    def delete_node(self, node: Union[BKNode, BKNodeLabeled]):
+    def delete_node(self, node: Union["BKNode", "BKNodeLabeled"]):
         if not node._deleted:
             node._deleted = True
             self._deleted_item_count += 1
@@ -165,8 +190,8 @@ class BKTree(Generic[T]):
         """Insert key value, and in the case of labeled nodes, a unique key label, into the tree.
 
         Args:
-            key_value (T): The key value used to calculate distances between other keys.
-            key_label (str, optional): [description]. Defaults to None.
+            key_value: The key value used to calculate distances between other keys.
+            key_label: Optional; A unique key label for the new node. Defaults to None.
         """
         if key_label is not None:
             key_label = str(key_label)
@@ -189,7 +214,7 @@ class BKTree(Generic[T]):
 
     def search(
         self, key_value: int, radius: int, key_label: str = None
-    ) -> Union[List[BKNode], List[BKNodeLabeled]]:
+    ) -> Union[List["BKNode"], List["BKNodeLabeled"]]:
         if self._length == 0:
             return []
         if key_label is not None:

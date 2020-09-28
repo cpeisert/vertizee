@@ -25,11 +25,14 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 >>> g['s'].edges_incoming
 set()
 >>> g['s'].edges_outgoing
-{<vertizee.classes.edge.DiEdge object at 0x7f9f35c4b070>, <vertizee.classes.edge.DiEdge object at 0x7f9f35bbc9d0>}
+{(s, t), (s, y)}
 >>> g['s']['y'].weight
 5.0
 >>> from vertizee.algorithms import shortest_paths_dijkstra
->>> s_paths: vz.VertexDict[vz.ShortestPath] = shortest_paths_dijkstra(g, source='s', find_path_lengths_only=False)
+>>> # `s_paths` is a dictionary mapping vertices to ShortestPath objects. In
+>>> # this case, the ShortestPath objects contain information about shortest
+>>> # paths from source vertex `s` to all other vertices in the graph.
+>>> s_paths: vz.VertexDict[vz.ShortestPath] = shortest_paths_dijkstra(g, source='s', save_paths=True)
 >>> s_paths['t'].path
 [s, y, t]
 >>> s_paths['t'].length
@@ -46,23 +49,22 @@ set()
 * Object-oriented API: vertices and edges are first-class objects
 * Graph theory greatest-hits including:
   * Breadth-first-search (BFS) and depth-first search (DFS)
-  * Cuts: Karger minimum cut
+  * Cuts: Karger and Karger-Stein algorithms
   * Shortest-paths: the Bellman-Ford algorithm and Dijkstra's algorithm
   * All-pairs-shortest paths: the Floyd-Warshall algorithm and Johnson's algorithm
   * Spanning trees: Kruskal's and Prim's algorithms
   * Strongly-connected components: Kosaraju's algorithm
 * Input/output routines for reading and writing unweighted and weighted graphs
 * Data structures:
-  * BK Tree ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/bk_tree.py))
-  * Fibonacci Heap ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/fibonacci_heap.py))
-  * Priority Queue ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/priority_queue.py))
-  * Union Find (a.k.a. Disjoint Set) ([source](https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/union_find.py))
+  * BK Tree
+  * Fibonacci Heap
+  * Priority Queue
+  * Union Find (a.k.a. Disjoint Set)
 
 
 ## Installation
 
-You should install Vertizee in a [virtual environment](https://docs.python.org/3/library/venv.html)
-or a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html). If you're unfamiliar with Python virtual environments, check out the [user guide](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/).
+For detailed instructions, see the [Installation documentation]().
 
 
 ### With pip
@@ -83,12 +85,14 @@ conda install --channel conda-forge vertizee
 Vertizee documentation: https://cpeisert.github.io/vertizee
 
 
+# TODO(cpeisert): Update tutorial hyperlinks to online documentation.
+
 ## Tutorials
 
 | Notebook     |      Description      |   |
 |:----------|:-------------|------:|
 | [Getting Started](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb)  | How to create and work with graphs  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb) |
-| [Breadth-First and Depth-First Search](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/bfs_dfs.ipynb)  | BFS and DFS graph search and traversal  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/bfs_dfs.ipynb) |
+| [Breadth-First and Depth-First Search](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb)  | BFS and DFS graph search and traversal  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb) |
 | [Shortest paths](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb)  | Finding shortest paths and all-pairs shortest paths  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb) |
 | [Connected Components](https://github.com/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb)  | Finding strongly-connected components  |[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb) |
 

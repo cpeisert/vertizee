@@ -2,21 +2,26 @@
 Shortest Paths
 ============================================================================
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.get_weight_function
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.get_weight_function_all_pairs_shortest_paths
+Tutorial
+========
 
-.. autofunction:: vertizee.algorithms.shortest_paths.unweighted.breadth_first_search_shortest_paths
+:doc:`Shortest Paths Tutorial <../../tutorials/shortest_paths>`
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_floyd_warshall
+.. image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/shortest_paths.ipynb
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson_fibonacci
+Unweighted Graphs
+==================
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.shortest_paths_bellman_ford
+.. automodule:: vertizee.algorithms.shortest_paths.unweighted
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra
 
-.. autofunction:: vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra_fibonacci
+Weighted Graphs
+==================
 
+Note: The algorithms for finding shortest paths in weighted graphs may also be used on
+unweighted graphs (i.e. all edges are assigned a default weight of 1).
+
+.. automodule:: vertizee.algorithms.shortest_paths.weighted

@@ -14,6 +14,7 @@
 
 """Algorithms for strongly connected components."""
 
+from __future__ import annotations
 from typing import List
 
 from vertizee.algorithms.search.depth_first_search import (
@@ -29,14 +30,16 @@ from vertizee.algorithms.search.depth_first_search import (
 )
 from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex
+from vertizee.exception import GraphTypeNotSupported
 
 
-def kosaraju_strongly_connected_components(graph: GraphBase) -> List[DepthFirstSearchTree]:
+def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFirstSearchTree"]:
     """Returns strongly connected components, where each component is a DepthFirstSearchTree.
 
-    This function uses Kosaraju's algorithm, with the caveat that the strongly-connected components
-    (SCC) are returned in reverse topological order. This ordering refers to topologically sorting
-    the condensation graph (i.e. the graph created by representing each SCC as a vertex).
+    This function uses Kosaraju's algorithm [R2018]_, with the caveat that the strongly-connected
+    components (SCC) are returned in reverse topological order. This ordering refers to
+    topologically sorting the condensation graph (i.e. the graph created by representing each
+    SCC as a vertex).
 
     Args:
         graph (GraphBase): The graph to search.
@@ -46,11 +49,11 @@ def kosaraju_strongly_connected_components(graph: GraphBase) -> List[DepthFirstS
         is stored in a DepthFirstSearchTree object.
 
     References:
-        [1] Algorithms Illuminated (Part 2): Graph Algorithms and Data Structures. Tim Roughgarden.
-            Soundlikeyourself Publishing LLC, 2018. (pages 57-63)
+     .. [R2018] Algorithms Illuminated (Part 2): Graph Algorithms and Data Structures.
+                Tim Roughgarden. Soundlikeyourself Publishing LLC, 2018. (pages 57-63)
     """
     if not graph.is_directed_graph():
-        raise ValueError("graph must be directed")
+        raise GraphTypeNotSupported("graph must be directed")
     postorder = list(dfs_postorder_traversal(graph, reverse_graph=True))
     # Mark all vertices of graph as unexplored.
     _initialize_dfs_graph(graph)
@@ -69,7 +72,7 @@ def _dfs_scc(graph: GraphBase, source: Vertex) -> DepthFirstSearchTree:
 
     Args:
         graph (GraphBase): The graph to search.
-        source (VertexKeyType, optional): The source vertex from which to discover reachable
+        source (VertexType, optional): The source vertex from which to discover reachable
             vertices.
 
     Returns:

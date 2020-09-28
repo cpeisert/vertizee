@@ -30,10 +30,9 @@ help:
 
 
 clean:
-	-rm -rf build/*
+	-rm -rf _build/*
 	-rm -rf ghpages_build
 	-rm -rf auto_examples modules
-	-rm -rf reference/generated reference/algorithms/generated reference/classes/generated reference/readwrite/generated
 
 dist: html
 	test -d build/latex || make latex

@@ -2,8 +2,5 @@
 Edge and DiEdge
 ============================================================================
 
-.. autoclass:: vertizee.classes.edge.Edge
-    :members:
-
-.. autoclass:: vertizee.classes.edge.DiEdge
-    :members:
+.. automodule:: vertizee.classes.edge
+   :inherited-members:

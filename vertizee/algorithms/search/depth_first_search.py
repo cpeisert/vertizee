@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for depth-first searching the vertices of graphs."""
+"""Algorithms for depth-first graph search."""
 
-from typing import Iterator, List, Optional, Set, Tuple
+from __future__ import annotations
+from typing import Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from vertizee.classes.edge import EdgeType
 from vertizee.classes.graph_base import GraphBase
-from vertizee.classes.vertex import Vertex, VertexKeyType
+from vertizee.classes.vertex import Vertex
 
+if TYPE_CHECKING:
+    from vertizee.classes.vertex import VertexType
 
 # Internal constants
 BLACK = "black"
@@ -41,44 +44,57 @@ class DFSResults:
 
         * A forest of depth-first-search trees.
         * An ordering of vertices sorted from last to first finishing time. The finishing time of a
-            vertex is the time at which the search of the vertex's subtree finished.
+          vertex is the time at which the search of the vertex's subtree finished.
         * Topological sort: If the graph is a DAG (directed, acyclic), then reverse postordering
-            of the vertices is a topological sort.
+          of the vertices is a topological sort.
         * Cycle detection: For both directed and undirected graphs, if there is a back edge, then
-            the graph has a cycle and the state `is_acyclic` is set to False. A cycle
-            is a path (with at least one edge) whose first and last vertices are the same. The
-            minimal cycle is a self loop and second smallest cycle is two vertices connected by
-            parallel edges (in the case of a directed graph, the parallel edges must be facing
-            opposite directions).
+          the graph has a cycle and the state `is_acyclic` is set to False. A cycle
+          is a path (with at least one edge) whose first and last vertices are the same. The
+          minimal cycle is a self loop and second smallest cycle is two vertices connected by
+          parallel edges (in the case of a directed graph, the parallel edges must be facing
+          opposite directions).
         * Edge classification: The edges of the graph are classified into the following categories:
 
             1. Tree edges - edge (u, v) is a tree edge if v was first discovered by exploring edge
-                (u, v).
+               (u, v).
             2. Back edges - back edge (u, v) connects vertex u to ancestor v in a depth-first tree.
             3. Forward edges: non-tree edges (u, v) connecting a vertex u to a descendant v in a
-                depth-first tree.
+               depth-first tree.
             4. Cross edges - All other edges, which may go between vertices in the same depth-first
-                tree as long as one vertex is not an ancestor of the other, or they go between
-                vertices in different depth-first trees.
+               tree as long as one vertex is not an ancestor of the other, or they go between
+               vertices in different depth-first trees.
 
             In an undirected graph, every edge is either a tree edge or a back edge.
 
     Args:
-        graph (GraphBase): The graph that was searched.
+        graph: The graph that was searched.
+
+    Attributes:
+        back_edges: The set of back edges.
+        cross_edges: The set of cross edges.
+        forward_edges: The set of forward edges.
+        graph: The graph that was searched.
+        dfs_forest: A depth-first forest, which is a set of :class:`DepthFirstSearchTree` objects.
+        edges_in_discovery_order: The edges in the order traversed by the depth-first search.
+        tree_edges: The set of tree edges.
+        vertices_pre_order: The list of vertices in ascending order of first discovery times during
+            the DFS.
+        vertices_post_order: The list of vertices in descending order of discovery finishing time.
+            The finishing time is the time at which all of the paths adjacent to the vertex have
+            been fully explored. For directed, acyclic graphs, the reverse postorder is a
+            topological sort.
 
     See Also:
-        `~depth_first_search.depth_first_search`
-        `~depth_first_search.DepthFirstSearchTree`
-        `~depth_first_search.dfs_preorder_traversal`
-        `~depth_first_search.dfs_postorder_traversal`
-        `~depth_first_search.dfs_labeled_edge_traversal`
+        * :func:`depth_first_search`
+        * :class:`DepthFirstSearchTree`
+        * :func:`dfs_preorder_traversal`
+        * :func:`dfs_postorder_traversal`
+        * :func:`dfs_labeled_edge_traversal`
     """
 
     def __init__(self, graph: GraphBase):
         self.graph: GraphBase = graph
         self.edges_in_discovery_order: List[EdgeType] = []
-        """The edges in the order traversed by the depth-first search."""
-
         self.dfs_forest: Set["DepthFirstSearchTree"] = set()
 
         # Edge classification.
@@ -90,18 +106,13 @@ class DFSResults:
         self._is_acyclic = True
 
         self.vertices_pre_order: List[Vertex] = []
-        """The vertices in ascending order of first discovery times during the DFS."""
-
         self.vertices_post_order: List[Vertex] = []
-        """The vertices in descending order of discovery finishing time. The finishing time is
-        the time at which all of the paths adjacent to the vertex have been fully explored.
-        For directed, acyclic graphs, the reverse postorder is a topological sort."""
 
     def get_topological_sort(self) -> Optional[List[Vertex]]:
         """Returns a list of topologically sorted vertices, or None if the graph is not a DAG.
 
-        Note that the topological ordering is the reverse of the postordering (which is not the
-        same as the preordering).
+        Note that the topological ordering is the reverse of the postordering; and the reverse of
+        the postordering is not the same as the preordering.
         """
         if self.graph.is_directed_graph() and self.is_acyclic():
             return list(reversed(self.vertices_post_order))
@@ -109,6 +120,7 @@ class DFSResults:
             return None
 
     def is_acyclic(self) -> bool:
+        """Returns True if the graph cycle free (i.e. does not contain cycles)."""
         return self._is_acyclic
 
 
@@ -117,15 +129,16 @@ class DepthFirstSearchTree:
     """A depth-first tree is a tree comprised of vertices and edges discovered during a
     depth-first search.
 
-    Args:
-        root (Vertex, optional): The root vertex of the DFS tree.
+    Attributes:
+        root: Optional; The root vertex of the DFS tree.
+        edges_in_discovery_order: The edges in the order traversed by the depth-first search of the
+            tree.
+        vertices: The set of vertices visited during the depth-first search.
     """
 
-    def __init__(self, root: Vertex = None):
+    def __init__(self, root: Optional[Vertex] = None):
         self.root: Vertex = root
         self.edges_in_discovery_order: List[EdgeType] = []
-        """The edges in the order traversed by the depth-first search of the tree."""
-
         self.vertices: Set[Vertex] = set()
         if root is not None:
             self.vertices.add(root)
@@ -149,41 +162,53 @@ class _Timer:
 
 
 def depth_first_search(
-    graph: GraphBase, source: VertexKeyType = None, reverse_graph: bool = False
+    graph: "GraphBase", source: Optional["VertexType"] = None, reverse_graph: bool = False
 ) -> DFSResults:
-    """Performs a depth-first-search in time O(\|V\| + \|E\|) and provides detailed results in a
-    `DFSResults` object.
+    """Performs a depth-first-search and provides detailed results (e.g. a forest of
+    depth-first-search trees, cycle detection, and edge classification).
 
-    If a `source` is not specified then vertices are repeatedly selected until all components in
+    Running time: :math:`O(|V| + |E|)`
+
+    If a ``source`` is not specified then vertices are repeatedly selected until all components in
     the graph have been searched.
 
+    Note:
+        This is adapted from DFS and DFS-VISIT [CLRS2009_9]_, except that this implementation does
+        not use recursion, thus avoiding potential stack overflow for large graphs.
+
     Args:
-        graph (GraphBase): The graph to search.
-        source (VertexKeyType, optional): The source vertex from which to discover reachable
-            vertices.
-        reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
+        graph: The graph to search.
+        source: Optional; The source vertex from which to discover reachable vertices.
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
             False.
 
     Returns:
-        DFSResults: The results of the DFS.
+        The results of the DFS.
 
-    Example::
-
-        >>> g = Graph()
+    Example:
+        >>> import vertizee as vz
+        >>> from vertizee.algorithms import depth_first_search
+        >>> g = vz.Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         >>> dfs_results = depth_first_search(g)
+        >>> dfs_results.vertices_pre_order
+        [3, 1, 0, 2, 5, 4, 7, 6]
+        >>> [str(edge) for edge in dfs_results.edges_in_discovery_order]
+        ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
+        >>> dfs_results.is_acyclic()
+        False
 
     See Also:
-        `~depth_first_search.DepthFirstSearchTree`
-        `~depth_first_search.dfs_preorder_traversal`
-        `~depth_first_search.dfs_postorder_traversal`
-        `~depth_first_search.dfs_labeled_edge_traversal`
-        `~depth_first_search.DFSResults`
+        * :class:`DepthFirstSearchTree`
+        * :func:`dfs_postorder_traversal`
+        * :func:`dfs_preorder_traversal`
+        * :func:`dfs_labeled_edge_traversal`
+        * :class:`DFSResults`
 
     References:
-        [1] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-            Introduction to Algorithms: Third Edition, page 604. The MIT Press, 2009.
+     .. [CLRS2009_9] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+                   Introduction to Algorithms: Third Edition, page 604. The MIT Press, 2009.
     """
     _initialize_dfs_graph(graph)
     dfs_results = DFSResults(graph)
@@ -210,65 +235,68 @@ def depth_first_search(
 
 
 def dfs_labeled_edge_traversal(
-    graph: GraphBase,
-    source: VertexKeyType = None,
-    depth_limit: int = None,
+    graph: "GraphBase",
+    source: Optional["VertexType"] = None,
+    depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
-) -> Iterator[Tuple[Vertex, Vertex, str, str]]:
-    """Iterates over the labeled edges of a depth-first search traversal in O(\|V\| + \|E\|).
+) -> Iterator[Tuple["Vertex", "Vertex", str, str]]:
+    """Iterates over the labeled edges of a depth-first search traversal.
+
+    Running time: :math:`O(|V| + |E|)`
 
     This function is adapted from the NetworkX function:
-    networkx.algorithms.traversal.depth_first_search.dfs_labeled_edges
+    `networkx.algorithms.traversal.depth_first_search.dfs_labeled_edges
+    <https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/depth_first_search.py>`_
+    [N2020]_
 
     The NetworkX function was in turn adapted from David Eppstein's depth-first search function in
-    `PADS`.
+    `PADS`. [E2004]_
 
-    For directed graphs, setting `reverse_graph` to True will generate edges as if the graph
+    For directed graphs, setting ``reverse_graph`` to True will generate edges as if the graph
     were reversed (i.e. all directed edges pointing in the opposite direction).
 
     Args:
-        graph (GraphBase): The graph to search.
-        source (VertexKeyType, optional): The source vertex from which to discover reachable
+        graph: The graph to search.
+        source: Optional; The source vertex from which to discover reachable
             vertices. Defaults to None.
-        depth_limit (int, optional): The depth limit of the search. Defaults to None (no limit).
-        reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Default
-            value is False.
+        depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
+            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults
+            to False.
 
     Returns:
-        Iterator[Vertex, Vertex, str, str]: An iterator over tuples of the form:
-        (parent, child, label, search_direction)
+        An iterator over tuples of the form ``(parent, child, label, search_direction)``
+        where ``(parent, child)`` is the edge being explored in the depth-first search. The
+        ``child`` vertex is found by iterating over the parent's adjacency list.
 
-        where (parent, child) is the edge being explored in the depth-first search. The `child`
-        vertex is found by iterating over the parent's adjacency list.
-
-        The `label` is one of the strings:
+        The ``label`` is one of the strings:
 
             1. dfs_tree_root - (u, u), where u is the root vertex of a DFS tree.
             2. tree_edge - edge (u, v) is a tree edge if v was first discovered by exploring edge
-                (u, v).
+               (u, v).
             3. back_edge - back edge (u, v) connects vertex u to ancestor v in a depth-first tree.
             4. forward_edge: non-tree edges (u, v) connecting a vertex u to a descendant v in a
-                depth-first tree.
+               depth-first tree.
             5. cross_edge - All other edges, which may go between vertices in the same depth-first
-                tree as long as one vertex is not an ancestor of the other, or they go between
-                vertices in different depth-first trees.
+               tree as long as one vertex is not an ancestor of the other, or they go between
+               vertices in different depth-first trees.
 
         In an undirected graph, every edge is either a tree edge or a back edge.
 
-        The `direction` is the direction of traversal and is one of the strings:
+        The ``search_direction`` is the direction of traversal and is one of the strings:
 
             1. preorder - the traversal discovered new vertex `child` in the DFS.
             2. postorder - the traversal finished visiting vertex `child` in the DFS.
             3. already_discovered - the traversal found a non-tree edge that had already been
-                discovered.
+               discovered.
 
-    Example::
-
-        # The labels reveal the complete transcript of the depth-first search algorithm.
+    Example:
+        The labels reveal the complete transcript of the depth-first search algorithm.
 
         >>> from pprint import pprint
-        >>> g = DiGraph([(0, 1), (1, 2), (2, 1)])
+        >>> import vertizee as vz
+        >>> from vertizee.algorithms import dfs_labeled_edge_traversal
+        >>> g = vz.DiGraph([(0, 1), (1, 2), (2, 1)])
         >>> pprint(list(dfs_labeled_edge_traversal(g, source=0)))
         [(0, 0, 'dfs_tree_root', 'preorder'),
          (0, 1, 'tree_edge', 'preorder'),
@@ -279,19 +307,18 @@ def dfs_labeled_edge_traversal(
          (0, 0, 'dfs_tree_root', 'postorder')]
 
     See Also:
-        `~depth_first_search.depth_first_search`
-        `~depth_first_search.DepthFirstSearchTree`
-        `~depth_first_search.dfs_preorder_traversal`
-        `~depth_first_search.dfs_postorder_traversal`
-        `~depth_first_search.DFSResults`
+        * :func:`depth_first_search`
+        * :class:`DepthFirstSearchTree`
+        * :func:`dfs_postorder_traversal`
+        * :func:`dfs_preorder_traversal`
+        * :class:`DFSResults`
 
     References:
-        [1] NetworkX Python package: networkx.algorithms.traversal.depth_first_search.py
-            https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/depth_first_search.py
-        [2] David Eppstein's depth-first search function.
-            http://www.ics.uci.edu/~eppstein/PAD
-        [3] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-            Introduction to Algorithms: Third Edition, page 604. The MIT Press, 2009.
+     .. [E2004] David Eppstein's depth-first search function.
+                http://www.ics.uci.edu/~eppstein/PADS
+
+     .. [N2020] NetworkX Python package: networkx.algorithms.traversal.depth_first_search.py
+                https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/depth_first_search.py
     """
     _initialize_dfs_graph(graph)
     timer = _Timer()
@@ -350,11 +377,11 @@ def dfs_labeled_edge_traversal(
 
 
 def dfs_postorder_traversal(
-    graph: GraphBase,
-    source: VertexKeyType = None,
-    depth_limit: int = None,
+    graph: "GraphBase",
+    source: Optional["VertexType"] = None,
+    depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
-) -> Iterator[Vertex]:
+) -> Iterator["Vertex"]:
     """Iterates over vertices in depth-first search postorder, meaning the order in which vertices
     were last visited.
 
@@ -371,23 +398,23 @@ def dfs_postorder_traversal(
     https://en.wikipedia.org/wiki/Transpose_graph.
 
     Args:
-        graph (GraphBase): The graph to search.
-        source (VertexKeyType, optional): The source vertex from which to discover reachable
+        graph: The graph to search.
+        source: Optional; The source vertex from which to discover reachable
             vertices. Defaults to None.
-        depth_limit (int, optional): The depth limit of the search. Defaults to None (no limit).
-        reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
+        depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
             False.
 
     Returns:
-        Iterator[Vertex]: An iterator over the vertices in DFS postorder.
+        An iterator over the vertices in DFS postorder.
 
     See Also:
-        `~depth_first_search.depth_first_search`
-        `~depth_first_search.DepthFirstSearchTree`
-        `~depth_first_search.dfs_preorder_traversal`
-        `~depth_first_search.dfs_labeled_edge_traversal`
-        `~depth_first_search.DFSResults`
+        * :func:`depth_first_search`
+        * :class:`DepthFirstSearchTree`
+        * :func:`dfs_preorder_traversal`
+        * :func:`dfs_labeled_edge_traversal`
+        * :class:`DFSResults`
     """
     edges = dfs_labeled_edge_traversal(
         graph, source=source, depth_limit=depth_limit, reverse_graph=reverse_graph
@@ -396,38 +423,37 @@ def dfs_postorder_traversal(
 
 
 def dfs_preorder_traversal(
-    graph: GraphBase,
-    source: VertexKeyType = None,
-    depth_limit: int = None,
+    graph: "GraphBase",
+    source: Optional["VertexType"] = None,
+    depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
-) -> Iterator[Vertex]:
+) -> Iterator["Vertex"]:
     """Iterates over vertices in depth-first search preorder (time of first discovery).
 
-    Preorder is the order in which vertices are first discovered during a depth-first search.
-    For directed graphs, setting `reverse_graph` to True will generate vertices as if the graph
+    For directed graphs, setting ``reverse_graph`` to True will generate vertices as if the graph
     were reversed (i.e. all directed edges pointing in the opposite direction).
 
     The reverse of a directed graph is also called the transpose or the converse. See
     https://en.wikipedia.org/wiki/Transpose_graph.
 
     Args:
-        graph (GraphBase): The graph to search.
-        source (VertexKeyType, optional): The source vertex from which to discover reachable
+        graph: The graph to search.
+        source: Optional; The source vertex from which to discover reachable
             vertices. Defaults to None.
-        depth_limit (int, optional): The depth limit of the search. Defaults to None (no limit).
-        reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
+        depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
             False.
 
     Returns:
-        Iterator[Vertex]: An iterator over the vertices in DFS preorder.
+        An iterator over the vertices in DFS preorder.
 
     See Also:
-        `~depth_first_search.depth_first_search`
-        `~depth_first_search.DepthFirstSearchTree`
-        `~depth_first_search.dfs_postorder_traversal`
-        `~depth_first_search.dfs_labeled_edge_traversal`
-        `~depth_first_search.DFSResults`
+        * :func:`depth_first_search`
+        * :class:`DepthFirstSearchTree`
+        * :func:`dfs_postorder_traversal`
+        * :func:`dfs_labeled_edge_traversal`
+        * :class:`DFSResults`
     """
     edges = dfs_labeled_edge_traversal(
         graph, source=source, depth_limit=depth_limit, reverse_graph=reverse_graph

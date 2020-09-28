@@ -36,12 +36,12 @@ class TestDirectedGraph:
     def test_vertex(self):
         g = MultiDiGraph()
         v0 = g.add_vertex("0")
-        assert v0.key == "0", f'DiVertex v0 should have key "0", but had key "{v0.key}"'
+        assert v0.label == "0", f'DiVertex v0 should have label "0", but had label "{v0.label}"'
         assert v0.degree == 0, f"DiVertex v0 should have degree 0, but had degree {v0.degree}"
         assert len(v0.edges_incoming) == 0, "DiVertex v0 should have no incoming edges."
 
         v1 = g.add_vertex("1")
-        assert v1.key == "1", f'DiVertex v1 should have key "1", but had key "{v1.key}"'
+        assert v1.label == "1", f'DiVertex v1 should have label "1", but had label "{v1.label}"'
         assert v1.degree == 0, f"DiVertex v1 should have degree 0, but had degree {v1.degree}"
 
     def test_edge(self):
@@ -55,15 +55,19 @@ class TestDirectedGraph:
             e1.weight == DEFAULT_WEIGHT
         ), f"Edge e1 should have weight {DEFAULT_WEIGHT} (default), but weight was {e1.weight}"
         assert e1.parallel_edge_count == 0, "Edge e1 should have zero parallel edges."
-        assert e1.tail == v0, f"Edge e1 should have tail ({v0.key}), but tail was ({e1.tail.key})"
-        assert e1.head == v1, f"Edge e1 should have head ({v1.key}), but head was ({e1.head.key})"
+        assert (
+            e1.tail == v0
+        ), f"Edge e1 should have tail ({v0.label}), but tail was ({e1.tail.label})"
+        assert (
+            e1.head == v1
+        ), f"Edge e1 should have head ({v1.label}), but head was ({e1.head.label})"
         assert e_loop.is_loop(), "Edge e_loop should be a loop."
         assert v0.degree == 3, "DiVertex v0 should have degree 3."
         assert len(v0.adjacent_vertices_outgoing) == 1, (
             "Vertex v0 should have 1 outgoing " "adjacent vertex."
         )
         adj_vertex = v0.adjacent_vertices_outgoing.pop()
-        assert adj_vertex.key == "1", "Vertex v0 should be adjacent to vertex 1."
+        assert adj_vertex.label == "1", "Vertex v0 should be adjacent to vertex 1."
 
         v2 = g.add_vertex("2")
         e2 = g.add_edge(
@@ -134,6 +138,6 @@ class TestDirectedGraph:
         g.add_edge(tail=v[3], head=v[2], weight=1.9)
         # Isolated vertex
         #   - 1 vertex (0 edges)
-        g.add_vertex(v[4].key)
+        g.add_vertex(v[4].label)
 
         return g

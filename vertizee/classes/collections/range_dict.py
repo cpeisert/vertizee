@@ -19,7 +19,10 @@
 import bisect
 from typing import Any, List, MutableMapping, Optional, TypeVar, Union
 
+#:TypeVar("KT"): Type variable for keys in a generic RangeDict data structure.
 KT = TypeVar("KT")
+
+#:TypeVar("VT"): Type variable for values in a generic RangeDict data structure.
 VT = TypeVar("VT")
 
 
@@ -59,6 +62,7 @@ class RangeDict(dict, MutableMapping[KT, VT]):
                 self._sorted_range_endpoints.remove(rng_key[-1] + 1)
 
     def __getitem__(self, key: Union[range, int]) -> VT:
+        """Support index accessor notation to retrieve items."""
         return self._get_item(key)
 
     def __setitem__(self, key: Union[range, int], val: Any):

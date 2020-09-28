@@ -1,5 +1,5 @@
 ============================================================================
-Vertex
+Fibonacci Heap
 ============================================================================
 
-.. automodule:: vertizee.classes.vertex
+.. automodule:: vertizee.classes.collections.fibonacci_heap

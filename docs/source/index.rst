@@ -1,5 +1,3 @@
-.. _contents:
-
 ===============================
 Vertizee Graph Library
 ===============================
@@ -12,20 +10,28 @@ Features
 * Object-oriented API: vertices and edges are first-class objects
 * Graph theory greatest-hits including:
 
-  * Breadth-first-search (BFS) and depth-first search (DFS)
-  * Cuts: Karger minimum cut
-  * All-pairs-shortest paths: the Floyd-Warshall algorithm and Johnson's algorithm
-  * Shortest-paths: the Bellman-Ford algorithm and Dijkstra's algorithm
-  * Spanning trees: Kruskal's and Prim's algorithms
-  * Strongly-connected components: Kosaraju's algorithm
+  * :doc:`Breadth-first-search (BFS) and depth-first search (DFS) <api/algorithms/search>`
+  * :doc:`Karger and Karger-Stein minimum cuts <api/algorithms/cuts>`
+  * All-pairs-shortest paths: the :func:`Floyd-Warshall algorithm
+    <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_floyd_warshall>` and
+    :func:`Johnson's algorithm
+    <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson>`
+  * Shortest-paths: the :func:`Bellman-Ford algorithm
+    <vertizee.algorithms.shortest_paths.weighted.shortest_paths_bellman_ford>` and :func:`Dijkstra's
+    algorithm <vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra>`
+  * Spanning trees: :func:`Kruskal's algorithm
+    <vertizee.algorithms.tree.spanning.spanning_tree_kruskal>` and :func:`Prim's algorithm
+    <vertizee.algorithms.tree.spanning.spanning_tree_prim>`
+  * Strongly-connected components: :func:`Kosaraju's algorithm
+    <vertizee.algorithms.components.strongly_connected.kosaraju_strongly_connected_components>`
 
 * Input/output routines for reading and writing unweighted and weighted graphs
 * Data structures:
 
-  * `BK Tree <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/bk_tree.py>`_
-  * `Fibonacci Heap <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/fibonacci_heap.py>`_
-  * `Priority Queue <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/priority_queue.py>`_
-  * `Union Find (a.k.a. Disjoint Set) <https://github.com/cpeisert/vertizee/blob/master/vertizee/classes/collections/union_find.py>`_
+  * :doc:`api/classes/bk_tree`
+  * :doc:`api/classes/fibonacci_heap`
+  * :doc:`api/classes/priority_queue`
+  * :doc:`api/classes/union_find`
 
 
 Python
@@ -54,18 +60,27 @@ Roughgarden's excellent series *Algorithms Illuminated*, many of the Vertizee im
 are based on the modern-classic
 *Introduction to Algorithms: Third Edition* by Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
 The `NetworkX <https://networkx.github.io/>`_ library was used as a template for the package
-structure and inspired many ideas for improved algorithms and documentation.
+structure and inspired many ideas for improved documentation and algorithms.
 
 
+=======================
 Documentation
 =======================
+
+.. toctree::
+   :maxdepth: 1
+   :caption: General Information
+
+   installation
+   license
+   release_log
 
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials
 
    tutorials/getting_started
-   tutorials/bfs_dfs
+   tutorials/search
    tutorials/connected_components
    tutorials/shortest_paths
 
@@ -73,10 +88,10 @@ Documentation
    :maxdepth: 1
    :caption: API Reference
 
-   api/classes/index
    api/algorithms/index
-   api/io/index
+   api/classes/index
    api/exceptions
+   api/io/index
 
 .. toctree::
    :maxdepth: 1
@@ -86,17 +101,8 @@ Documentation
    developer/contributor_guide
    developer/core_dev
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Additional Information
 
-   license
-   release_log
-
-
-Indices and tables
+Indices
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

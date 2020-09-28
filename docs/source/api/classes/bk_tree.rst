@@ -1,5 +1,7 @@
+.. include:: ../../substitutions.txt
+
 ============================================================================
-Vertex
+Burkhard-Keller Tree (BK Tree)
 ============================================================================
 
-.. automodule:: vertizee.classes.vertex
+.. automodule:: vertizee.classes.collections.bk_tree

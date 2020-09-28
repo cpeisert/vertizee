@@ -1,5 +1,5 @@
 ============================================================================
-Vertex
+Parsed Primitives
 ============================================================================
 
-.. automodule:: vertizee.classes.vertex
+.. automodule:: vertizee.classes.parsed_primitives

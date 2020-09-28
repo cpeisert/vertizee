@@ -1,5 +1,5 @@
-# Make certain functions available to the user as direct imports from the `vertizee.algorithms`
-# namespace.
+"""Make certain functions available to the user as direct imports from the ``vertizee.algorithms``
+namespace."""
 
 from vertizee.algorithms.components.strongly_connected import kosaraju_strongly_connected_components
 from vertizee.algorithms.search.depth_first_search import (
@@ -8,7 +8,7 @@ from vertizee.algorithms.search.depth_first_search import (
     dfs_postorder_traversal,
     dfs_labeled_edge_traversal,
 )
-from vertizee.algorithms.shortest_paths.unweighted import breadth_first_search_shortest_paths
+from vertizee.algorithms.shortest_paths.unweighted import shortest_paths_breadth_first_search
 from vertizee.algorithms.shortest_paths.weighted import (
     shortest_paths_bellman_ford,
     shortest_paths_dijkstra,

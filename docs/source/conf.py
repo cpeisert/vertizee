@@ -45,15 +45,37 @@ extensions = [
     'recommonmark',  # Markdown support
 ]
 
+# https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
+autosectionlabel_prefix_document = True
+
+# autodoc options
+autodoc_typehints = 'signature'
+
 autodoc_default_options = {
     'autoclass_content': 'class',
-    'inherited-members': True,
-    'members': True,
     'member-order': 'bysource',
+    'members': True,
     'show-inheritance': True,
-    'special-members': '__call__, __getitem__',
+    'special-members': '__call__, __getitem__, __len__',
     'undoc-members': True,
 }
+
+mathjax_config = {
+    'extensions': ['tex2jax.js'],
+    'jax': ['input/TeX', 'output/HTML-CSS'],
+}
+
+latex_elements = {
+    'extrapackages': r'\usepackage{ latexsym }'
+}
+
+# Napoleon settings
+napoleon_google_docstring = True
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_param = False  # Show the Parameter Types in separate line.
+napoleon_use_rtype = True   # Show the Return Type in separate line.
 
 # nbsphinx options
 html_sourcelink_suffix = ''
@@ -62,7 +84,7 @@ nbsphinx_kernel_name = 'python3'
 # nbsphinx_output_prompt = 'Out [%s]:'
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = 'sphinx'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -87,6 +109,15 @@ master_doc = 'index'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+# html_theme = 'alabaster'
+
+html_theme_options = {
+    "canonical_url": "https://cpeisert.github.io/vertizee/documentation/stable/",
+    "navigation_depth": 3,
+    "logo_only": True,
+}
+
+# html_logo = "_static/vertizee.svg"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

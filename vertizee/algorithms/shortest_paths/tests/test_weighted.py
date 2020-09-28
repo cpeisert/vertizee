@@ -119,7 +119,7 @@ class TestWeightedAllPairsShortestPaths:
         assert paths["z"]["y"].length == 11, "Length of path z ~> y should be 11."
         assert paths["z"]["z"].length == 0, "Length of path z ~> z should be 0."
 
-    def test_floyd_warshall_find_path_lengths_only(self):
+    def test_floyd_warshall_save_paths(self):
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -136,15 +136,15 @@ class TestWeightedAllPairsShortestPaths:
         )
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_floyd_warshall(
-            g, find_path_lengths_only=True
+            g, save_paths=False
         )
 
-        assert paths["s"]["z"].path == [], "With find_path_lengths_only == True, all paths empty."
-        assert paths["y"]["s"].path == [], "With find_path_lengths_only == True, all paths empty."
-        assert paths["y"]["t"].path == [], "With find_path_lengths_only == True, all paths empty."
-        assert paths["y"]["x"].path == [], "With find_path_lengths_only == True, all paths empty."
-        assert paths["y"]["y"].path == [], "With find_path_lengths_only == True, all paths empty."
-        assert paths["y"]["z"].path == [], "With find_path_lengths_only == True, all paths empty."
+        assert paths["s"]["z"].path == [], "With save_paths == False, all paths empty."
+        assert paths["y"]["s"].path == [], "With save_paths == False, all paths empty."
+        assert paths["y"]["t"].path == [], "With save_paths == False, all paths empty."
+        assert paths["y"]["x"].path == [], "With save_paths == False, all paths empty."
+        assert paths["y"]["y"].path == [], "With save_paths == False, all paths empty."
+        assert paths["y"]["z"].path == [], "With save_paths == False, all paths empty."
 
     def test_floyd_warshall_path_reconstruction(self):
         g = DiGraph(
@@ -164,7 +164,7 @@ class TestWeightedAllPairsShortestPaths:
         )
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_floyd_warshall(
-            g, find_path_lengths_only=False
+            g, save_paths=True
         )
 
         assert paths["s"]["z"].path == ["s", "y", "z"], "Path s ~> z should be [s, y, z]."
@@ -356,7 +356,7 @@ class TestWeightedAllPairsShortestPaths:
         )
 
         paths: VertexDict[VertexDict[ShortestPath]] = all_pairs_shortest_paths_johnson(
-            g, find_path_lengths_only=False
+            g, save_paths=True
         )
 
         assert paths["s"]["z"].path == ["s", "y", "z"], "Path s ~> z should be [s, y, z]."
@@ -505,9 +505,7 @@ class TestWeightedSingleSourceShortestPaths:
             ]
         )
 
-        paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(
-            g, "s", find_path_lengths_only=False
-        )
+        paths: VertexDict[ShortestPath] = shortest_paths_bellman_ford(g, "s", save_paths=True)
 
         assert paths["t"].path == ["s", "t"], "Path s ~> t should be [s, t]."
         assert paths["x"].path == [
@@ -655,9 +653,7 @@ class TestWeightedSingleSourceShortestPaths:
             ]
         )
 
-        paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(
-            g, "s", find_path_lengths_only=False
-        )
+        paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(g, "s", save_paths=True)
 
         assert paths["t"].path == ["s", "y", "t"], "Path s ~> t should be [s, y, t]."
         assert paths["x"].path == ["s", "y", "t", "x"], "Path s ~> x should be [s, y, t, x]."
@@ -740,10 +736,10 @@ class TestWeightedSingleSourceShortestPaths:
             graph = v1._parent_graph
             if reverse_graph:
                 edge: EdgeType = graph[v2][v1]
-                edge_str = f"({v2.key}, {v1.key})"
+                edge_str = f"({v2.label}, {v1.label})"
             else:
                 edge: EdgeType = graph[v1][v2]
-                edge_str = f"({v1.key}, {v2.key})"
+                edge_str = f"({v1.label}, {v2.label})"
             if edge is None:
                 raise ValueError(f"graph does not have edge {edge_str}")
             if edge.attr.get(COLOR, "RED") == "BLUE":

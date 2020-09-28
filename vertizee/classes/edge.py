@@ -14,9 +14,12 @@
 
 """Data types supporting directed and undirected graph edges.
 
-* Edge - Class supporting both directed and undirected edges.
-* DiEdge - A directed edge class with properties for the tail and head vertices.
-* EdgeType - A union of the edge classes for generic type hinting.
+* :class:`Edge <vertizee.classes.edge.Edge>` - An undirected connection between two vertices.
+  The order of the vertices does not matter. However, the string representation will always
+  print vertices sorted in lexicographic order.
+* :class:`DiEdge <vertizee.classes.edge.DiEdge>` - A directed connection between two vertices that
+  defines the ``tail`` as the starting vertex and the ``head`` as the destination vertex.
+* :class:`EdgeType` - A type alias for the union of the edge classes: ``Union[DiEdge, Edge]``
 """
 
 from __future__ import annotations
@@ -35,18 +38,30 @@ class Edge:
     """Edge is a graph primitive that represents an undirected connection between two vertices.
 
     To ensure the integrity of graphs, edges should never be initialized directly. Attempting
-    to initialize an edge using its `__init__` method will raise an error. To create edges, use
-    GraphBase methods such as `add_edge`.
+    to initialize an edge using its ``__init__`` method will raise an error. To create edges, use
+    :class:`GraphBase <vertizee.classes.graph_base.GraphBase>` methods such as
+    :meth:`GraphBase.add_edge <vertizee.classes.graph_base.GraphBase.add_edge>`.
 
-    Edges may be assigned a weight as well as custom attributes. This class supports both
-    directed and undirected edges. However, directed graphs use the subclass DiEdge, which provides
-    tail and head Vertex properties.
+    Edges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
 
-    IMPORTANT: If multiple edges are added with the same vertices, then a single `Edge` instance
-    is used to store the parallel edges. When working with edges, use the `parallel_edge_count`
-    property to determine if the edge represents more than one edge connection. Edges represented
-    by vertex pairs (a, b) and (b, a) map to the same Edge object in undirected graphs, but
-    different Edge objects in directed graphs.
+    Note:
+        Directed graphs use the subclass :class:`DiEdge`, which provides ``tail`` and ``head``
+        Vertex properties.
+
+    Note:
+        If multiple edges are added with the same vertices, then a single ``Edge`` instance
+        is used to store the parallel edges. When working with edges, use the
+        ``parallel_edge_count`` property to determine if the edge represents more than one edge
+        connection. Edges represented by vertex pairs :math:`(a, b)` and :math:`(b, a)` map to the
+        same ``Edge`` object in undirected graphs, but different ``DiEdge`` objects in directed
+        graphs.
+
+    Note:
+        When new edges are created, the incident edge lists for each ``Vertex`` object are updated
+        with references to the new edge. This process is handled automatically as long as vertices
+        and edges are initialized using the ``GraphBase`` API (e.g. :meth:`GraphBase.add_edge
+        <vertizee.classes.graph_base.GraphBase.add_edge>` and :meth:`GraphBase.add_vertex
+        <vertizee.classes.graph_base.GraphBase.add_vertex>`).
 
     Args:
         v1: The first vertex (the order does not matter, since this is an
@@ -58,10 +73,8 @@ class Edge:
         parallel_edge_weights: Optional; List of weights for the parallel edges.
             Defaults to None.
 
-    Note:
-        When new edges are created, the incident edge lists for each Vertex object are updated
-        with references to the new edge. This process is handled automatically as long as vertices
-        and edges are not initialized outside of the `GraphBase` API.
+    Attributes:
+        attr: Attribute dictionary to store ad hoc data associated with the edge.
     """
 
     # Limit initialization to protected method `_create`.
@@ -70,8 +83,8 @@ class Edge:
     @classmethod
     def _create(
         cls,
-        v1: Vertex,
-        v2: Vertex,
+        v1: "Vertex",
+        v2: "Vertex",
         weight: Optional[float] = DEFAULT_WEIGHT,
         parallel_edge_count: Optional[int] = 0,
         parallel_edge_weights: Optional[List[float]] = None,
@@ -89,26 +102,25 @@ class Edge:
     def __init__(
         self,
         create_key,
-        v1: Vertex,
-        v2: Vertex,
-        weight: Optional[float] = DEFAULT_WEIGHT,
-        parallel_edge_count: Optional[int] = 0,
+        v1: "Vertex",
+        v2: "Vertex",
+        weight: float = DEFAULT_WEIGHT,
+        parallel_edge_count: int = 0,
         parallel_edge_weights: Optional[List[float]] = None,
     ):
         if create_key != Edge._create_key:
             raise ValueError(
-                f"{self._runtime_type()} objects must be initialized using " "`_create`."
+                f"{self._runtime_type()} objects should be created using method "
+                "GraphBase.add_edge(); do not use __init__"
             )
 
-        # IMPORTANT: vertex1 and vertex2 are used in Edge.__hash__, and must therefore be
+        # IMPORTANT: _vertex1 and _vertex2 are used in Edge.__hash__, and must therefore be
         # treated as immutable (read-only). If the vertex keys need to change, first delete the
         # edge instance and then create a new instance.
         self._vertex1 = v1
         self._vertex2 = v2
 
         self.attr: dict = {}
-        """Custom attribute dictionary to store any additional data associated with edges."""
-
         self._weight: float = float(weight)
 
         self._parallel_edge_count = parallel_edge_count
@@ -139,9 +151,9 @@ class Edge:
         o_v1 = other.vertex1
         o_v2 = other.vertex2
         if not directed_graph:
-            if v1.key > v2.key:
+            if v1.label > v2.label:
                 v1, v2 = v2, v1
-            if o_v1.key > o_v2.key:
+            if o_v1.label > o_v2.label:
                 o_v1, o_v2 = o_v2, o_v1
         if (
             v1 != o_v1
@@ -170,25 +182,33 @@ class Edge:
         directed_graph = self.vertex1._parent_graph.is_directed_graph()
         if directed_graph:
             return hash((self.vertex1, self.vertex2))
-        else:  # undirected graph
-            if self.vertex1.key <= self.vertex2.key:
-                return hash((self.vertex1, self.vertex2))
-            else:
-                return hash((self.vertex2, self.vertex1))
+
+        # undirected graph
+        if self.vertex1.label > self.vertex2.label:
+            return hash((self.vertex2, self.vertex1))
+
+        return hash((self.vertex1, self.vertex2))
+
+    def __repr__(self):
+        return self.__str__()
 
     def __str__(self):
         directed_graph = self.vertex1._parent_graph.is_directed_graph()
         if directed_graph:
-            return f"({self.vertex1.key}, {self.vertex2.key})"
-        else:  # Undirected edge
-            if self.vertex1.key <= self.vertex2.key:
-                return f"({self.vertex1.key}, {self.vertex2.key})"
+            edge_str = f"({self.vertex1.label}, {self.vertex2.label})"
+        else:
+            # undirected edge
+            if self.vertex1.label > self.vertex2.label:
+                edge_str = f"({self.vertex2.label}, {self.vertex1.label})"
             else:
-                return f"({self.vertex2.key}, {self.vertex1.key})"
+                edge_str = f"({self.vertex1.label}, {self.vertex2.label})"
+
+        edges = [edge_str for _ in range(self.parallel_edge_count + 1)]
+        return ", ".join(edges)
 
     def is_loop(self) -> bool:
         """Returns True if this edge is a loop back to itself."""
-        return self.vertex1.key == self.vertex2.key
+        return self.vertex1.label == self.vertex2.label
 
     @property
     def parallel_edge_count(self) -> int:
@@ -207,8 +227,8 @@ class Edge:
     def parallel_edge_weights(self) -> List[float]:
         """A list of parallel edge weights.
 
-        This list should not contain the weight of the initial edge between the two vertices,
-        which should instead be stored in `_weight`.
+        The list of parallel edge weights does not contain the weight of the initial edge between
+        the two vertices. Instead, the initial edge weight is stored in the ``weight`` property.
 
         Returns:
             List[float]: The list of parallel edge weights.
@@ -217,15 +237,17 @@ class Edge:
 
     @property
     def vertex1(self) -> Vertex:
+        """The first vertex. For DiEdge objects, this is a synonym for the ``tail`` property."""
         return self._vertex1
 
     @property
     def vertex2(self) -> Vertex:
+        """The second vertex. For DiEdge objects, this is a synonym for the ``head`` property."""
         return self._vertex2
 
     @property
     def weight(self) -> float:
-        """Returns the edge weight."""
+        """The edge weight."""
         return self._weight
 
     @property
@@ -254,20 +276,26 @@ class DiEdge(Edge):
     """DiEdge is a graph primitive that represents a directed connection between two vertices.
 
     To ensure the integrity of graphs, edges should never be initialized directly. Attempting
-    to initialize an edge using its `__init__` method will raise an error. To create edges, use
-    GraphBase methods such as `add_edge`.
+    to initialize an edge using its ``__init__`` method will raise an error. To create edges, use
+    :class:`GraphBase <vertizee.classes.graph_base.GraphBase>` methods such as
+    :meth:`GraphBase.add_edge <vertizee.classes.graph_base.GraphBase.add_edge>`.
 
-    The starting vertex is called the tail and the destination vertex is called the head. The edge
-    points from the tail to the head.
+    The starting vertex is called the ``tail`` and the destination vertex is called the ``head``.
+    The edge points from the tail to the head.
+
+    DiEdges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
 
     Args:
-        vertex1: The first vertex.
-        vertex2: The second vertex.
+        tail: The starting vertex.
+        head: The destination vertex.
         weight: Optional; Edge weight. Defaults to 0.0.
-        parallel_edge_count: Optional; The number of parallel edges from vertex1 to vertex2.
+        parallel_edge_count: Optional; The number of parallel edges from tail to head.
             Defaults to 0.
         parallel_edge_weights: Optional; List of weights for the parallel edges.
             Defaults to None.
+
+    Attributes:
+        attr: Attribute dictionary to store ad hoc data associated with the edge.
     """
 
     # Limit initialization to protected method `_create`.
@@ -279,8 +307,8 @@ class DiEdge(Edge):
         cls,
         tail: Vertex,
         head: Vertex,
-        weight: Optional[float] = DEFAULT_WEIGHT,
-        parallel_edge_count: Optional[int] = 0,
+        weight: float = DEFAULT_WEIGHT,
+        parallel_edge_count: int = 0,
         parallel_edge_weights: Optional[List[float]] = None,
     ) -> "DiEdge":
         """Initializes a new Edge."""
@@ -298,8 +326,8 @@ class DiEdge(Edge):
         create_key,
         tail: Vertex,
         head: Vertex,
-        weight: Optional[float] = DEFAULT_WEIGHT,
-        parallel_edge_count: Optional[int] = 0,
+        weight: float = DEFAULT_WEIGHT,
+        parallel_edge_count: int = 0,
         parallel_edge_weights: Optional[List[float]] = None,
     ):
         if create_key != DiEdge.__create_key:
@@ -312,8 +340,12 @@ class DiEdge(Edge):
 
     @property
     def head(self) -> Vertex:
+        """The destination vertex that the tail points to. This is a synonym for the ``vertex2``
+        property."""
         return self._vertex2
 
     @property
     def tail(self) -> Vertex:
+        """The starting vertex that points to the head. This is a synonym for the ``vertex1``
+        property."""
         return self._vertex1

@@ -1,13 +1,16 @@
 Classes
 ==================
 
-.. currentmodule:: vertizee
-
 .. toctree::
    :maxdepth: 2
 
-   graph
+   bk_tree
    edge
+   fibonacci_heap
+   graph
+   parsed_primitives
+   priority_queue
+   shortest_path
+   union_find
    vertex
    vertex_dictionary
-   shortest_path

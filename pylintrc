@@ -37,9 +37,6 @@ max-line-length=100
 disable=invalid-name,
         anomalous-backslash-in-string,
         bad-continuation,
-        missing-docstring,
-        no-else-return,
-        no-self-use,
         pointless-string-statement,
         protected-name,
         protected-access,
@@ -47,7 +44,7 @@ disable=invalid-name,
         redefined-builtin,
         too-few-public-methods,
         too-many-arguments,
-        unnecessary-lambda,
+        too-many-branches,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
