@@ -82,6 +82,13 @@ class TestUndirectedGraphs:
             e2.weight_with_parallel_edges == 4.5
         ), "Edge e2 should have total weight 4.5 including parallel edges."
         assert e2.parallel_edge_count == 1, "Edge e2 should have 1 parallel edge."
+        e3 = g.add_edge(3, 4, 10.5)
+        assert e3.__str__() == (
+            "(3, 4, 10.5)"
+        ), "Weighted edges should include weight in string representation."
+
+        g2 = Graph([(1, 2)])
+        assert g2[1, 2].__str__() == "(1, 2)", "Unweighted graphs should show edges with weights."
 
     def test_graph_initialization_and_parallel_edges(self):
         g = MultiGraph()

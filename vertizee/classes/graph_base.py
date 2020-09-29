@@ -100,6 +100,10 @@ class GraphBase:
         self._is_directed_graph = is_directed_graph
         self._is_multigraph = is_multigraph
         self._is_simple_graph = is_simple_graph
+        self._is_weighted_graph = False
+        """If an edge is added with a weight that is not equal to `DEFAULT_WEIGHT`, then this flag
+        is set to True."""
+
         self._vertices: Dict[str, Vertex] = {}
 
     def __contains__(self, vertex: VertexType) -> bool:
@@ -203,6 +207,8 @@ class GraphBase:
                 )
             self._graph_state_is_simple_graph = False
 
+        if weight != DEFAULT_WEIGHT:
+            self._is_weighted_graph = True
         if self._is_directed_graph:
             new_edge = DiEdge._create(
                 vertex1,
@@ -459,6 +465,10 @@ class GraphBase:
     def is_multigraph(self) -> bool:
         """Returns True if this is a multigraph (i.e. a graph that allows parallel edges)."""
         return self._is_multigraph
+
+    def is_weighted(self) -> bool:
+        """Returns True if this is a weighted graph, i.e., contains edges with weights != 1."""
+        return self._is_weighted_graph
 
     def merge_vertices(self, vertex1: VertexType, vertex2: VertexType):
         """Merge ``vertex2`` into ``vertex1``.

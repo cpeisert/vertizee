@@ -233,13 +233,18 @@ class Edge:
     def __str__(self):
         directed_graph = self.vertex1._parent_graph.is_directed_graph()
         if directed_graph:
-            edge_str = f"({self.vertex1.label}, {self.vertex2.label})"
+            edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
         else:
             # undirected edge
             if self.vertex1.label > self.vertex2.label:
-                edge_str = f"({self.vertex2.label}, {self.vertex1.label})"
+                edge_str = f"({self.vertex2.label}, {self.vertex1.label}"
             else:
-                edge_str = f"({self.vertex1.label}, {self.vertex2.label})"
+                edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
+
+        if self.vertex1._parent_graph.is_weighted():
+            edge_str = f"{edge_str}, {self._weight})"
+        else:
+            edge_str = f"{edge_str})"
 
         edges = [edge_str for _ in range(self.parallel_edge_count + 1)]
         return ", ".join(edges)
