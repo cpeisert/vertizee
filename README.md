@@ -26,7 +26,7 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 set()
 >>> g['s'].edges_outgoing
 {(s, t), (s, y)}
->>> g['s']['y'].weight
+>>> g['s', 'y'].weight
 5.0
 >>> from vertizee.algorithms import shortest_paths_dijkstra
 >>> # `s_paths` is a dictionary mapping vertices to ShortestPath objects. In

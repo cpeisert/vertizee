@@ -23,7 +23,7 @@
 """
 
 from __future__ import annotations
-from typing import List, Optional, TYPE_CHECKING, Union
+from typing import Any, List, Optional, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
@@ -164,6 +164,26 @@ class Edge:
             return False
         return True
 
+    def __getitem__(self, key: Any) -> Any:
+        """Supports index accessor notation to retrieve values from the `attr` dictionary.
+
+        Example:
+            >>> import vertizee as vz
+            >>> g = vz.Graph()
+            >>> g.add_edge(1, 2)
+            (1, 2)
+            >>> g[1, 2]["color"] = "blue"
+            >>> g[1, 2]["color"]
+            'blue'
+
+        Args:
+            key: The `attr` dictionary key.
+
+        Returns:
+            Any: The value indexed by `key`.
+        """
+        return self.attr[key]
+
     def __hash__(self):
         """Create a hash key using the edge vertices.
 
@@ -191,6 +211,24 @@ class Edge:
 
     def __repr__(self):
         return self.__str__()
+
+    def __setitem__(self, key: Any, value: Any):
+        """Supports index accessor notation to set values in the `attr` dictionary.
+
+        Example:
+            >>> import vertizee as vz
+            >>> g = vz.Graph()
+            >>> g.add_edge(1, 2)
+            (1, 2)
+            >>> g[1, 2]["color"] = "blue"
+            >>> g[1, 2]["color"]
+            "blue"
+
+        Args:
+            key: The `attr` dictionary key.
+            value: The value to assign to `key` in the `attr` dictionary.
+        """
+        self.attr[key] = value
 
     def __str__(self):
         directed_graph = self.vertex1._parent_graph.is_directed_graph()

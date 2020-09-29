@@ -469,7 +469,7 @@ def _check_for_parallel_edge_cycle(graph: GraphBase, dfs_results: DFSResults, ed
         dfs_results._is_acyclic = False
     elif graph.is_directed_graph() and dfs_results.is_acyclic():
         # Check if parallel edge in opposite direction.
-        if graph[edge.vertex2][edge.vertex1] is not None:
+        if graph[edge.vertex2, edge.vertex1] is not None:
             dfs_results._is_acyclic = False
 
 
@@ -534,7 +534,7 @@ def _get_tree_edge_to_parent(graph: GraphBase, v: Vertex) -> Optional[EdgeType]:
     """DFS helper function to retrieve the DFS tree edge leading from `v` to its parent vertex."""
     if v.attr[PARENT]:
         parent_v = v.attr[PARENT]
-        return graph[parent_v][v]
+        return graph[parent_v, v]
     return None
 
 
@@ -571,7 +571,7 @@ def _push_next_undiscovered_adj_vertex_to_stack(
     """Helper function to update the stack with the next undiscovered adjacent vertex."""
     adj_vertices = stack[-1].adj_vertices
     w = adj_vertices.pop()
-    edge = graph[prev_vertex][w]
+    edge = graph[prev_vertex, w]
 
     if w.attr[COLOR] == WHITE:  # UNDISCOVERED vertex w adjacent to v.
         dfs_results.tree_edges.add(edge)

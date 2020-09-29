@@ -27,7 +27,7 @@ Function summary:
 """
 
 from __future__ import annotations
-from typing import Dict, Optional, Set, TYPE_CHECKING, Union
+from typing import Any, Dict, Optional, Set, TYPE_CHECKING, Union
 
 from vertizee.classes import parsed_primitives
 
@@ -140,29 +140,25 @@ class Vertex:
     def __eq__(self, other: VertexType):
         return self.__compare(other, "==")
 
-    def __getitem__(self, vertex_label: VertexType) -> EdgeType:
-        """Support index accessor notation to retrieve incident edges.
-
-        This is syntactic sugar for the method :meth:`get_edge`.
+    def __getitem__(self, key: Any) -> Any:
+        """Supports index accessor notation to retrieve values from the `attr` dictionary.
 
         Example:
             >>> import vertizee as vz
             >>> g = vz.Graph()
-            >>> g.add_edge(1, 2)
-            <vertizee.classes.edge.Edge object at 0x7fb4f468b220>
-            >>> vertex1 = g[1]
-            >>> str(vertex1[2])
-            '(1, 2)'
-            >>> str(g[1][2])
-            '(1, 2)'
+            >>> g.add_vertex(1)
+            1
+            >>> g[1]["color"] = "blue"
+            >>> g[1]["color"]
+            'blue'
 
         Args:
-            vertex_label (Union[int, str, Vertex]): The key label of the edge's second vertex.
+            key: The `attr` dictionary key.
 
         Returns:
-            Edge: The edge specified by vertex pair (self.label, vertex_label).
+            Any: The value indexed by `key`.
         """
-        return self._parent_graph.get_edge(self.label, vertex_label)
+        return self.attr[key]
 
     def __ge__(self, other: VertexType):
         return self.__compare(other, ">=")
@@ -184,6 +180,24 @@ class Vertex:
 
     def __repr__(self):
         return f"{self.label}"
+
+    def __setitem__(self, key: Any, value: Any):
+        """Supports index accessor notation to set values in the `attr` dictionary.
+
+        Example:
+            >>> import vertizee as vz
+            >>> g = vz.Graph()
+            >>> g.add_vertex(1)
+            1
+            >>> g[1]["color"] = "blue"
+            >>> g[1]["color"]
+            'blue'
+
+        Args:
+            key: The `attr` dictionary key.
+            value: The value to assign to `key` in the `attr` dictionary.
+        """
+        self.attr[key] = value
 
     def __str__(self):
         return f"{self.label}"

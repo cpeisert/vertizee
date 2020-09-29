@@ -120,7 +120,7 @@ class TestUndirectedGraphs:
         assert v0 in g, "Graph should contain vertex with label 0."
         assert g.has_vertex(v0), "Graph should contain vertex with label 0."
 
-        edge00 = v0[0]  # Test accessor notation. Same as: g.get_edge(v0, v0)
+        edge00 = g[0, 0]
         assert edge00.is_loop(), "Edge (0, 0) should be a loop."
 
         assert g.graph_weight == 4971.5, "Graph should have weight of 4971.5."
@@ -143,9 +143,9 @@ class TestUndirectedGraphs:
 
         edge01 = g.get_edge(v0, v1)
         # Test accessor notation.
-        edge10 = g[1][0]
+        edge10 = g[1, 0]
         edge12 = g.get_edge(v1, v2)
-        edge20 = g[2][0]
+        edge20 = g[2, 0]
         edge32 = g.get_edge(v3, v2)
 
         assert not g.has_edge(edge00), "Graph should not contain edge (0, 0)."

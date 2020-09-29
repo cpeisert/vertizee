@@ -47,10 +47,10 @@ def get_weight_function(
             def get_min_weight(v1: VertexType, v2: VertexType, reverse_graph: bool) -> float:
                 graph = v1._parent_graph
                 if reverse_graph:
-                    edge: EdgeType = graph[v2][v1]
+                    edge: EdgeType = graph[v2, v1]
                     edge_str = f'({v2.label}, {v1.label})'
                 else:
-                    edge: EdgeType = graph[v1][v2]
+                    edge: EdgeType = graph[v1, v2]
                     edge_str = f'({v1.label}, {v2.label})'
                 if edge is None:
                     raise AlgorithmError(f'graph does not have edge {edge_str}')
@@ -88,10 +88,10 @@ def get_weight_function(
     def get_min_weight(v1: VertexType, v2: VertexType, reverse_graph: bool) -> float:
         graph = v1._parent_graph
         if reverse_graph:
-            edge: EdgeType = graph[v2][v1]
+            edge: EdgeType = graph[v2, v1]
             edge_str = f"({v2.label}, {v1.label})"
         else:
-            edge: EdgeType = graph[v1][v2]
+            edge: EdgeType = graph[v1, v2]
             edge_str = f"({v1.label}, {v2.label})"
         if edge is None:
             raise vertizee.AlgorithmError(f"graph does not have edge {edge_str}")
@@ -341,7 +341,7 @@ def all_pairs_shortest_paths_johnson(
 
     # pylint: disable=unused-argument
     def new_weight(v1: VertexType, v2: VertexType, reverse_graph: bool = False) -> float:
-        edge: EdgeType = graph[v1][v2]
+        edge: EdgeType = graph[v1, v2]
         return weight_function(edge) + bellman_paths[v1].length - bellman_paths[v2].length
 
     source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()
@@ -410,7 +410,7 @@ def all_pairs_shortest_paths_johnson_fibonacci(
 
     # pylint: disable=unused-argument
     def new_weight(v1: VertexType, v2: VertexType, reverse_graph: bool = False) -> float:
-        edge: EdgeType = graph[v1][v2]
+        edge: EdgeType = graph[v1, v2]
         return weight_function(edge) + bellman_paths[v1].length - bellman_paths[v2].length
 
     source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()

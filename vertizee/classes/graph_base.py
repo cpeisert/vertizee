@@ -29,7 +29,7 @@ See Also:
 
 from __future__ import annotations
 import random
-from typing import Dict, List, Optional, Set, TYPE_CHECKING
+from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING, Union
 
 from vertizee.classes import parsed_primitives
 from vertizee.classes.parsed_primitives import ParsedPrimitives
@@ -43,6 +43,8 @@ if TYPE_CHECKING:
     from vertizee.classes.edge import EdgeType
     from vertizee.classes.parsed_primitives import GraphPrimitive
     from vertizee.classes.vertex import VertexType
+
+VertexOrPair = Union["VertexType", Tuple["VertexType", "VertexType"]]
 
 
 class GraphBase:
@@ -108,28 +110,37 @@ class GraphBase:
             )
         return primitives.vertex_labels[0] in self._vertices
 
-    # TODO(cpeisert): Add support for accessing edges using double index notation: [v1, v2].
-    def __getitem__(self, vertex_label: VertexType) -> Optional[Vertex]:
-        """Supports index accessor notation to retrieve vertices.
+    def __getitem__(self, vertex_keys: VertexOrPair) -> Union[Vertex, EdgeType, None]:
+        """Supports index accessor notation to retrieve vertices (one vertex index) and edges (two
+        vertex indices).
 
         Example:
             >>> import vertizee as vz
             >>> g = vz.Graph()
             >>> g.add_edge(1, 2)
-            <vertizee.classes.edge.Edge object at 0x7fb4f468b220>
-            >>> vertex1 = g[1]
-            >>> str(vertex1[2])
-            '(1, 2)'
-            >>> str(g[1][2])
-            '(1, 2)'
+            (1, 2)
+            >>> g[1]
+            1
+            >>> g[1, 2]
+            (1, 2)
 
         Args:
-            vertex_label: The vertex label (``int`` or ``str``).
+            vertex_keys: The vertex keys. One vertex indicates a `Vertex` lookup and two vertices
+                indicates an `Edge` (or `DiEdge`) lookup.
 
         Returns:
-            Vertex: The vertex specified by the vertex label.
+            Union[Vertex, EdgeType, None]: The vertex specified by the vertex label or the edge
+                specified by two vertices. If no matching vertex or edge found, returns None.
         """
-        return self._get_vertex(vertex_label)
+        if isinstance(vertex_keys, tuple):
+            if len(vertex_keys) > 2:
+                raise ValueError(
+                    "graph index lookup supports one or two vertices; " f"{len(vertex_keys)} found"
+                )
+            if len(vertex_keys) == 1:
+                return self._get_vertex(vertex_keys[0])
+            return self.get_edge(vertex_keys[0], vertex_keys[1])
+        return self._get_vertex(vertex_keys)
 
     def __iter__(self):
         return iter(self._vertices.values())
@@ -343,28 +354,6 @@ class GraphBase:
         """The set of graph edges."""
         return set(self._edges)
 
-    def get_edge(self, *args: "GraphPrimitive") -> Optional[EdgeType]:
-        """Gets the edge specified by the graph primitives, or None if no such edge exists.
-
-        Args:
-            *args: graph primitives (i.e. vertices or edges)
-
-        Returns:
-            EdgeType: The edge or None if not found.
-
-        See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
-        """
-        primitives = parsed_primitives.parse_graph_primitives(*args)
-        edge_tuple = parsed_primitives.get_edge_tuple_from_parsed_primitives(primitives)
-        if edge_tuple is None or edge_tuple[1] is None:
-            return None
-        if edge_tuple[0] not in self._vertices or edge_tuple[1] not in self._vertices:
-            return None
-
-        vertex = self._vertices[edge_tuple[0]]
-        return vertex.get_edge(edge_tuple[0], edge_tuple[1])
-
     def get_all_graph_edges_from_parsed_primitives(
         self, primitives: ParsedPrimitives
     ) -> List[EdgeType]:
@@ -398,6 +387,28 @@ class GraphBase:
                 vertex_prev = vertex_current
 
         return [x for x in graph_edges if x is not None]
+
+    def get_edge(self, *args: "GraphPrimitive") -> Optional[EdgeType]:
+        """Gets the edge specified by the graph primitives, or None if no such edge exists.
+
+        Args:
+            *args: graph primitives (i.e. vertices or edges)
+
+        Returns:
+            EdgeType: The edge or None if not found.
+
+        See Also:
+            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+        """
+        primitives = parsed_primitives.parse_graph_primitives(*args)
+        edge_tuple = parsed_primitives.get_edge_tuple_from_parsed_primitives(primitives)
+        if edge_tuple is None or edge_tuple[1] is None:
+            return None
+        if edge_tuple[0] not in self._vertices or edge_tuple[1] not in self._vertices:
+            return None
+
+        vertex = self._vertices[edge_tuple[0]]
+        return vertex.get_edge(edge_tuple[0], edge_tuple[1])
 
     def get_random_edge(self) -> Optional[EdgeType]:
         """Returns a randomly selected edge from the graph, or None if there are no edges.

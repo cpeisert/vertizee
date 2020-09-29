@@ -682,16 +682,16 @@ class TestWeightedSingleSourceShortestPaths:
                 ("z", "x"),
             ]
         )
-        g["s"]["t"].attr[WEIGHT] = 10
-        g["s"]["y"].attr[WEIGHT] = 5
-        g["t"]["y"].attr[WEIGHT] = 2
-        g["t"]["x"].attr[WEIGHT] = 1
-        g["x"]["z"].attr[WEIGHT] = 4
-        g["y"]["t"].attr[WEIGHT] = 3
-        g["y"]["x"].attr[WEIGHT] = 9
-        g["y"]["z"].attr[WEIGHT] = 2
-        g["z"]["s"].attr[WEIGHT] = 7
-        g["z"]["x"].attr[WEIGHT] = 6
+        g["s", "t"][WEIGHT] = 10
+        g["s", "y"][WEIGHT] = 5
+        g["t", "y"][WEIGHT] = 2
+        g["t", "x"][WEIGHT] = 1
+        g["x", "z"][WEIGHT] = 4
+        g["y", "t"][WEIGHT] = 3
+        g["y", "x"][WEIGHT] = 9
+        g["y", "z"][WEIGHT] = 2
+        g["z", "s"][WEIGHT] = 7
+        g["z", "x"][WEIGHT] = 6
 
         paths: VertexDict[ShortestPath] = shortest_paths_dijkstra(g, "s", weight=WEIGHT)
 
@@ -720,25 +720,25 @@ class TestWeightedSingleSourceShortestPaths:
             ]
         )
 
-        g["s"]["t"].attr[COLOR] = "RED"
-        g["s"]["y"].attr[COLOR] = "BLUE"
-        g["t"]["y"].attr[COLOR] = "RED"
-        g["t"]["x"].attr[COLOR] = "RED"
-        g["x"]["z"].attr[COLOR] = "RED"
-        g["y"]["t"].attr[COLOR] = "BLUE"
-        g["y"]["x"].attr[COLOR] = "RED"
-        g["y"]["z"].attr[COLOR] = "BLUE"
-        g["z"]["s"].attr[COLOR] = "BLUE"
-        g["z"]["x"].attr[COLOR] = "BLUE"
+        g["s", "t"][COLOR] = "RED"
+        g["s", "y"][COLOR] = "BLUE"
+        g["t", "y"][COLOR] = "RED"
+        g["t", "x"][COLOR] = "RED"
+        g["x", "z"][COLOR] = "RED"
+        g["y", "t"][COLOR] = "BLUE"
+        g["y", "x"][COLOR] = "RED"
+        g["y", "z"][COLOR] = "BLUE"
+        g["z", "s"][COLOR] = "BLUE"
+        g["z", "x"][COLOR] = "BLUE"
 
         # Exclude blue edges.
         def get_min_weight(v1: Vertex, v2: Vertex, reverse_graph: bool) -> float:
             graph = v1._parent_graph
             if reverse_graph:
-                edge: EdgeType = graph[v2][v1]
+                edge: EdgeType = graph[v2, v1]
                 edge_str = f"({v2.label}, {v1.label})"
             else:
-                edge: EdgeType = graph[v1][v2]
+                edge: EdgeType = graph[v1, v2]
                 edge_str = f"({v1.label}, {v2.label})"
             if edge is None:
                 raise ValueError(f"graph does not have edge {edge_str}")
