@@ -77,7 +77,7 @@ class TestDFSResults:
         assert len(dfs.vertices_pre_order) == len(
             dfs.vertices_post_order
         ), "The number of vertices should be the same in discovery as well post order."
-        assert len(dfs.back_edges) == 0, "Graph should have zero back edges."
+        assert len(dfs.back_edges) == 1, "Graph should have one self-loop back edge."
         assert len(dfs.cross_edges) == 0, (
             "Graph should have zero cross edges (true for all " "undirected graphs)."
         )

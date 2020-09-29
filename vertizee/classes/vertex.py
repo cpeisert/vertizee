@@ -371,8 +371,7 @@ class Vertex:
         """
         if edge.vertex1.label != self.label and edge.vertex2.label != self.label:
             raise ValueError(
-                f"Edge ({{{edge.vertex1.label}, {edge.vertex2.label}}}) did not "
-                f"have a vertex matching this vertex {{{self.label}}}"
+                f"Edge {edge} did not have a vertex matching this vertex {{{self.label}}}"
             )
         self._edges.add_edge(edge)
 
@@ -384,8 +383,7 @@ class Vertex:
         """
         if edge.vertex1.label != self.label and edge.vertex2.label != self.label:
             raise ValueError(
-                f"Edge ({{{edge.vertex1.label}, {edge.vertex2.label}}}) did not "
-                f"have a vertex matching this vertex {{{self.label}}}"
+                f"Edge {edge} did not have a vertex matching this vertex {{{self.label}}}"
             )
         self._edges.remove_edge_from(edge)
         return 1 + edge.parallel_edge_count
@@ -399,13 +397,19 @@ class IncidentEdges:
     """Collection of edges that are incident on a shared vertex.
 
     Attempting to add an edge that does not have the shared vertex raises an error. Self loops are
-    tracked and may be accessed with the ``loops`` property. In the case of directed edges,
-    the ``incoming`` and ``outgoing`` properties may be used. Collections of adjacent vertices are
+    tracked and may be accessed with the ``loops`` property. Loops cause a vertex to be adjacent
+    to itself and the loop is an adjacent edge. [LOOP2020]_ In the case of directed edges, adjacent
+    edges are also classified as ``incoming`` and ``outgoing``. Collections of adjacent vertices are
     also maintained for algorithmic efficiency.
 
     Args:
         shared_vertex_label: The vertex label of the vertex shared by the incident edges.
         parent_graph: The graph to which the incident edges belong.
+
+    References:
+     .. [LOOP2020] Wikipedia contributors. "Loop (graph theory)." Wikipedia, The Free
+        Encyclopedia. Available from: https://en.wikipedia.org/wiki/Loop_(graph_theory).
+        Accessed 29 September 2020.
     """
 
     def __init__(self, shared_vertex_label: str, parent_graph: GraphBase):
@@ -478,8 +482,8 @@ class IncidentEdges:
             and edge.vertex2.label != self._shared_vertex_label
         ):
             raise ValueError(
-                f"Cannot add edge ({edge.vertex1.label}, {edge.vertex2.label}) since it does not"
-                f" share vertex {{{self._shared_vertex_label}}}."
+                f"Cannot add edge {edge} since it does not share vertex "
+                f"{{{self._shared_vertex_label}}}."
             )
 
         edge_label = _create_edge_label(
@@ -488,6 +492,12 @@ class IncidentEdges:
         if edge.vertex1 == edge.vertex2:
             self._loops = edge
             self._edges[edge_label] = edge
+            self._adj_vertices.add(edge.vertex1)
+            if self._parent_graph.is_directed_graph():
+                self._outgoing.add(edge)
+                self._adj_vertices_outgoing.add(edge.vertex1)
+                self._incoming.add(edge)
+                self._adj_vertices_incoming.add(edge.vertex1)
             return
 
         adj_vertex = None

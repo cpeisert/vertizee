@@ -35,14 +35,19 @@ pytestmark = pytest.mark.skipif(
 class TestDirectedGraph:
     def test_vertex(self):
         g = MultiDiGraph()
-        v0 = g.add_vertex("0")
-        assert v0.label == "0", f'DiVertex v0 should have label "0", but had label "{v0.label}"'
-        assert v0.degree == 0, f"DiVertex v0 should have degree 0, but had degree {v0.degree}"
-        assert len(v0.edges_incoming) == 0, "DiVertex v0 should have no incoming edges."
-
-        v1 = g.add_vertex("1")
-        assert v1.label == "1", f'DiVertex v1 should have label "1", but had label "{v1.label}"'
-        assert v1.degree == 0, f"DiVertex v1 should have degree 0, but had degree {v1.degree}"
+        g.add_edge(0, 0)
+        assert (
+            next(iter(g[0].adjacent_vertices_incoming)) == g[0]
+        ), "Vertex 0 should be adjacent to itself as an incoming edge."
+        assert (
+            next(iter(g[0].adjacent_vertices_outgoing)) == g[0]
+        ), "Vertex 0 should be adjacent to itself as an outgoing edge."
+        assert g[0].edges_incoming == {
+            g[0, 0]
+        }, "Vertex 0 adjacent incoming edges should include the self loop."
+        assert g[0].edges_outgoing == {
+            g[0, 0]
+        }, "Vertex 0 adjacent outgoing edges should include the self loop."
 
     def test_edge(self):
         g = MultiDiGraph()
@@ -63,11 +68,13 @@ class TestDirectedGraph:
         ), f"Edge e1 should have head ({v1.label}), but head was ({e1.head.label})"
         assert e_loop.is_loop(), "Edge e_loop should be a loop."
         assert v0.degree == 3, "DiVertex v0 should have degree 3."
-        assert len(v0.adjacent_vertices_outgoing) == 1, (
-            "Vertex v0 should have 1 outgoing " "adjacent vertex."
-        )
-        adj_vertex = v0.adjacent_vertices_outgoing.pop()
-        assert adj_vertex.label == "1", "Vertex v0 should be adjacent to vertex 1."
+        assert (
+            len(v0.adjacent_vertices_outgoing) == 2
+        ), "Vertex v0 should have 2 outgoing adjacent vertices."
+        assert v0.adjacent_vertices_outgoing == {
+            g[0],
+            g[1],
+        }, "Vertex v0 should be adjacent to itself and vertex 1."
 
         v2 = g.add_vertex("2")
         e2 = g.add_edge(

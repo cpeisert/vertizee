@@ -33,13 +33,19 @@ class TestUndirectedGraphs:
     def test_vertex(self):
         g = Graph()
         v0 = g.add_vertex("0")
-        assert v0.label == "0", f'Vertex v0 should have label "0", but had label "{v0.label}"'
+        assert v0.label == "0", f"Vertex v0 should have label '0', but had label '{v0.label}'"
         assert v0.degree == 0, f"Vertex v0 should have degree 0, but had degree {v0.degree}"
         assert len(v0.edges) == 0, "Vertex v0 should have no incoming edges."
 
         v1 = g.add_vertex("1")
-        assert v1.label == "1", f'Vertex v1 should have label "1", but had label "{v1.label}"'
+        assert v1.label == "1", f"Vertex v1 should have label '1', but had label '{v1.label}'"
         assert v1.degree == 0, f"Vertex v1 should have degree 0, but had degree {v1.degree}"
+
+        g.add_edge(0, 0)
+        assert g[0].degree == 2, "Vertex 0 should have degree '2', since loops count twice."
+        assert next(iter(g[0].adjacent_vertices)) == g[0], "Vertex 0 should be adjacent to itself."
+        assert g[0].loops == {g[0, 0]}, "Loop edge on vertex should equal the same edge in graph."
+        assert g[0].edges == {g[0, 0]}, "Vertex 0 adjacent edges should include the self loop."
 
     def test_edge(self):
         g = MultiGraph()
@@ -63,9 +69,11 @@ class TestUndirectedGraphs:
         assert e_loop.is_loop(), "Edge e_loop should be a loop."
         assert v0.degree == 3, "Vertex v0 should have degree 3."
         assert len(v0.non_loop_edges) == 1, "Vertex v0 should have 1 non-loop edge."
-        assert len(v0.adjacent_vertices) == 1, "Vertex v0 should have 1 adjacent vertex."
-        adj_vertex = v0.adjacent_vertices.pop()
-        assert adj_vertex.label == "1", "Vertex v0 should be adjacent to vertex 1."
+        assert len(v0.adjacent_vertices) == 2, "Vertex v0 should have 2 adjacent vertices."
+        assert v0.adjacent_vertices == {
+            g[0],
+            g[1],
+        }, "Vertex v0 should be adjacent to itself and vertex 1."
 
         v2 = g.add_vertex("2")
         e2 = g.add_edge(v1, v2, weight=1.5, parallel_edge_count=1, parallel_edge_weights=[3])
