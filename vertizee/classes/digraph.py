@@ -35,7 +35,7 @@ Example:
     4
     >>> edge01.parallel_edge_count
     1
-    >>> g[1][0].parallel_edge_count
+    >>> g[1, 0].parallel_edge_count
     0
 """
 # Note: In Python < 3.10, in order to prevent Sphinx from unfolding type aliases, future

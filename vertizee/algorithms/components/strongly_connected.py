@@ -91,7 +91,7 @@ def _dfs_scc(graph: GraphBase, source: Vertex) -> DepthFirstSearchTree:
 
             if v.attr[PARENT]:
                 parent_v = v.attr[PARENT]
-                edge = graph[parent_v][v]
+                edge = graph[parent_v, v]
                 scc.edges_in_discovery_order.append(edge)
 
         if adj_vertices:  # Continue depth-first search with next adjacent vertex.

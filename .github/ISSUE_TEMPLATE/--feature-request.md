@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 <!--🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅🔅
-Hi there! 😄 
+Hi there! 😄
 
 To expedite issue processing please search open and closed issues before submitting a new one.
 Existing issues often contain information about workarounds, resolution, or progress updates.
@@ -19,7 +19,7 @@ Existing issues often contain information about workarounds, resolution, or prog
 ### Relevant Module
 <!-- Can you pin-point one or more vertizee/* modules the are relevant for this feature request? -->
 <!-- ✍️edit: -->
-This feature request is for vertizee/<package/<module.py>
+This feature request is for vertizee/<package>/<module.py>
 
 
 ### Description

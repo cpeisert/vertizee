@@ -227,12 +227,12 @@ def spanning_tree_prim(
         if u.attr[PRIM_PARENT_KEY] is not None:
             parent = u.attr[PRIM_PARENT_KEY]
             adj_vertices = u.adjacent_vertices - {parent}
-            tree_edge = graph[parent][u]
+            tree_edge = graph[parent, u]
         else:
             adj_vertices = u.adjacent_vertices
 
         for v in adj_vertices:
-            u_v_weight = _weight_function(graph[u][v], weight, minimum)
+            u_v_weight = _weight_function(graph[u, v], weight, minimum)
             if v not in vertices_in_tree and u_v_weight < v.attr[PRIM_PRIORITY_KEY]:
                 v.attr[PRIM_PARENT_KEY] = u
                 v.attr[PRIM_PRIORITY_KEY] = u_v_weight
@@ -322,12 +322,12 @@ def spanning_tree_prim_fibonacci(
         if u.attr[PRIM_PARENT_KEY] is not None:
             parent = u.attr[PRIM_PARENT_KEY]
             adj_vertices = u.adjacent_vertices - {parent}
-            tree_edge = graph[parent][u]
+            tree_edge = graph[parent, u]
         else:
             adj_vertices = u.adjacent_vertices
 
         for v in adj_vertices:
-            u_v_weight = _weight_function(graph[u][v], weight, minimum)
+            u_v_weight = _weight_function(graph[u, v], weight, minimum)
             if v not in vertices_in_tree and u_v_weight < v.attr[PRIM_PRIORITY_KEY]:
                 v.attr[PRIM_PARENT_KEY] = u
                 v.attr[PRIM_PRIORITY_KEY] = u_v_weight
