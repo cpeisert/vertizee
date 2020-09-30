@@ -127,11 +127,6 @@ class TestUndirectedGraphs:
         assert v2.degree == 3, f"Vertex v2 should have degree 3, but had degree {v2.degree}."
         assert v4.degree == 0, f"Vertex v4 should have degree 0, but had degree {v4.degree}."
         assert v4 in g, "Graph should contain isolated vertex v4."
-        g.remove_degree_zero_vertices()
-        assert (
-            v4 not in g
-        ), "Graph should not contain isolated vertex v4 after deleting vertices with degree 0."
-
         assert v0 in g, "Graph should contain vertex with label 0."
         assert g.has_vertex(v0), "Graph should contain vertex with label 0."
 
@@ -180,6 +175,22 @@ class TestUndirectedGraphs:
             "Graph should have 3 edges (including parallel edges) after deleting edges (0, 0) "
             " and (0, 1)."
         )
+
+    def test_isolated_vertex_removal(self):
+        g = MultiGraph([(0, 0), (0, 0), (1, 2), (3, 4)])
+        g.add_vertex(5)
+        count = g.remove_isolated_vertices()
+        assert count == 2, "Should have removed two vertices."
+        assert g[0] is None, "Vertex 0 should have been removed."
+        assert g[5] is None, "Vertex 5 should have been removed."
+        assert (
+            g[1] is not None and g[2] is not None and g[3] is not None and g[4] is not None
+        ), "Vertices with adjacent edges should not have been removed."
+        count = g.remove_isolated_vertices()
+        assert count == 0, "Should not have removed any vertices, since no vertices were isolated."
+        g.add_vertex(10)
+        count = g.remove_isolated_vertices()
+        assert count == 1, "Should have removed isolated vertex 10."
 
     def test_iterators(self):
         g = MultiGraph()

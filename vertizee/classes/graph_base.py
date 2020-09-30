@@ -616,12 +616,19 @@ class GraphBase:
                     edge._parallel_edge_weights.pop()
         return deletion_count
 
-    def remove_degree_zero_vertices(self) -> int:
-        """Removes all vertices with degree zero and returns the count of deleted vertices."""
+    def remove_isolated_vertices(self) -> int:
+        """Removes all isolated vertices and returns the count of deleted vertices.
+
+        Isolated vertices are vertices that either have zero adjacent edges or only self-loops.
+        """
         vertex_labels_to_remove = []
         for key, vertex in self._vertices.items():
             if vertex.degree == 0:
                 vertex_labels_to_remove.append(key)
+            elif len(vertex.loops) > 0:
+                if len(vertex.edges) == len(vertex.loops):
+                    vertex_labels_to_remove.append(key)
+
         for k in vertex_labels_to_remove:
             self._vertices.pop(k)
         return len(vertex_labels_to_remove)
