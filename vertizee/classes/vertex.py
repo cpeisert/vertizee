@@ -19,7 +19,7 @@ Classes and type aliases:
     * :class:`VertexType` - The type alias ``Union[int, str, Vertex]``. Any context that accepts
       ``VertexType`` permits referring to vertices by label (``str`` or ``int``) or by
       ``Vertex`` object.
-    * :class:`IncidentEdges` - Collection class to manage edges incident on a shared vertex.
+    * :class:`_IncidentEdges` - Collection class to manage edges incident on a shared vertex.
 
 Function summary:
     * :func:`get_vertex_label` - Returns the vertex label string for the specified vertex.
@@ -112,7 +112,7 @@ class Vertex:
 
         self.attr: dict = {}
 
-        self._edges: IncidentEdges = IncidentEdges(self.label, parent_graph)
+        self._edges: _IncidentEdges = _IncidentEdges(self.label, parent_graph)
         self._parent_graph = parent_graph
 
     def __compare(self, other: VertexType, operator: str) -> bool:
@@ -224,14 +224,14 @@ class Vertex:
     def degree(self) -> int:
         """The degree (or valance) of this vertex.
 
-        The degree is the number of incident edges and self-loops are counted twice.
+        The degree is the number of incident edges. Self-loops are counted twice.
         """
         total = 0
         for edge in self.edges:
             if edge.is_loop():
-                total += 2 * (1 + edge.parallel_edge_count)
+                total += 2 * edge.multiplicity
             else:
-                total += 1 + edge.parallel_edge_count
+                total += edge.multiplicity
         return total
 
     def delete_loops(self) -> int:
@@ -244,12 +244,39 @@ class Vertex:
         loops = []
         for edge in self._edges.loops:
             loops.append(edge)
-            deletion_count += 1 + edge.parallel_edge_count
+            deletion_count += edge.multiplicity
             self._parent_graph._edges.remove(edge)
             self._parent_graph._edges_with_freq_weight.pop(edge)
         for loop in loops:
             self._edges.remove_edge_from(loop)
         return deletion_count
+
+    @property
+    def edges(self) -> Set[EdgeType]:
+        """The set of all incident edges (incoming, outgoing, and self-loops)."""
+        return self._edges.edges
+
+    @property
+    def edges_incoming(self) -> Set[EdgeType]:
+        """The set of incoming edges (i.e. edges where this vertex is the head).
+
+        This is an empty set for undirected graphs. Use ``edges`` instead.
+
+        Returns:
+            Set[Edge]: The incoming edges.
+        """
+        return self._edges.incoming
+
+    @property
+    def edges_outgoing(self) -> Set[EdgeType]:
+        """The set of outgoing edges (i.e. edges where this vertex is the tail).
+
+        This is an empty set for undirected graphs. Use ``edges`` instead.
+
+        Returns:
+            Set[Edge]: The outgoing edges.
+        """
+        return self._edges.outgoing
 
     def get_adj_for_search(
         self, parent: Optional["Vertex"] = None, reverse_graph: bool = False
@@ -284,47 +311,20 @@ class Vertex:
             adj_vertices = adj_vertices - {parent}
         return adj_vertices
 
-    def get_edge(self, *args: GraphPrimitive) -> Optional[EdgeType]:
-        """Retrieves edge incident to this vertex by specifying a second vertex in ``args``.
-
-        Args:
-            *args: Any combination of graph primitives yielding an incident vertex.
-
-        Returns:
-            EdgeType: The edge specified by this vertex and ``args``, or None if no such edge
-            exists.
-
-        See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
-        """
-        return self._edges.get_edge(*args)
-
     @property
-    def edges(self) -> Set[EdgeType]:
-        """The set of all incident edges (incoming, outgoing, and self-loops)."""
-        return self._edges.edges
+    def indegree(self) -> int:
+        """The indegree of this vertex.
 
-    @property
-    def edges_incoming(self) -> Set[EdgeType]:
-        """The set of incoming edges (i.e. edges where this vertex is the head).
-
-        This is an empty set for undirected graphs. Use ``edges`` instead.
-
-        Returns:
-            Set[Edge]: The incoming edges.
+        The indegree is the number of incoming incident edges. For undirected graphs, the indegree
+        is the same as the degree.
         """
-        return self._edges.incoming
+        if not self._parent_graph.is_directed_graph():
+            return self.degree
 
-    @property
-    def edges_outgoing(self) -> Set[EdgeType]:
-        """The set of outgoing edges (i.e. edges where this vertex is the tail).
-
-        This is an empty set for undirected graphs. Use ``edges`` instead.
-
-        Returns:
-            Set[Edge]: The outgoing edges.
-        """
-        return self._edges.outgoing
+        total = 0
+        for edge in self._edges.incoming:
+            total += edge.multiplicity
+        return total
 
     def is_incident_edge(self, *args: GraphPrimitive) -> bool:
         """Returns True if the edge specified by ``args`` is incident on this vertex.
@@ -361,6 +361,21 @@ class Vertex:
         non_loops = self._edges.edges - self._edges.loops
         return non_loops
 
+    @property
+    def outdegree(self) -> int:
+        """The outdegree of this vertex.
+
+        The outdegree is the number of outgoing incident edges. For undirected graphs, the outdegree
+        is the same as the degree.
+        """
+        if not self._parent_graph.is_directed_graph():
+            return self.degree
+
+        total = 0
+        for edge in self._edges.outgoing:
+            total += edge.multiplicity
+        return total
+
     def _add_edge(self, edge: EdgeType):
         """Adds an edge.
 
@@ -374,6 +389,24 @@ class Vertex:
                 f"Edge {edge} did not have a vertex matching this vertex {{{self.label}}}"
             )
         self._edges.add_edge(edge)
+
+    def _get_edge(self, *args: GraphPrimitive) -> Optional[EdgeType]:
+        """Gets the incident edge specified by ``args``, or None if no such edge exists.
+
+        Args:
+            *args: For undirected graph, ``args`` may specify this vertex and the adjacent vertex
+                or just the adjacent vertex. For directed graphs, ``args`` must specify both this
+                vertex and the adjacent vertex, since the order of the vertices distinguishes
+                between incoming and outgoing edges.
+
+        Returns:
+            EdgeType: The edge specified by this vertex and ``args``, or None if no such edge
+            exists.
+
+        See Also:
+            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+        """
+        return self._edges.get_edge(*args)
 
     def _remove_edge(self, edge: EdgeType) -> int:
         """Removes an incident edge.
@@ -393,7 +426,7 @@ class Vertex:
         return self.__class__.__name__
 
 
-class IncidentEdges:
+class _IncidentEdges:
     """Collection of edges that are incident on a shared vertex.
 
     Attempting to add an edge that does not have the shared vertex raises an error. Self loops are
@@ -449,7 +482,7 @@ class IncidentEdges:
         """The label of the vertex common between all of the incident edges."""
 
     def __eq__(self, other):
-        if not isinstance(other, IncidentEdges):
+        if not isinstance(other, _IncidentEdges):
             return False
         if self._shared_vertex_label != other._shared_vertex_label or len(self._edges) != len(
             other._edges
@@ -467,7 +500,7 @@ class IncidentEdges:
 
     def __str__(self):
         str_edges = ", ".join(self._edges.keys())
-        return f"IncidentEdges: {{{str_edges}}}"
+        return f"_IncidentEdges: {{{str_edges}}}"
 
     def add_edge(self, edge: EdgeType):
         """Adds an edge incident to the vertex specified by ``shared_vertex_label``.
@@ -545,7 +578,10 @@ class IncidentEdges:
         """Gets the incident edge specified by ``args``, or None if no such edge exists.
 
         Args:
-            *args: Graph primitives specifying an edge.
+            *args: For undirected graph, ``args`` may specify this vertex and the adjacent vertex
+                or just the adjacent vertex. For directed graphs, ``args`` must specify both this
+                vertex and the adjacent vertex, since the order of the vertices distinguishes
+                between incoming and outgoing edges.
 
         Returns:
             Edge: The incident edge specified by ``args``, or None if no edge found.
@@ -557,6 +593,11 @@ class IncidentEdges:
         edge_tuple = parsed_primitives.get_edge_tuple_from_parsed_primitives(primitives)
         if edge_tuple is None:
             return None
+
+        if edge_tuple[1] is None:
+            if self._parent_graph.is_directed_graph():
+                raise ValueError("directed graphs must specify both endpoint vertices to get edge")
+            edge_tuple = (edge_tuple[0], self._shared_vertex_label)
 
         edge_label = _create_edge_label(
             edge_tuple[0], edge_tuple[1], self._parent_graph.is_directed_graph()
@@ -593,10 +634,9 @@ class IncidentEdges:
 
     def remove_edge_from(self, edge: EdgeType):
         """Removes an edge."""
+        is_directed = self._parent_graph.is_directed_graph()
         edge_label = _create_edge_label(
-            edge.vertex1.label,
-            edge.vertex2.label,
-            is_directed=self._parent_graph.is_directed_graph(),
+            edge.vertex1.label, edge.vertex2.label, is_directed=is_directed
         )
         if edge_label in self._edges:
             self._edges.pop(edge_label)
@@ -607,6 +647,29 @@ class IncidentEdges:
             self._outgoing.remove(edge)
         if edge in self._incoming:
             self._incoming.remove(edge)
+
+        if edge.vertex1.label == self._shared_vertex_label:
+            other_vertex = edge.vertex2
+            outgoing_edge = True
+        else:
+            other_vertex = edge.vertex1
+            outgoing_edge = False
+
+        if is_directed:
+            reverse_edge_label = _create_edge_label(
+                edge.vertex2.label, edge.vertex1.label, is_directed=is_directed
+            )
+            if reverse_edge_label not in self._edges:
+                if other_vertex in self._adj_vertices:
+                    self._adj_vertices.remove(other_vertex)
+
+            if outgoing_edge and other_vertex in self._adj_vertices_outgoing:
+                self._adj_vertices_outgoing.remove(other_vertex)
+            elif other_vertex in self._adj_vertices_incoming:
+                self._adj_vertices_incoming.remove(other_vertex)
+        else:  # undirected graph
+            if other_vertex in self._adj_vertices:
+                self._adj_vertices.remove(other_vertex)
 
 
 def _create_edge_label(v1_label: str, v2_label: str, is_directed: bool) -> str:

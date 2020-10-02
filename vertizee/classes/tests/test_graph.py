@@ -30,66 +30,6 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.mark.usefixtures()
 class TestUndirectedGraphs:
-    def test_vertex(self):
-        g = Graph()
-        v0 = g.add_vertex("0")
-        assert v0.label == "0", f"Vertex v0 should have label '0', but had label '{v0.label}'"
-        assert v0.degree == 0, f"Vertex v0 should have degree 0, but had degree {v0.degree}"
-        assert len(v0.edges) == 0, "Vertex v0 should have no incoming edges."
-
-        v1 = g.add_vertex("1")
-        assert v1.label == "1", f"Vertex v1 should have label '1', but had label '{v1.label}'"
-        assert v1.degree == 0, f"Vertex v1 should have degree 0, but had degree {v1.degree}"
-
-        g.add_edge(0, 0)
-        assert g[0].degree == 2, "Vertex 0 should have degree '2', since loops count twice."
-        assert next(iter(g[0].adjacent_vertices)) == g[0], "Vertex 0 should be adjacent to itself."
-        assert g[0].loops == {g[0, 0]}, "Loop edge on vertex should equal the same edge in graph."
-        assert g[0].edges == {g[0, 0]}, "Vertex 0 adjacent edges should include the self loop."
-
-    def test_edge(self):
-        g = MultiGraph()
-        v0 = g.add_vertex("0")
-        v1 = g.add_vertex("1")
-        e1 = g.add_edge(v0, v1)
-        e_loop = g.add_edge(v0, v0)  # Create self-loop.
-
-        e1_str = e1.__str__()
-        assert e1_str.find("0") < e1_str.find("1"), 'Edge e1 __str__() should have "0" before "1".'
-        assert (
-            e1.weight == DEFAULT_WEIGHT
-        ), f"Edge e1 should have weight {DEFAULT_WEIGHT} (default), but weight was {e1.weight}"
-        assert e1.parallel_edge_count == 0, "Edge e1 should have zero parallel edges."
-        assert (
-            e1.vertex1 == v0
-        ), f"Edge e1 should have vertex1 ({v0.label}), but it was ({e1.vertex1.label})"
-        assert (
-            e1.vertex2 == v1
-        ), f"Edge e1 should have vertex2 ({v1.label}), but it was ({e1.vertex2.label})"
-        assert e_loop.is_loop(), "Edge e_loop should be a loop."
-        assert v0.degree == 3, "Vertex v0 should have degree 3."
-        assert len(v0.non_loop_edges) == 1, "Vertex v0 should have 1 non-loop edge."
-        assert len(v0.adjacent_vertices) == 2, "Vertex v0 should have 2 adjacent vertices."
-        assert v0.adjacent_vertices == {
-            g[0],
-            g[1],
-        }, "Vertex v0 should be adjacent to itself and vertex 1."
-
-        v2 = g.add_vertex("2")
-        e2 = g.add_edge(v1, v2, weight=1.5, parallel_edge_count=1, parallel_edge_weights=[3])
-        assert e2.weight == 1.5, "Edge e2 should have weight 1.5."
-        assert (
-            e2.weight_with_parallel_edges == 4.5
-        ), "Edge e2 should have total weight 4.5 including parallel edges."
-        assert e2.parallel_edge_count == 1, "Edge e2 should have 1 parallel edge."
-        e3 = g.add_edge(3, 4, 10.5)
-        assert e3.__str__() == (
-            "(3, 4, 10.5)"
-        ), "Weighted edges should include weight in string representation."
-
-        g2 = Graph([(1, 2)])
-        assert g2[1, 2].__str__() == "(1, 2)", "Unweighted graphs should show edges with weights."
-
     def test_graph_initialization_and_parallel_edges(self):
         g = MultiGraph()
         v0 = g.add_vertex(0)
@@ -129,11 +69,9 @@ class TestUndirectedGraphs:
         assert v4 in g, "Graph should contain isolated vertex v4."
         assert v0 in g, "Graph should contain vertex with label 0."
         assert g.has_vertex(v0), "Graph should contain vertex with label 0."
+        assert g.graph_weight == 4971.5, "Graph should have weight of 4971.5."
 
         edge00 = g[0, 0]
-        assert edge00.is_loop(), "Edge (0, 0) should be a loop."
-
-        assert g.graph_weight == 4971.5, "Graph should have weight of 4971.5."
         assert (
             edge00.weight_with_parallel_edges == 10.5
         ), "Edge (0, 0) should have total weight 10.5, including parallel edges"
@@ -159,13 +97,13 @@ class TestUndirectedGraphs:
         edge32 = g.get_edge(v3, v2)
 
         assert not g.has_edge(edge00), "Graph should not contain edge (0, 0)."
-        assert g.has_edge(edge01), "Graph should not contain edge (0, 1)."
-        assert g.has_edge(edge10), "Graph should not contain edge (1, 0)."
+        assert g.has_edge(edge01), "Graph should contain edge (0, 1)."
+        assert g.has_edge(edge10), "Graph should contain edge (1, 0)."
         assert edge01 == edge10, "Undirected graph edges (0, 1) and (1, 0) should be equal."
 
-        assert g.has_edge(edge12), "Graph should not contain edge (1, 2)."
-        assert g.has_edge(edge20), "Graph should not contain edge (2, 0)."
-        assert g.has_edge(edge32), "Graph should not contain edge (3, 2)."
+        assert g.has_edge(edge12), "Graph should contain edge (1, 2)."
+        assert g.has_edge(edge20), "Graph should contain edge (2, 0)."
+        assert g.has_edge(edge32), "Graph should contain edge (3, 2)."
 
         assert g.graph_weight == 4961, "Graph should have weight 4961 after deleting loops on v0."
         assert g.edge_count == 109, "Graph should have 109 edges after deleting loops on v0."
@@ -258,7 +196,7 @@ class TestUndirectedGraphs:
                 other_edge = edge.vertex2
             else:
                 other_edge = edge.vertex1
-            new_edge = v0.get_edge(v0, other_edge)
+            new_edge = g[v0, other_edge]
             assert new_edge is not None, (
                 f"After merging v1 into v0, old edge (1, {other_edge}) should become "
                 f" (0, {other_edge})"
@@ -267,7 +205,7 @@ class TestUndirectedGraphs:
         # v1 is deleted from the graph
         assert v1 not in g, "After merging v1 into v0, v1 should not be in the graph."
 
-        edge00 = v0.get_edge(v0, v0)
+        edge00 = g[v0, v0]
         assert edge00.parallel_edge_count == 111, (
             "After merging v1 into v0, there should be 112 loops on v0"
             " (i.e. 111 parallel edge loops plus the initial loop)."
@@ -338,7 +276,7 @@ class TestUndirectedGraphs:
             rand_edge = g.get_random_edge()
             cnt[rand_edge] += 1
         total_samples = sum(cnt.values())
-        edge01 = v0.get_edge(v0, v1)
+        edge01 = g[v0, v1]
 
         ###
         # edge00 = v0.get_edge(v0, v0)

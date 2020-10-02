@@ -326,10 +326,12 @@ class GraphBase:
         temp_edges = self._edges.copy()
         while temp_edges:
             edge = temp_edges.pop()
-            edge._parallel_edge_count = 0
-            edge._parallel_edge_weights = []
             if edge.is_loop():
                 self.remove_all_edges_from(edge)
+            else:
+                edge._parallel_edge_count = 0
+                edge._parallel_edge_weights = []
+
         self._graph_state_is_simple_graph = True
 
     def current_state_is_simple_graph(self) -> bool:
@@ -414,7 +416,7 @@ class GraphBase:
             return None
 
         vertex = self._vertices[edge_tuple[0]]
-        return vertex.get_edge(edge_tuple[0], edge_tuple[1])
+        return vertex._get_edge(edge_tuple[0], edge_tuple[1])
 
     def get_random_edge(self) -> Optional[EdgeType]:
         """Returns a randomly selected edge from the graph, or None if there are no edges.
@@ -577,7 +579,7 @@ class GraphBase:
 
         deletion_count = len(edges_to_remove)
         for edge in edges_to_remove:
-            deletion_count += edge.parallel_edge_count
+            deletion_count += edge.multiplicity
             self._edges.remove(edge)
             self._edges_with_freq_weight.pop(edge)
             edge.vertex1._remove_edge(edge)

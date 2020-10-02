@@ -254,6 +254,15 @@ class Edge:
         return self.vertex1.label == self.vertex2.label
 
     @property
+    def multiplicity(self) -> int:
+        """The multiplicity is the number of edges within a multi-edge.
+
+        For edges without parallel connections, the multiplicity is 1. Each parallel edge adds 1 to
+        the multiplicity. A edge with one parallel connection has multiplicity 2.
+        """
+        return self._parallel_edge_count + 1
+
+    @property
     def parallel_edge_count(self) -> int:
         """The number of parallel edges.
 
