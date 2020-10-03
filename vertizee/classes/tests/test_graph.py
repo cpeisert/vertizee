@@ -123,7 +123,7 @@ class TestUndirectedGraphs:
         assert g[5] is None, "Vertex 5 should have been removed."
         assert (
             g[1] is not None and g[2] is not None and g[3] is not None and g[4] is not None
-        ), "Vertices with adjacent edges should not have been removed."
+        ), "Vertices with incident edges should not have been removed."
         count = g.remove_isolated_vertices()
         assert count == 0, "Should not have removed any vertices, since no vertices were isolated."
         g.add_vertex(10)
@@ -175,7 +175,7 @@ class TestUndirectedGraphs:
             pre_merge_degree == 226
         ), "The total degree of v0 + v1 prior to merge should be 226 (119 + 107)."
 
-        v1_old_edges = v1.edges
+        v1_old_edges = v1.incident_edges
 
         g.merge_vertices(v0, v1)
         """

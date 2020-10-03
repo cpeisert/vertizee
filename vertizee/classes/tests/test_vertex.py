@@ -81,35 +81,37 @@ class TestVertex:
         assert (
             loop.vertex1 == g[0] and loop.vertex2 == g[0]
         ), "Loop should have same vertex endpoints."
-        edge = next(iter(g[0].edges))
-        assert edge == loop, "The only adjacent edge should be the self loop."
-        adj_v = next(iter(g[0].adjacent_vertices))
+        edge = next(iter(g[0].incident_edges))
+        assert edge == loop, "The only incident edge should be the self loop."
+        adj_v = next(iter(g[0].adj_vertices))
         assert adj_v == g[0], "Vertex 0 should be adjacent to itself."
         assert g[0].delete_loops() == 1, "Should have deleted one loop edge."
         assert (
-            len(g[0].adjacent_vertices) == 0
+            len(g[0].adj_vertices) == 0
         ), "After loop deletion, there should be no adjacent vertices."
-        assert len(g[0].edges) == 0, "After loop deletion, there should be no adjacent edges."
+        assert (
+            len(g[0].incident_edges) == 0
+        ), "After loop deletion, there should be no incident edges."
 
         dg = DiGraph([(1, 1)])
         assert (
-            len(dg[1].adjacent_vertices) == 1
+            len(dg[1].adj_vertices) == 1
         ), "Vertex with directed self-loop should be adjacent to itself."
         assert (
-            len(dg[1].adjacent_vertices_incoming) == 1
+            len(dg[1].adj_vertices_incoming) == 1
         ), "Vertex with directed self-loop should be adjacent to itself."
         assert (
-            len(dg[1].adjacent_vertices_outgoing) == 1
+            len(dg[1].adj_vertices_outgoing) == 1
         ), "Vertex with directed self-loop should be adjacent to itself."
 
-    def test_vertex_adjacent_edges_undirected_graph(self):
+    def test_vertex_incident_edges_undirected_graph(self):
         g = Graph([(0, 1)])
-        edge: Edge = next(iter(g[0].edges))
+        edge: Edge = next(iter(g[0].incident_edges))
         assert (
             edge.vertex1 == g[0] and edge.vertex2 == g[1]
         ), "Edge should have vertex endpoints in instantiation order."
 
-        adj_v = next(iter(g[0].adjacent_vertices))
+        adj_v = next(iter(g[0].adj_vertices))
         assert adj_v == g[1], "Vertex 0 should be adjacent to vertex 1."
 
         g.add_edge(1, 2)
@@ -117,16 +119,13 @@ class TestVertex:
         assert next(iter(adj_search)) == g[2], "Adj. vertex for searching should be vertex 2."
 
         assert g[0]._get_edge(1) == g[0, 1], "get_edge should return edge (0, 1)"
-        assert (
-            g[0].non_loop_edges == g[0].edges
-        ), "Non-loop edges should equal edges when there are no self-loops."
-        assert g[0].is_incident_edge(g[0, 1]), "Edge (0, 1) should be adjacent to vertex 0."
+        assert g[0].is_incident_edge(g[0, 1]), "Edge (0, 1) should be incident to vertex 0."
         g.add_edge(2, 3)
-        assert not g[0].is_incident_edge(g[2, 3]), "Edge (2, 3) should not be adjacent to vertex 0."
+        assert not g[0].is_incident_edge(g[2, 3]), "Edge (2, 3) should not be incident to vertex 0."
 
-    def test_vertex_adjacent_edges_directed_graph(self):
+    def test_vertex_incident_edges_directed_graph(self):
         g = DiGraph([(0, 1)])
-        edge: DiEdge = next(iter(g[0].edges))
+        edge: DiEdge = next(iter(g[0].incident_edges))
         assert (
             edge.tail == g[0] and edge.head == g[1]
         ), "DiEdge should have vertex endpoints in instantiation order."
@@ -134,39 +133,39 @@ class TestVertex:
         g.add_edge(1, 0)
         g.add_edge(1, 2)
         g.add_edge(3, 1)
-        assert g[1].adjacent_vertices == {
+        assert g[1].adj_vertices == {
             g[0],
             g[2],
             g[3],
         }, "Adj. vertices should include incoming and outgoing edges."
 
-        assert g[1].adjacent_vertices_incoming == {
+        assert g[1].adj_vertices_incoming == {
             g[0],
             g[3],
         }, "Incoming adj. vertices should include incoming edges."
 
-        assert g[1].adjacent_vertices_outgoing == {
+        assert g[1].adj_vertices_outgoing == {
             g[0],
             g[2],
         }, "Outgoing adj. vertices should include outgoing edges."
 
-        assert g[1].edges_incoming == {
+        assert g[1].incident_edges_incoming == {
             g[0, 1],
             g[3, 1],
         }, "Incoming edges should include (0, 1) and (3, 1)."
 
-        assert g[1].edges_outgoing == {
+        assert g[1].incident_edges_outgoing == {
             g[1, 0],
             g[1, 2],
         }, "Outgoing edges should include (1, 0) and (1, 2)."
 
         assert (
-            g[1].get_adj_for_search() == g[1].adjacent_vertices_outgoing
-        ), "Adj. vertices for digraph search should be the adjacent outgoing edges."
+            g[1].get_adj_for_search() == g[1].adj_vertices_outgoing
+        ), "Adj. vertices for digraph search should be the incident outgoing edges."
 
         assert (
-            g[1].get_adj_for_search(reverse_graph=True) == g[1].adjacent_vertices_incoming
-        ), "Adj. vertices for search should be the adjacent incoming edges for reverse graph."
+            g[1].get_adj_for_search(reverse_graph=True) == g[1].adj_vertices_incoming
+        ), "Adj. vertices for search should be the incident incoming edges for reverse graph."
         assert g[1].is_incident_edge(g[1, 0]), "DiEdge (1, 0) should be incident to vertex 1."
         g.add_edge(2, 3)
         assert not g[1].is_incident_edge(

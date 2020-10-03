@@ -79,7 +79,7 @@ def _dfs_scc(graph: GraphBase, source: Vertex) -> DepthFirstSearchTree:
         DepthFirstSearchTree: A strongly-connected component stored as a depth-first-search tree.
     """
     scc = DepthFirstSearchTree(root=source)
-    stack: List[_StackFrame] = [_StackFrame(source, source.adjacent_vertices_outgoing)]
+    stack: List[_StackFrame] = [_StackFrame(source, source.adj_vertices_outgoing)]
 
     while stack:
         v = stack[-1].vertex
@@ -99,7 +99,7 @@ def _dfs_scc(graph: GraphBase, source: Vertex) -> DepthFirstSearchTree:
 
             if w.attr[COLOR] == WHITE:  # Undiscovered vertex w adjacent to v.
                 w.attr[PARENT] = v
-                stack.append(_StackFrame(w, w.adjacent_vertices_outgoing))
+                stack.append(_StackFrame(w, w.adj_vertices_outgoing))
         elif v.attr[COLOR] != BLACK:  # FINISHED visiting vertex v.
             stack.pop()
             v.attr[COLOR] = BLACK

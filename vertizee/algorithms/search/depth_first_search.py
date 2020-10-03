@@ -80,7 +80,7 @@ class DFSResults:
         vertices_pre_order: The list of vertices in ascending order of first discovery times during
             the DFS.
         vertices_post_order: The list of vertices in descending order of discovery finishing time.
-            The finishing time is the time at which all of the paths adjacent to the vertex have
+            The finishing time is the time at which all of the paths incident to the vertex have
             been fully explored. For directed, acyclic graphs, the reverse postorder is a
             topological sort.
 

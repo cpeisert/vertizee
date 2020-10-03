@@ -18,13 +18,13 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 >>> g.add_edge('y', 't', weight=3)
 >>> g.vertex_count
 3
->>> g['s'].adjacent_vertices
+>>> g['s'].adj_vertices
 {y, t}
 >>> g['s'].degree
 2
->>> g['s'].edges_incoming
+>>> g['s'].incident_edges_incoming
 set()
->>> g['s'].edges_outgoing
+>>> g['s'].incident_edges_outgoing
 {(s, t), (s, y)}
 >>> g['s', 'y'].weight
 5.0
@@ -46,7 +46,7 @@ set()
 
 ## Features
 
-* Object-oriented API: vertices and edges are first-class objects
+* Object-oriented API: vertices and incident_edges are first-class objects
 * Graph theory greatest-hits including:
   * Breadth-first-search (BFS) and depth-first search (DFS)
   * Cuts: Karger and Karger-Stein algorithms

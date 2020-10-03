@@ -45,17 +45,19 @@ class TestGraphIO:
 
         assert g.vertex_count == 5, "graph should have 5 vertices"
         assert g[1].loops is not None, "v1 should have a loop"
-        assert len(g[1].edges_incoming) == 2, "v1 should have 2 incoming edges (including its loop)"
-        assert len(g[1].edges_outgoing) == 3, "v1 edges_outgoing should have length 3"
+        assert (
+            len(g[1].incident_edges_incoming) == 2
+        ), "v1 should have 2 incoming edges (including its loop)"
+        assert len(g[1].incident_edges_outgoing) == 3, "v1 edges_outgoing should have length 3"
         assert g[1].degree == 6, "deg(v1) should be 6"
         assert g[2].degree == 4, "deg(v2) should be 4"
-        assert len(g[2].edges_outgoing) == 2, "v2 should have 2 outgoing edges"
-        assert len(g[3].edges_incoming) == 2, "v3 should have 2 incoming edges"
-        assert len(g[3].edges_outgoing) == 1, "v3 should have 1 outgoing edge"
-        assert len(g[4].edges_outgoing) == 0, "v4 should have 0 outgoing edges"
+        assert len(g[2].incident_edges_outgoing) == 2, "v2 should have 2 outgoing edges"
+        assert len(g[3].incident_edges_incoming) == 2, "v3 should have 2 incoming edges"
+        assert len(g[3].incident_edges_outgoing) == 1, "v3 should have 1 outgoing edge"
+        assert len(g[4].incident_edges_outgoing) == 0, "v4 should have 0 outgoing edges"
         v5_loop_edge = g[5].loops.pop()
         assert v5_loop_edge.parallel_edge_count == 1, "v5 should have 2 loops"
-        assert len(g[5].edges_incoming) == 1, "v5 should have 1 incoming edge (self-loop)"
+        assert len(g[5].incident_edges_incoming) == 1, "v5 should have 1 incoming edge (self-loop)"
 
         assert g[4, 3] is None, "graph should not have edge (4, 3)"
         assert g[3, 4] is not None, "graph should have edge (3, 4)"
@@ -72,7 +74,7 @@ class TestGraphIO:
         v1_loop_edge = g[1].loops.pop()
         assert v1_loop_edge.parallel_edge_count == 1, "v1 should have 2 loops"
         assert g[1].degree == 6, "deg(v1) should be 6"
-        assert len(g[2].edges) == 2, (
+        assert len(g[2].incident_edges) == 2, (
             "v2 should have 4 incident edges, 3 of which are parallel and stored in one "
             " Edge object."
         )

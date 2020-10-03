@@ -112,7 +112,7 @@ class Vertex:
 
         self.attr: dict = {}
 
-        self._edges: _IncidentEdges = _IncidentEdges(self.label, parent_graph)
+        self._incident_edges: _IncidentEdges = _IncidentEdges(self.label, parent_graph)
         self._parent_graph = parent_graph
 
     def __compare(self, other: VertexType, operator: str) -> bool:
@@ -170,7 +170,7 @@ class Vertex:
         return hash(self.label)
 
     def __iter__(self):
-        return self._edges.__iter__()
+        return self._incident_edges.__iter__()
 
     def __le__(self, other: VertexType):
         return self.__compare(other, "<=")
@@ -201,24 +201,24 @@ class Vertex:
 
     def __str__(self):
         return f"{self.label}"
-        # return f"{self._runtime_type()} {{{self.label}}} with {self._edges}"
+        # return f"{self._runtime_type()} {{{self.label}}} with {self._incident_edges}"
 
     @property
-    def adjacent_vertices(self) -> Set["Vertex"]:
+    def adj_vertices(self) -> Set["Vertex"]:
         """The set of all adjacent vertices."""
-        return self._edges._adj_vertices.copy()
+        return self._incident_edges._adj_vertices.copy()
 
     @property
-    def adjacent_vertices_incoming(self) -> Set["Vertex"]:
+    def adj_vertices_incoming(self) -> Set["Vertex"]:
         """The set of all adjacent vertices from incoming edges. This is an empty set for
         undirected graphs."""
-        return self._edges._adj_vertices_incoming.copy()
+        return self._incident_edges._adj_vertices_incoming.copy()
 
     @property
-    def adjacent_vertices_outgoing(self) -> Set["Vertex"]:
+    def adj_vertices_outgoing(self) -> Set["Vertex"]:
         """The set of all adjacent vertices from outgoing edges. This is an empty set for
         undirected graphs."""
-        return self._edges._adj_vertices_outgoing.copy()
+        return self._incident_edges._adj_vertices_outgoing.copy()
 
     @property
     def degree(self) -> int:
@@ -227,7 +227,7 @@ class Vertex:
         The degree is the number of incident edges. Self-loops are counted twice.
         """
         total = 0
-        for edge in self.edges:
+        for edge in self.incident_edges:
             if edge.is_loop():
                 total += 2 * edge.multiplicity
             else:
@@ -242,41 +242,41 @@ class Vertex:
         """
         deletion_count = 0
         loops = []
-        for edge in self._edges.loops:
+        for edge in self._incident_edges.loops:
             loops.append(edge)
             deletion_count += edge.multiplicity
             self._parent_graph._edges.remove(edge)
             self._parent_graph._edges_with_freq_weight.pop(edge)
         for loop in loops:
-            self._edges.remove_edge_from(loop)
+            self._incident_edges.remove_edge_from(loop)
         return deletion_count
 
     @property
-    def edges(self) -> Set[EdgeType]:
+    def incident_edges(self) -> Set[EdgeType]:
         """The set of all incident edges (incoming, outgoing, and self-loops)."""
-        return self._edges.edges
+        return self._incident_edges.incident_edges
 
     @property
-    def edges_incoming(self) -> Set[EdgeType]:
-        """The set of incoming edges (i.e. edges where this vertex is the head).
+    def incident_edges_incoming(self) -> Set[EdgeType]:
+        """The set of incoming incident edges (i.e. edges where this vertex is the head).
 
-        This is an empty set for undirected graphs. Use ``edges`` instead.
+        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
 
         Returns:
             Set[Edge]: The incoming edges.
         """
-        return self._edges.incoming
+        return self._incident_edges.incoming
 
     @property
-    def edges_outgoing(self) -> Set[EdgeType]:
-        """The set of outgoing edges (i.e. edges where this vertex is the tail).
+    def incident_edges_outgoing(self) -> Set[EdgeType]:
+        """The set of outgoing incident edges (i.e. edges where this vertex is the tail).
 
-        This is an empty set for undirected graphs. Use ``edges`` instead.
+        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
 
         Returns:
             Set[Edge]: The outgoing edges.
         """
-        return self._edges.outgoing
+        return self._incident_edges.outgoing
 
     def get_adj_for_search(
         self, parent: Optional["Vertex"] = None, reverse_graph: bool = False
@@ -302,11 +302,11 @@ class Vertex:
         """
         if self._parent_graph.is_directed_graph():
             if reverse_graph:
-                return self.adjacent_vertices_incoming
-            return self.adjacent_vertices_outgoing
+                return self.adj_vertices_incoming
+            return self.adj_vertices_outgoing
 
         # undirected graph
-        adj_vertices = self.adjacent_vertices
+        adj_vertices = self.adj_vertices
         if parent is not None:
             adj_vertices = adj_vertices - {parent}
         return adj_vertices
@@ -322,7 +322,7 @@ class Vertex:
             return self.degree
 
         total = 0
-        for edge in self._edges.incoming:
+        for edge in self._incident_edges.incoming:
             total += edge.multiplicity
         return total
 
@@ -332,7 +332,7 @@ class Vertex:
         See Also:
             :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
         """
-        return self._edges.get_edge(*args) is not None
+        return self._incident_edges.get_edge(*args) is not None
 
     @property
     def label(self) -> str:
@@ -348,18 +348,12 @@ class Vertex:
             parallel edges between two vertices [or in the case of a directed graph, two
             :class:`DiEdge <vertizee.classes.edge.DiEdge>` objects, one for edge :math:`(a, b)`
             and a second for :math:`(b, a)`], the loops set will always contain exactly zero or
-            one edge. A ``set`` is used for consistency with property :attr:`edges`.
+            one edge. A ``set`` is used for consistency with property :attr:`incident_edges`.
 
         Returns:
             Set[Edge]: The set of loop edges.
         """
-        return self._edges.loops
-
-    @property
-    def non_loop_edges(self) -> Set[EdgeType]:
-        """ The set of all incident edges excluding self-loops."""
-        non_loops = self._edges.edges - self._edges.loops
-        return non_loops
+        return self._incident_edges.loops
 
     @property
     def outdegree(self) -> int:
@@ -372,7 +366,7 @@ class Vertex:
             return self.degree
 
         total = 0
-        for edge in self._edges.outgoing:
+        for edge in self._incident_edges.outgoing:
             total += edge.multiplicity
         return total
 
@@ -388,7 +382,7 @@ class Vertex:
             raise ValueError(
                 f"Edge {edge} did not have a vertex matching this vertex {{{self.label}}}"
             )
-        self._edges.add_edge(edge)
+        self._incident_edges.add_edge(edge)
 
     def _get_edge(self, *args: GraphPrimitive) -> Optional[EdgeType]:
         """Gets the incident edge specified by ``args``, or None if no such edge exists.
@@ -406,7 +400,7 @@ class Vertex:
         See Also:
             :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
         """
-        return self._edges.get_edge(*args)
+        return self._incident_edges.get_edge(*args)
 
     def _remove_edge(self, edge: EdgeType) -> int:
         """Removes an incident edge.
@@ -418,7 +412,7 @@ class Vertex:
             raise ValueError(
                 f"Edge {edge} did not have a vertex matching this vertex {{{self.label}}}"
             )
-        self._edges.remove_edge_from(edge)
+        self._incident_edges.remove_edge_from(edge)
         return 1 + edge.parallel_edge_count
 
     def _runtime_type(self):
@@ -431,7 +425,7 @@ class _IncidentEdges:
 
     Attempting to add an edge that does not have the shared vertex raises an error. Self loops are
     tracked and may be accessed with the ``loops`` property. Loops cause a vertex to be adjacent
-    to itself and the loop is an adjacent edge. [LOOP2020]_ In the case of directed edges, adjacent
+    to itself and the loop is an incident edge. [LOOP2020]_ In the case of directed edges, incident
     edges are also classified as ``incoming`` and ``outgoing``. Collections of adjacent vertices are
     also maintained for algorithmic efficiency.
 
@@ -459,7 +453,7 @@ class _IncidentEdges:
         """Directed graphs only: the set of all vertices adjacent to the shared vertex from outgoing
         edges."""
 
-        self._edges: Dict[str, EdgeType] = {}
+        self._incident_edges: Dict[str, EdgeType] = {}
         """The dictionary of all incident edges: parallel, self loops, incoming, and outgoing.
 
         The dictionary keys are created by :func:`__create_edge_label`, and are a mapping from edge
@@ -484,22 +478,22 @@ class _IncidentEdges:
     def __eq__(self, other):
         if not isinstance(other, _IncidentEdges):
             return False
-        if self._shared_vertex_label != other._shared_vertex_label or len(self._edges) != len(
-            other._edges
-        ):
+        if self._shared_vertex_label != other._shared_vertex_label or len(
+            self._incident_edges
+        ) != len(other._incident_edges):
             return False
-        if self._edges != other._edges:
+        if self._incident_edges != other._incident_edges:
             return False
         return True
 
     def __iter__(self):
-        return iter(self._edges.values())
+        return iter(self._incident_edges.values())
 
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        str_edges = ", ".join(self._edges.keys())
+        str_edges = ", ".join(self._incident_edges.keys())
         return f"_IncidentEdges: {{{str_edges}}}"
 
     def add_edge(self, edge: EdgeType):
@@ -524,7 +518,7 @@ class _IncidentEdges:
         )
         if edge.vertex1 == edge.vertex2:
             self._loops = edge
-            self._edges[edge_label] = edge
+            self._incident_edges[edge_label] = edge
             self._adj_vertices.add(edge.vertex1)
             if self._parent_graph.is_directed_graph():
                 self._outgoing.add(edge)
@@ -541,7 +535,7 @@ class _IncidentEdges:
         else:
             adj_vertex = edge.vertex2
 
-        self._edges[edge_label] = edge
+        self._incident_edges[edge_label] = edge
         self._adj_vertices.add(adj_vertex)
 
         if self._parent_graph.is_directed_graph():
@@ -553,26 +547,26 @@ class _IncidentEdges:
                 self._adj_vertices_incoming.add(adj_vertex)
 
     @property
-    def adjacent_vertices(self) -> Set["Vertex"]:
+    def adj_vertices(self) -> Set["Vertex"]:
         """The set of all vertices adjacent to the shared vertex."""
         return self._adj_vertices.copy()
 
     @property
-    def adjacent_vertices_incoming(self) -> Set["Vertex"]:
+    def adj_vertices_incoming(self) -> Set["Vertex"]:
         """The set of all vertices adjacent to the shared vertex from incoming edges. This property
         is only defined for directed graphs."""
         return self._adj_vertices_incoming.copy()
 
     @property
-    def adjacent_vertices_outgoing(self) -> Set["Vertex"]:
+    def adj_vertices_outgoing(self) -> Set["Vertex"]:
         """The set of all vertices adjacent to the shared vertex from outgoing edges. This property
         is only defined for directed graphs."""
         return self._adj_vertices_outgoing.copy()
 
     @property
-    def edges(self) -> Set[EdgeType]:
-        """The set of all adjacent edges."""
-        return set(self._edges.values())
+    def incident_edges(self) -> Set[EdgeType]:
+        """The set of all incident edges."""
+        return set(self._incident_edges.values())
 
     def get_edge(self, *args: GraphPrimitive) -> Optional[EdgeType]:
         """Gets the incident edge specified by ``args``, or None if no such edge exists.
@@ -602,8 +596,8 @@ class _IncidentEdges:
         edge_label = _create_edge_label(
             edge_tuple[0], edge_tuple[1], self._parent_graph.is_directed_graph()
         )
-        if edge_label in self._edges:
-            return self._edges[edge_label]
+        if edge_label in self._incident_edges:
+            return self._incident_edges[edge_label]
         return None
 
     @property
@@ -638,8 +632,8 @@ class _IncidentEdges:
         edge_label = _create_edge_label(
             edge.vertex1.label, edge.vertex2.label, is_directed=is_directed
         )
-        if edge_label in self._edges:
-            self._edges.pop(edge_label)
+        if edge_label in self._incident_edges:
+            self._incident_edges.pop(edge_label)
 
         if self._loops == edge:
             self._loops = None
@@ -659,7 +653,7 @@ class _IncidentEdges:
             reverse_edge_label = _create_edge_label(
                 edge.vertex2.label, edge.vertex1.label, is_directed=is_directed
             )
-            if reverse_edge_label not in self._edges:
+            if reverse_edge_label not in self._incident_edges:
                 if other_vertex in self._adj_vertices:
                     self._adj_vertices.remove(other_vertex)
 

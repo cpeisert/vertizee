@@ -227,12 +227,12 @@ def write_adj_list_to_file(
                 line, loop_edge, delimiter, include_weights, weights_are_integers
             )
 
-        adj_edges = _get_adj_edges_excluding_loops(graph, vertex)
-        if adj_edges is None:
+        incident_edges = _get_incident_edges_excluding_loops(graph, vertex)
+        if incident_edges is None:
             lines.append(line)
             continue
 
-        sorted_edges = sorted(adj_edges, key=lambda e: e.__str__())
+        sorted_edges = sorted(incident_edges, key=lambda e: e.__str__())
         for edge in sorted_edges:
             line = _add_edge_to_line(
                 line, edge, vertex, delimiter, include_weights, weights_are_integers
@@ -313,10 +313,10 @@ def _add_loop_edges_to_line(
     return line
 
 
-def _get_adj_edges_excluding_loops(
+def _get_incident_edges_excluding_loops(
     graph: "GraphBase", vertex: "Vertex", reverse_graph: bool = False
 ) -> Set["EdgeType"]:
-    """Helper function to retrieve the adjacent edges of a vertex, excluding self loops.
+    """Helper function to retrieve the incident edges of a vertex, excluding self loops.
 
     If `reverse_graph` is True and it is a directed graph, then the child's incoming adjacency
     edges are returned rather than the outgoing edges. This is equivalent to reversing the
@@ -324,7 +324,7 @@ def _get_adj_edges_excluding_loops(
 
     Args:
         graph (GraphBase): The graph to search.
-        vertex (Vertex): The vertex whose adjacent edges are to be retrieved.
+        vertex (Vertex): The vertex whose incident edges are to be retrieved.
         reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
             False.
@@ -332,15 +332,15 @@ def _get_adj_edges_excluding_loops(
     if graph.is_directed_graph():
         if reverse_graph:
             return vertex.edges_incoming
-        return vertex.edges_outgoing
+        return vertex.incident_edges_outgoing
 
     # undirected graph
     if len(vertex.loops) > 0:
         loop_edges = next(iter(vertex.loops))
-        edges = vertex.edges
+        edges = vertex.incident_edges
         edges.remove(loop_edges)
         return edges
-    return vertex.edges
+    return vertex.incident_edges
 
 
 def _remove_duplicate_edges(graph: "GraphBase", edge_tuples: List[Tuple]) -> List[Tuple]:

@@ -513,7 +513,7 @@ class GraphBase:
 
         edges_to_delete: List[EdgeType] = []
         # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
-        for edge in v2.edges:
+        for edge in v2.incident_edges:
             edges_to_delete.append(edge)
             if edge.vertex1 == v2:
                 existing_edge = self.get_edge(v1, edge.vertex2)
@@ -621,14 +621,14 @@ class GraphBase:
     def remove_isolated_vertices(self) -> int:
         """Removes all isolated vertices and returns the count of deleted vertices.
 
-        Isolated vertices are vertices that either have zero adjacent edges or only self-loops.
+        Isolated vertices are vertices that either have zero incident edges or only self-loops.
         """
         vertex_labels_to_remove = []
         for key, vertex in self._vertices.items():
             if vertex.degree == 0:
                 vertex_labels_to_remove.append(key)
             elif len(vertex.loops) > 0:
-                if len(vertex.edges) == len(vertex.loops):
+                if len(vertex.incident_edges) == len(vertex.loops):
                     vertex_labels_to_remove.append(key)
 
         for k in vertex_labels_to_remove:
@@ -651,7 +651,7 @@ class GraphBase:
         lookup_key = primitives.vertex_labels[0]
         if lookup_key in self._vertices:
             graph_vertex = self._vertices[lookup_key]
-            if len(graph_vertex.edges) > 0:
+            if len(graph_vertex.incident_edges) > 0:
                 raise ValueError(
                     f"Vertex {{{lookup_key}}} has incident edges. All incident edges (excluding "
                     "loops) must be deleted prior to deleting a vertex."
