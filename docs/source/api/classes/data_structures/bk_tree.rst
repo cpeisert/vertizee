@@ -1,7 +1,7 @@
-.. include:: ../../substitutions.txt
+.. include:: ../../../substitutions.txt
 
 ============================================================================
-Shortest Path
+Burkhard-Keller Tree (BK Tree)
 ============================================================================
 
-.. automodule:: vertizee.classes.shortest_path
+.. automodule:: vertizee.classes.data_structures.bk_tree

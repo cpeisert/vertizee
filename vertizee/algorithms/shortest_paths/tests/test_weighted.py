@@ -17,6 +17,7 @@
 import pytest
 
 from vertizee import NegativeWeightCycle
+from vertizee.algorithms.algo_utilities.shortest_path_utils import reconstruct_path, ShortestPath
 from vertizee.algorithms.shortest_paths.weighted import (
     all_pairs_shortest_paths_floyd_warshall,
     all_pairs_shortest_paths_johnson,
@@ -25,11 +26,10 @@ from vertizee.algorithms.shortest_paths.weighted import (
     shortest_paths_dijkstra,
     shortest_paths_dijkstra_fibonacci,
 )
-from vertizee.classes.collections.vertex_dict import VertexDict
+from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.digraph import DiGraph, MultiDiGraph
 from vertizee.classes.edge import EdgeType
 from vertizee.classes.graph import MultiGraph
-from vertizee.classes.shortest_path import reconstruct_path, ShortestPath
 from vertizee.classes.vertex import Vertex
 
 pytestmark = pytest.mark.skipif(

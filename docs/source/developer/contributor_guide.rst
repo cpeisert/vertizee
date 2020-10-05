@@ -94,10 +94,10 @@ First-time contributor
 
      black vertizee
 
- * **Pytype**: If you use Linux, MacOSX, or WSL, we also recommend using `Pytype <https://github.com/google/pytype>`_
+ * **mypy**: we also recommend using the static type checker `mypy <http://mypy-lang.org/>`_
    (included in requirements/developer.txt). Run with::
 
-     pytype --config pytype.cfg
+     mypy vertizee
 
 Develop your contribution, including appropriate test cases
 -----------------------------------------------------------
@@ -385,7 +385,7 @@ Or tests from a specific file::
 
 Or a single test within that file::
 
-    $ PYTHONPATH=. pytest vertizee/algorithms/search/tests/test_depth_first_search.py::TestDFSResults::test_topological_sort
+    $ PYTHONPATH=. pytest vertizee/algorithms/search/tests/test_depth_first_search.py::TestDepthFirstSearchResults::test_topological_sort
 
 Use ``--doctest-modules`` to run doctests.
 For example, run all tests and all doctests using::

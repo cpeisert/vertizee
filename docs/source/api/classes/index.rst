@@ -1,16 +1,12 @@
+==================
 Classes
 ==================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
-   bk_tree
+   data_structures/index
    edge
-   fibonacci_heap
    graph
    parsed_primitives
-   priority_queue
-   shortest_path
-   union_find
    vertex
-   vertex_dictionary

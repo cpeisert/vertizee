@@ -15,22 +15,24 @@
 """Algorithms for strongly connected components."""
 
 from __future__ import annotations
-from typing import List
+from typing import List, TYPE_CHECKING
 
+from vertizee.algorithms.algo_utilities.depth_first_search_utils import DepthFirstSearchTree
 from vertizee.algorithms.search.depth_first_search import (
     _initialize_dfs_graph,
     _StackFrame,
     BLACK,
     COLOR,
-    DepthFirstSearchTree,
     dfs_postorder_traversal,
     GRAY,
     PARENT,
     WHITE,
 )
-from vertizee.classes.graph_base import GraphBase
-from vertizee.classes.vertex import Vertex
 from vertizee.exception import GraphTypeNotSupported
+
+if TYPE_CHECKING:
+    from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.vertex import Vertex
 
 
 def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFirstSearchTree"]:
@@ -45,7 +47,7 @@ def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFir
         graph (GraphBase): The graph to search.
 
     Returns:
-        List[DepthFirstSearchTree]: A list of strongly-connected component, where each component
+        List[DepthFirstSearchTree]: A list of strongly-connected components, where each component
         is stored in a DepthFirstSearchTree object.
 
     References:
@@ -66,7 +68,7 @@ def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFir
     return strongly_connected_components
 
 
-def _dfs_scc(graph: GraphBase, source: Vertex) -> DepthFirstSearchTree:
+def _dfs_scc(graph: "GraphBase", source: "Vertex") -> DepthFirstSearchTree:
     """Helper function Depth-First Search for Strongly Connected Components to implement
     Kosaraju's algorithm.
 

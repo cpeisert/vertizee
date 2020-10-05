@@ -16,7 +16,7 @@
 
 import pytest
 
-from vertizee.classes.collections.union_find import UnionFind
+from vertizee.classes.data_structures.union_find import UnionFind
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."

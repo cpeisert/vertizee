@@ -12,7 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data structures and functions for working with shortest paths.
+"""Utility functions and classes for working with shortest paths.
+
+* :func:`reconstruct_path` - Reconstructs the shortest path between two vertices based on the
+  predecessors stored in the shortest paths dictionary (or a dictionary of shortest paths
+  dictionaries).
+* :class:`ShortestPath` - A data structure representing a shortest path between a source vertex
+  and a destination vertex.
 
 See Also:
     * :func:`all_pairs_shortest_paths_floyd_warshall
@@ -36,7 +42,7 @@ from typing import Callable, List, Optional, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
 from vertizee.exception import AlgorithmError
-from vertizee.classes.collections.vertex_dict import VertexDict
+from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 if TYPE_CHECKING:
     from vertizee.classes.graph_base import GraphBase
@@ -174,8 +180,8 @@ class ShortestPath:
 
     def __init__(
         self,
-        source: Vertex,
-        destination: Vertex,
+        source: "Vertex",
+        destination: "Vertex",
         initial_length: float = INFINITY,
         save_paths: bool = False,
         add_initial_s_d_edge: bool = True,
@@ -201,7 +207,7 @@ class ShortestPath:
             self._add_s_d_edge_if_exists()
 
     @property
-    def destination(self) -> Vertex:
+    def destination(self) -> "Vertex":
         """The destination vertex of the path."""
         return self._destination
 
@@ -221,7 +227,7 @@ class ShortestPath:
         return self._length
 
     @property
-    def path(self) -> List[Vertex]:
+    def path(self) -> List["Vertex"]:
         """The list of vertices comprising the path (only set if ``save_paths`` is
         initialized to True).
 
@@ -237,7 +243,7 @@ class ShortestPath:
         return self._path.copy()
 
     @property
-    def predecessor(self) -> Optional[Vertex]:
+    def predecessor(self) -> Optional["Vertex"]:
         """The vertex immediately preceding the destination vertex."""
         return self._predecessor
 
@@ -265,7 +271,7 @@ class ShortestPath:
     def relax_edge(
         self,
         predecessor_path: "ShortestPath",
-        weight_function: Callable[[Vertex, Vertex, bool], float],
+        weight_function: Callable[["Vertex", "Vertex", bool], float],
         reverse_graph: bool = False,
     ) -> bool:
         """Tests whether there is a shorter path from the source vertex through ``predecessor_path``
@@ -367,7 +373,7 @@ class ShortestPath:
         return True
 
     @property
-    def source(self) -> Vertex:
+    def source(self) -> "Vertex":
         """The source vertex of the path."""
         return self._source
 

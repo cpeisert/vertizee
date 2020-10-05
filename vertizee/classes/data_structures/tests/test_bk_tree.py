@@ -18,7 +18,7 @@ from typing import Dict, List, Set, Tuple
 
 import pytest
 
-from vertizee.classes.collections.bk_tree import BKNode, BKNodeLabeled, BKTree
+from vertizee.classes.data_structures.bk_tree import BKNode, BKNodeLabeled, BKTree
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."

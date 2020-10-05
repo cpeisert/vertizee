@@ -1,5 +1,5 @@
 ============================================================================
-Fibonacci Heap
+Priority Queue
 ============================================================================
 
-.. automodule:: vertizee.classes.collections.fibonacci_heap
+.. automodule:: vertizee.classes.data_structures.priority_queue

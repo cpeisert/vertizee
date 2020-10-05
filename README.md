@@ -12,35 +12,38 @@ Vertizee is an object-oriented, typed, graph library for the analysis and study 
 
 ```python
 >>> import vertizee as vz
+>>> # Create a new directed graph.
 >>> g = vz.DiGraph()
->>> g.add_edge('s', 't', weight=10)
->>> g.add_edge('s', 'y', weight=5)
->>> g.add_edge('y', 't', weight=3)
+>>> g.add_edge("s", "t", weight=10)
+>>> g.add_edge("s", "y", weight=5)
+>>> g.add_edge("y", "t", weight=3)
 >>> g.vertex_count
 3
->>> g['s'].adj_vertices
+>>> # Get Vertex object for vertex "s" and use its `adj_vertices` property to get adjacent vertices.
+>>> g["s"].adj_vertices
 {y, t}
->>> g['s'].degree
+>>> g["s"].degree
 2
->>> g['s'].incident_edges_incoming
+>>> g["s"].incident_edges_incoming
 set()
->>> g['s'].incident_edges_outgoing
+>>> g["s"].incident_edges_outgoing
 {(s, t), (s, y)}
->>> g['s', 'y'].weight
+>>> # Get DiEdge (directed edge) object for edge (s, y) and access its `weight` property.
+>>> g["s", "y"].weight
 5.0
 >>> from vertizee.algorithms import shortest_paths_dijkstra
->>> # `s_paths` is a dictionary mapping vertices to ShortestPath objects. In
->>> # this case, the ShortestPath objects contain information about shortest
->>> # paths from source vertex `s` to all other vertices in the graph.
->>> s_paths: vz.VertexDict[vz.ShortestPath] = shortest_paths_dijkstra(g, source='s', save_paths=True)
->>> s_paths['t'].path
-[s, y, t]
->>> s_paths['t'].length
-8.0
->>> s_paths['y'].path
+>>> # `s_paths` is a dictionary mapping path-destination vertices (the dictionary keys) to
+>>> # ShortestPath objects. In this case, each ShortestPath object contains information about the
+>>> # shortest path from source vertex `s` to a destination vertex.
+>>> s_paths: vz.VertexDict[vz.ShortestPath] = shortest_paths_dijkstra(g, source="s", save_paths=True)
+>>> s_paths["y"].path
 [s, y]
->>> s_paths['y'].length
+>>> s_paths["y"].length
 5.0
+>>> s_paths["t"].path
+[s, y, t]
+>>> s_paths["t"].length
+8.0
 ```
 
 

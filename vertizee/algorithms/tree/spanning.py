@@ -17,9 +17,9 @@
 from __future__ import annotations
 from typing import Iterator, Optional, TYPE_CHECKING
 
-from vertizee.classes.collections.fibonacci_heap import FibonacciHeap
-from vertizee.classes.collections.priority_queue import PriorityQueue
-from vertizee.classes.collections.union_find import UnionFind
+from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
+from vertizee.classes.data_structures.priority_queue import PriorityQueue
+from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.vertex import Vertex
 from vertizee.exception import GraphTypeNotSupported, VertexNotFound
 
@@ -120,7 +120,7 @@ def spanning_tree_kruskal(
         * :func:`spanning_arborescence_ggst`
         * :func:`spanning_tree_prim`
         * :func:`spanning_tree_prim_fibonacci`
-        * :class:`UnionFind <vertizee.classes.collections.union_find.UnionFind>`
+        * :class:`UnionFind <vertizee.classes.data_structures.union_find.UnionFind>`
 
     References:
      .. [CLRS2009_5] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
@@ -155,7 +155,7 @@ def spanning_tree_prim(
         asymptotic running time as Kruskal's algorithm. However, in practice, Kruskal's algorithm
         often outperforms Prim's algorithm, since the Vertizee implementation of Kruskal's algorithm
         uses the highly-efficient :class:`UnionFind
-        <vertizee.classes.collections.union_find.UnionFind>` data structure.
+        <vertizee.classes.data_structures.union_find.UnionFind>` data structure.
 
     This algorithm is only defined for undirected graphs. To find the spanning tree of a directed
     graph, see :func:`spanning_arborescence_ggst`.
@@ -183,7 +183,7 @@ def spanning_tree_prim(
 
     See Also:
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :class:`Priority Queue <vertizee.classes.collections.priority_queue.PriorityQueue>`
+        * :class:`Priority Queue <vertizee.classes.data_structures.priority_queue.PriorityQueue>`
         * :func:`spanning_arborescence_ggst`
         * :func:`spanning_tree_kruskal`
         * :func:`spanning_tree_prim_fibonacci`
@@ -252,7 +252,7 @@ def spanning_tree_prim_fibonacci(
     This Fibonacci-heap based implementation of Prim's algorithm is faster than the default
     binary-heap implementation, since the DECREASE-KEY operation, i.e.
     :meth:`PriorityQueue.add_or_update()
-    <vertizee.classes.collections.priority_queue.PriorityQueue.add_or_update>`, requires
+    <vertizee.classes.data_structures.priority_queue.PriorityQueue.add_or_update>`, requires
     :math:`O(\\log V)` time for binary heaps and only :math:`O(1)` amortized time for Fibonacci
     heaps.
 
@@ -282,7 +282,7 @@ def spanning_tree_prim_fibonacci(
 
     See Also:
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :class:`Priority Queue <vertizee.classes.collections.priority_queue.PriorityQueue>`
+        * :class:`Priority Queue <vertizee.classes.data_structures.priority_queue.PriorityQueue>`
         * :func:`spanning_arborescence_ggst`
         * :func:`spanning_tree_kruskal`
         * :func:`spanning_tree_prim`

@@ -18,11 +18,9 @@ from typing import List
 
 import pytest
 
+from vertizee.algorithms.algo_utilities.depth_first_search_utils import DepthFirstSearchTree
 from vertizee.algorithms.components.strongly_connected import kosaraju_strongly_connected_components
-from vertizee.algorithms.search.depth_first_search import (
-    DepthFirstSearchTree,
-    dfs_postorder_traversal,
-)
+from vertizee.algorithms.search.depth_first_search import dfs_postorder_traversal
 from vertizee.classes.digraph import MultiDiGraph
 
 pytestmark = pytest.mark.skipif(

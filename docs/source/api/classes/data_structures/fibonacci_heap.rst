@@ -1,7 +1,5 @@
-.. include:: ../../substitutions.txt
-
 ============================================================================
-Burkhard-Keller Tree (BK Tree)
+Fibonacci Heap
 ============================================================================
 
-.. automodule:: vertizee.classes.collections.bk_tree
+.. automodule:: vertizee.classes.data_structures.fibonacci_heap

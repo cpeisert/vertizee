@@ -18,7 +18,7 @@ import pytest
 
 from vertizee.classes.graph import Graph
 from vertizee.classes.vertex import Vertex
-from vertizee.classes.collections.vertex_dict import VertexDict
+from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."

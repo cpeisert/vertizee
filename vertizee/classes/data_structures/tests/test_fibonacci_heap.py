@@ -17,7 +17,7 @@
 from typing import Optional
 import pytest
 
-from vertizee.classes.collections.fibonacci_heap import FibonacciHeap
+from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."

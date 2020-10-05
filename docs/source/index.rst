@@ -28,10 +28,10 @@ Features
 * Input/output routines for reading and writing unweighted and weighted graphs
 * Data structures:
 
-  * :doc:`api/classes/bk_tree`
-  * :doc:`api/classes/fibonacci_heap`
-  * :doc:`api/classes/priority_queue`
-  * :doc:`api/classes/union_find`
+  * :doc:`api/classes/data_structures/bk_tree`
+  * :doc:`api/classes/data_structures/fibonacci_heap`
+  * :doc:`api/classes/data_structures/priority_queue`
+  * :doc:`api/classes/data_structures/union_find`
 
 
 Python

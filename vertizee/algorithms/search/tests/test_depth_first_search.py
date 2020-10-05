@@ -16,19 +16,18 @@
 
 import pytest
 
-from vertizee.classes.edge import EdgeType
-from vertizee.classes.graph import Graph
-from vertizee.classes.digraph import DiGraph, MultiDiGraph
+from vertizee.algorithms import DepthFirstSearchResults, DepthFirstSearchTree
 from vertizee.algorithms.search.depth_first_search import (
     BLACK,
     COLOR,
     depth_first_search,
-    DFSResults,
-    DepthFirstSearchTree,
     dfs_labeled_edge_traversal,
     dfs_postorder_traversal,
     dfs_preorder_traversal,
 )
+from vertizee.classes.edge import EdgeType
+from vertizee.classes.graph import Graph
+from vertizee.classes.digraph import DiGraph, MultiDiGraph
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."
@@ -36,11 +35,11 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.usefixtures()
-class TestDFSResults:
+class TestDepthFirstSearch:
     def test_dfs_undirected_cyclic_graph(self):
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        dfs: DFSResults = depth_first_search(g, 0)
+        dfs: DepthFirstSearchResults = depth_first_search(g, 0)
         t, *_ = dfs.dfs_forest
         tree: DepthFirstSearchTree = t
 
@@ -70,7 +69,7 @@ class TestDFSResults:
 
     def test_dfs_undirected_cyclic_graph_with_self_loop(self):
         g = Graph([(0, 0), (0, 1), (1, 2), (3, 4)])
-        dfs: DFSResults = depth_first_search(g)
+        dfs: DepthFirstSearchResults = depth_first_search(g)
 
         assert len(dfs.dfs_forest) == 2, "DFS should have discovered two DFS trees."
         assert len(dfs.vertices_pre_order) == 5, "DFS tree should have 5 vertices."
@@ -108,7 +107,7 @@ class TestDFSResults:
         )
 
         # Test DiGraph DFS by specifying source vertex s.
-        dfs: DFSResults = depth_first_search(g, "s")
+        dfs: DepthFirstSearchResults = depth_first_search(g, "s")
 
         assert len(dfs.dfs_forest) == 1, (
             "DFS search should find 1 DFS tree, since source " "vertex s was specified."
@@ -125,7 +124,7 @@ class TestDFSResults:
         assert not dfs.is_acyclic(), "Graph should not be acyclic, since it contains cycles."
 
         # Test DiGraph DFS without specifying a source vertex.
-        dfs: DFSResults = depth_first_search(g)
+        dfs: DepthFirstSearchResults = depth_first_search(g)
 
         assert len(dfs.vertices_pre_order) == len(
             dfs.vertices_post_order
@@ -139,7 +138,7 @@ class TestDFSResults:
     def test_topological_sort(self):
         g = DiGraph([("s", "t"), ("t", "u"), ("u", "v")])
 
-        dfs: DFSResults = depth_first_search(g)
+        dfs: DepthFirstSearchResults = depth_first_search(g)
         topo_sorted = dfs.get_topological_sort()
         assert topo_sorted[0] == "s", "First element of path graph topo sort should be s."
         assert topo_sorted[1] == "t", "Second element of path graph topo sort should be t."
@@ -149,7 +148,7 @@ class TestDFSResults:
         g = DiGraph()
         g.add_edges_from([("s", "v"), ("s", "w"), ("v", "t"), ("w", "t")])
 
-        dfs: DFSResults = depth_first_search(g)
+        dfs: DepthFirstSearchResults = depth_first_search(g)
         topo_sorted = dfs.get_topological_sort()
         assert topo_sorted[0] == "s", "First element of topo sort should be s."
         assert topo_sorted[1] == "v" or topo_sorted[1] == "w", (

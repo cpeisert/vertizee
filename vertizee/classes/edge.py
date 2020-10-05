@@ -14,10 +14,10 @@
 
 """Data types supporting directed and undirected graph edges.
 
-* :class:`Edge <vertizee.classes.edge.Edge>` - An undirected connection between two vertices.
+* :class:`Edge` - An undirected connection between two vertices.
   The order of the vertices does not matter. However, the string representation will always
   print vertices sorted in lexicographic order.
-* :class:`DiEdge <vertizee.classes.edge.DiEdge>` - A directed connection between two vertices that
+* :class:`DiEdge` - A directed connection between two vertices that
   defines the ``tail`` as the starting vertex and the ``head`` as the destination vertex.
 * :class:`EdgeType` - A type alias for the union of the edge classes: ``Union[DiEdge, Edge]``
 """
@@ -27,6 +27,7 @@ from typing import Any, List, Optional, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
+    from vertizee.classes.graph_base import GraphBase
     from vertizee.classes.vertex import Vertex
 
 EdgeType = Union["DiEdge", "Edge"]
@@ -129,7 +130,7 @@ class Edge:
         else:
             self._parallel_edge_weights: List[float] = [float(x) for x in parallel_edge_weights]
 
-        self._parent_graph: "GraphBase" = self.vertex1._parent_graph
+        self._parent_graph: GraphBase = self.vertex1._parent_graph
 
         # Don't raise warning, unless edge has non-default weight.
         if self._weight != DEFAULT_WEIGHT and self._parallel_edge_count != len(

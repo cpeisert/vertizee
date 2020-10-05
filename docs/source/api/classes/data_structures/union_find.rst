@@ -1,5 +1,5 @@
 ============================================================================
-Vertex Dictionary
+Union Find
 ============================================================================
 
-.. automodule:: vertizee.classes.collections.vertex_dict
+.. automodule:: vertizee.classes.data_structures.union_find

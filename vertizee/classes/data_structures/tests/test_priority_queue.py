@@ -18,7 +18,7 @@ import pytest
 
 from vertizee.classes.graph import Graph
 from vertizee.classes.vertex import Vertex
-from vertizee.classes.collections.priority_queue import PriorityQueue
+from vertizee.classes.data_structures.priority_queue import PriorityQueue
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."

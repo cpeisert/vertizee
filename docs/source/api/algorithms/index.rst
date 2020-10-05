@@ -7,6 +7,7 @@ Algorithms
 .. toctree::
    :maxdepth: 2
 
+   algo_utilities/index
    components
    cuts
    search

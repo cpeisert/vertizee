@@ -18,8 +18,9 @@ from __future__ import annotations
 from collections import deque
 from typing import Set, TYPE_CHECKING
 
-from vertizee.classes.collections.vertex_dict import VertexDict
-from vertizee.classes.shortest_path import ShortestPath
+from vertizee import VertexNotFound
+from vertizee.algorithms.algo_utilities.shortest_path_utils import ShortestPath
+from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.vertex import Vertex
 
 if TYPE_CHECKING:
@@ -40,20 +41,24 @@ def shortest_paths_breadth_first_search(
     Unreachable vertices will have an empty list of vertices for their path and a length of
     infinity (``float("inf")``). In additional, ``ShortestPath.is_unreachable()`` will return True.
 
+    Note:
+        This is adapted from BFS [CLRS2009_10]_, but with the generalization of updating shortest
+        paths and predecessor vertices using the concept of edge relaxation.
+
     Args:
         graph: The graph to search.
         source: The source vertex from which to find shortest paths to all other reachable vertices.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 
     Example:
         >>> g = Graph()
@@ -67,10 +72,14 @@ def shortest_paths_breadth_first_search(
         []
         >>> paths[6].is_unreachable()
         True
+
+    References:
+     .. [CLRS2009_10] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+                      Introduction to Algorithms: Third Edition, page 595. The MIT Press, 2009.
     """
     s: Vertex = graph[source]
     if s is None:
-        raise ValueError("source vertex was not found in the graph")
+        raise VertexNotFound("source vertex was not found in the graph")
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
 
     for v in graph:

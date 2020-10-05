@@ -30,6 +30,7 @@ with open('README.md', 'r') as f:
 LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
 AUTHOR = f'The {DISTNAME.title()} Authors'
 AUTHOR_EMAIL = 'cpeisert@gmail.com'
+MAIN_PACKAGE = 'vertizee'
 LICENSE = 'Apache 2.0'
 ORG_OR_USER = 'cpeisert'
 PYTHON_REQUIRES = '>=3.6'
@@ -77,5 +78,6 @@ if __name__ == "__main__":
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         long_description_content_type=LONG_DESCRIPTION_CONTENT_TYPE,
+        package_data={MAIN_PACKAGE: ["py.typed"]},
         packages=find_packages(),
     )

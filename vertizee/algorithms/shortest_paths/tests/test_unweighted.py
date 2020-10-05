@@ -16,12 +16,10 @@
 
 import pytest
 
-from vertizee.classes.collections.vertex_dict import VertexDict
+from vertizee.algorithms.algo_utilities.shortest_path_utils import ShortestPath
+from vertizee.algorithms.shortest_paths.unweighted import shortest_paths_breadth_first_search
+from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.graph import Graph
-from vertizee.algorithms.shortest_paths.unweighted import (
-    shortest_paths_breadth_first_search,
-    ShortestPath,
-)
 
 pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."

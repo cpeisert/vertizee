@@ -1,5 +1,7 @@
+.. include:: ../../../substitutions.txt
+
 ============================================================================
-Priority Queue
+Depth First Search Utilities
 ============================================================================
 
-.. automodule:: vertizee.classes.collections.priority_queue
+.. automodule:: vertizee.algorithms.algo_utilities.depth_first_search_utils

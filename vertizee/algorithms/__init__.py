@@ -18,3 +18,9 @@ from vertizee.algorithms.tree.spanning import (
     spanning_tree_prim,
     spanning_tree_prim_fibonacci,
 )
+
+from vertizee.algorithms.algo_utilities.depth_first_search_utils import (
+    DepthFirstSearchResults,
+    DepthFirstSearchTree
+)
+from vertizee.algorithms.algo_utilities.shortest_path_utils import reconstruct_path, ShortestPath

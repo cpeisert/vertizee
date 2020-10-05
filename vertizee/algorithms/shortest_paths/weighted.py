@@ -18,12 +18,12 @@ from __future__ import annotations
 from typing import Callable, Union
 
 import vertizee
-from vertizee.classes.collections.fibonacci_heap import FibonacciHeap
-from vertizee.classes.collections.priority_queue import PriorityQueue
-from vertizee.classes.collections.vertex_dict import VertexDict
+from vertizee.algorithms.algo_utilities.shortest_path_utils import ShortestPath
+from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
+from vertizee.classes.data_structures.priority_queue import PriorityQueue
+from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.edge import EdgeType
 from vertizee.classes.graph_base import GraphBase
-from vertizee.classes.shortest_path import ShortestPath
 from vertizee.classes.vertex import Vertex, VertexType
 
 INFINITY = float("inf")
@@ -164,7 +164,7 @@ def all_pairs_shortest_paths_floyd_warshall(
 
     Pairs of vertices for which there is no connecting path will have path length infinity. In
     addition, :meth:`ShortestPath.is_destination_reachable()
-    <vertizee.classes.shortest_path.ShortestPath.is_destination_reachable>`
+    <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath.is_destination_reachable>`
     will return False.
 
     Note:
@@ -177,12 +177,13 @@ def all_pairs_shortest_paths_floyd_warshall(
             dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`.
+            Defaults to False.
 
     Returns:
         VertexDict[VertexDict[ShortestPath]]: A dictionary mapping source vertices to dictionaries
         mapping destination vertices to :class:`ShortestPath
-        <vertizee.classes.shortest_path.ShortestPath>` objects.
+        <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>` objects.
 
     Raises:
         NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
@@ -191,9 +192,11 @@ def all_pairs_shortest_paths_floyd_warshall(
     See Also:
         * :func:`all_pairs_shortest_paths_johnson`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.classes.shortest_path.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :func:`reconstruct_path
+          <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath
+          <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 
     Example:
         >>> g = DiGraph([
@@ -286,12 +289,12 @@ def all_pairs_shortest_paths_johnson(
             dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
 
     Returns:
         VertexDict[VertexDict[ShortestPath]]: A dictionary mapping source vertices to dictionaries
         mapping destination vertices to :class:`ShortestPath
-        <vertizee.classes.shortest_path.ShortestPath>` objects.
+        <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>` objects.
 
     Raises:
         NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
@@ -301,9 +304,9 @@ def all_pairs_shortest_paths_johnson(
         * :func:`all_pairs_shortest_paths_floyd_warshall`
         * :func:`all_pairs_shortest_paths_johnson_fibonacci`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.classes.shortest_path.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :func:`reconstruct_path <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 
     Example:
         >>> g = DiGraph([
@@ -380,12 +383,12 @@ def all_pairs_shortest_paths_johnson_fibonacci(
             dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
 
     Returns:
         VertexDict[VertexDict[ShortestPath]]: A dictionary mapping source vertices to dictionaries
         mapping destination vertices to :class:`ShortestPath
-        <vertizee.classes.shortest_path.ShortestPath>` objects.
+        <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>` objects.
 
     Raises:
         NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
@@ -395,9 +398,9 @@ def all_pairs_shortest_paths_johnson_fibonacci(
         * :func:`all_pairs_shortest_paths_floyd_warshall`
         * :func:`all_pairs_shortest_paths_johnson`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.classes.shortest_path.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :func:`reconstruct_path <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
     """
     weight_function = get_weight_function_all_pairs_shortest_paths(weight)
 
@@ -445,7 +448,7 @@ def shortest_paths_bellman_ford(
 
     Unreachable vertices will have a path length of infinity. In additional,
     :func:`ShortestPath.is_destination_reachable()
-    <vertizee.classes.shortest_path.ShortestPath.is_destination_reachable>` will return False.
+    <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath.is_destination_reachable>` will return False.
 
     The :class:`Edge <vertizee.classes.edge.Edge>` class has a built-in ``weight`` property, which
     is used by default to determine edge weights (i.e. edge lengths). Alternatively, a weight
@@ -469,7 +472,7 @@ def shortest_paths_bellman_ford(
             False.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -482,10 +485,10 @@ def shortest_paths_bellman_ford(
     See Also:
         * :func:`get_weight_function`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.classes.shortest_path.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
+        * :func:`reconstruct_path <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
         * :func:`shortest_paths_dijkstra`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 
     Example:
         >>> g = DiGraph([
@@ -573,7 +576,7 @@ def shortest_paths_dijkstra(
 
     Unreachable vertices will have a path length of infinity. In additional,
     :func:`ShortestPath.is_destination_reachable()
-    <vertizee.classes.shortest_path.ShortestPath.is_destination_reachable>` will return False.
+    <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath.is_destination_reachable>` will return False.
 
     The :class:`Edge <vertizee.classes.edge.Edge>` class has a built-in ``weight`` property, which
     is used by default to determine edge weights (i.e. edge lengths). Alternatively, a weight
@@ -597,7 +600,7 @@ def shortest_paths_dijkstra(
             False.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -606,11 +609,11 @@ def shortest_paths_dijkstra(
     See Also:
         * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.classes.shortest_path.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
+        * :func:`reconstruct_path <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
         * :func:`shortest_paths_bellman_ford`
         * :func:`shortest_paths_dijkstra_fibonacci`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 
     Example:
         >>> g = DiGraph([
@@ -694,7 +697,7 @@ def shortest_paths_dijkstra_fibonacci(
 
     Unreachable vertices will have a path length of infinity. In additional,
     :func:`ShortestPath.is_destination_reachable()
-    <vertizee.classes.shortest_path.ShortestPath.is_destination_reachable>` will return False.
+    <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath.is_destination_reachable>` will return False.
 
     The Edge class has a built-in ``weight`` property, which is used by default to determine edge
     weights (i.e. edge lengths). Alternatively, a weight function may be specified that accepts
@@ -717,7 +720,7 @@ def shortest_paths_dijkstra_fibonacci(
             False.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.classes.shortest_path.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -726,11 +729,11 @@ def shortest_paths_dijkstra_fibonacci(
     See Also:
         * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.classes.shortest_path.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.classes.shortest_path.ShortestPath>`
+        * :func:`reconstruct_path <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
         * :func:`shortest_paths_bellman_ford`
         * :func:`shortest_paths_dijkstra`
-        * :class:`VertexDict <vertizee.classes.collections.vertex_dict.VertexDict>`
+        * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
     """
     #
     # TODO(cpeisert): run benchmarks.
