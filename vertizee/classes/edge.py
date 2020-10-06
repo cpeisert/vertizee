@@ -25,14 +25,44 @@
 from __future__ import annotations
 from typing import Any, List, Optional, TYPE_CHECKING, Union
 
+from vertizee.classes.vertex import get_vertex_label
+
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
     from vertizee.classes.graph_base import GraphBase
-    from vertizee.classes.vertex import Vertex
+    from vertizee.classes.vertex import Vertex, VertexType
 
 EdgeType = Union["DiEdge", "Edge"]
 
 DEFAULT_WEIGHT = 1
+
+
+def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed: bool) -> str:
+    """Creates an edge key string based on two Vertex endpoints.
+
+    For undirected graphs, the vertex keys are sorted, such that if v1_label <= v2_label, then the
+    new edge key will contain v1_label followed by v2_label. This provides a consistent mapping of
+    undirected edges, such that both (v1_label, v2_label) as well as (v2_label, v1_label) produce
+    the same edge key.
+
+    Args:
+        vertex1: The first vertex of the edge.
+        vertex2: The second vertex of the edge.
+        is_directed (bool): True indicates a directed edge, False an undirected edge.
+
+    Returns:
+        str: The edge key.
+    """
+    v1_label = get_vertex_label(vertex1)
+    v2_label = get_vertex_label(vertex2)
+
+    if is_directed:
+        return f"({v1_label}, {v2_label})"
+
+    # undirected edge
+    if v1_label > v2_label:
+        return f"({v2_label}, {v1_label})"
+    return f"({v1_label}, {v2_label})"
 
 
 class Edge:
@@ -86,8 +116,8 @@ class Edge:
         cls,
         v1: "Vertex",
         v2: "Vertex",
-        weight: Optional[float] = DEFAULT_WEIGHT,
-        parallel_edge_count: Optional[int] = 0,
+        weight: float = DEFAULT_WEIGHT,
+        parallel_edge_count: int = 0,
         parallel_edge_weights: Optional[List[float]] = None,
     ):
         """Initializes a new Edge."""
@@ -126,9 +156,9 @@ class Edge:
 
         self._parallel_edge_count = parallel_edge_count
         if parallel_edge_weights is None:
-            self._parallel_edge_weights: List[float] = []
+            self._parallel_edge_weights = []
         else:
-            self._parallel_edge_weights: List[float] = [float(x) for x in parallel_edge_weights]
+            self._parallel_edge_weights = [float(x) for x in parallel_edge_weights]
 
         self._parent_graph: GraphBase = self.vertex1._parent_graph
 
@@ -142,7 +172,7 @@ class Edge:
                 f"({len(self._parallel_edge_weights)})."
             )
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, Edge):
             return False
 
@@ -185,7 +215,7 @@ class Edge:
         """
         return self.attr[key]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Create a hash key using the edge vertices.
 
         Note that __eq__ is defined to take `_weight`, and `_parallel_edge_count` into
@@ -210,10 +240,10 @@ class Edge:
 
         return hash((self.vertex1, self.vertex2))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __setitem__(self, key: Any, value: Any):
+    def __setitem__(self, key: Any, value: Any) -> None:
         """Supports index accessor notation to set values in the `attr` dictionary.
 
         Example:
@@ -231,7 +261,7 @@ class Edge:
         """
         self.attr[key] = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         directed_graph = self.vertex1._parent_graph.is_directed_graph()
         if directed_graph:
             edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
@@ -320,7 +350,7 @@ class Edge:
             total += w
         return total
 
-    def _runtime_type(self):
+    def _runtime_type(self) -> str:
         """Returns the name of the runtime subclass."""
         return self.__class__.__name__
 

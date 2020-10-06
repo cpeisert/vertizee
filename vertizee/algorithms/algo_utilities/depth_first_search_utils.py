@@ -87,7 +87,7 @@ class DepthFirstSearchResults:
           <vertizee.algorithms.search.depth_first_search.dfs_labeled_edge_traversal>`
     """
 
-    def __init__(self, graph: "GraphBase"):
+    def __init__(self, graph: "GraphBase") -> None:
         self.graph: GraphBase = graph
         self.edges_in_discovery_order: List[EdgeType] = []
         self.dfs_forest: Set["DepthFirstSearchTree"] = set()
@@ -131,7 +131,7 @@ class DepthFirstSearchTree:
         vertices: The set of vertices visited during the depth-first search.
     """
 
-    def __init__(self, root: Optional["Vertex"] = None):
+    def __init__(self, root: Optional["Vertex"] = None) -> None:
         self.root: Vertex = root
         self.edges_in_discovery_order: List[EdgeType] = []
         self.vertices: Set[Vertex] = set()

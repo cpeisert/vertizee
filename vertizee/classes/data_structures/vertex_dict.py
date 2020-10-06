@@ -61,7 +61,7 @@ class VertexDict(dict, Dict["VertexType", VT]):
         three
     """
 
-    def __init__(self, iterable_or_mapping=None, **kwargs):
+    def __init__(self, iterable_or_mapping=None, **kwargs) -> None:
         if iterable_or_mapping is None:
             super().__init__(kwargs)
         else:
@@ -74,7 +74,7 @@ class VertexDict(dict, Dict["VertexType", VT]):
     def __contains__(self, vertex: "VertexType") -> bool:
         return super().__contains__(_normalize_vertex(vertex))
 
-    def __getitem__(self, vertex: "VertexType"):
+    def __getitem__(self, vertex: "VertexType") -> VT:
         """Supports index accessor notation to retrieve items.
 
         Example:
@@ -82,14 +82,14 @@ class VertexDict(dict, Dict["VertexType", VT]):
         """
         return super().__getitem__(_normalize_vertex(vertex))
 
-    def __setitem__(self, vertex: "VertexType", val):
+    def __setitem__(self, vertex: "VertexType", val: VT) -> None:
         super().__setitem__(_normalize_vertex(vertex), val)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         dictrepr = super().__repr__()
         return f"{type(self).__name__}({dictrepr})"
 
-    def update(self, iterable_or_mapping):
+    def update(self, iterable_or_mapping) -> None:
         """Updates the dictionary from an iterable or mapping object.
 
         Args:

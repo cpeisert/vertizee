@@ -38,7 +38,7 @@ TEST_DIR = "vertizee/io/tests"
 
 
 @pytest.mark.usefixtures()
-class TestGraphIO:
+class TestGraphIOAdjList:
     def test_digraph_read_adj_list(self):
         g = MultiDiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, DIGRAPH_FILE01), g)
@@ -72,7 +72,7 @@ class TestGraphIO:
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE01), g)
 
         v1_loop_edge = g[1].loops.pop()
-        assert v1_loop_edge.parallel_edge_count == 1, "v1 should have 2 loops"
+        assert v1_loop_edge.multiplicity == 2, "v1 should have 2 loops"
         assert g[1].degree == 6, "deg(v1) should be 6"
         assert len(g[2].incident_edges) == 2, (
             "v2 should have 4 incident edges, 3 of which are parallel and stored in one "

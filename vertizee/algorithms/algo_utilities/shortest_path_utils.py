@@ -247,7 +247,9 @@ class ShortestPath:
         """The vertex immediately preceding the destination vertex."""
         return self._predecessor
 
-    def reinitialize(self, initial_length: float = INFINITY, add_initial_s_d_edge: bool = True):
+    def reinitialize(
+        self, initial_length: float = INFINITY, add_initial_s_d_edge: bool = True
+    ) -> None:
         """Reinitializes the shortest path by setting the initial length and clearing the
         ``path`` vertex list.
 
@@ -377,7 +379,7 @@ class ShortestPath:
         """The source vertex of the path."""
         return self._source
 
-    def _add_s_d_edge_if_exists(self):
+    def _add_s_d_edge_if_exists(self) -> None:
         """If the length is less then infinity and there exists an edge connecting source to
         destination, then the edge is added to the path and predecessor is set to source."""
         if self._length < INFINITY and self._source != self._destination:

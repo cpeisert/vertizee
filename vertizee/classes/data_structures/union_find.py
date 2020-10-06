@@ -94,7 +94,7 @@ class UnionFind(Generic[T]):
                   https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
     """
 
-    def __init__(self, *args: T):
+    def __init__(self, *args: T) -> None:
         self._parents: Dict[T, T] = dict()
         """A dictionary mapping an object to its parent. If the parent of an object is itself,
         then the the object is the root of a tree in the disjoint-set forest."""
@@ -143,7 +143,7 @@ class UnionFind(Generic[T]):
         """Returns True if the items are elements of the same set."""
         return self[item1] == self[item2]
 
-    def make_set(self, item: T):
+    def make_set(self, item: T) -> None:
         """Creates a new set containing the item."""
         self._set_count += 1
         self._parents[item] = item
@@ -167,7 +167,7 @@ class UnionFind(Generic[T]):
             dict_of_sets[root].add(k)
         return iter(dict_of_sets.values())
 
-    def union(self, item1: T, item2: T):
+    def union(self, item1: T, item2: T) -> None:
         """Unites the dynamic sets that contain ``item1`` and ``item2``."""
         x = self[item1]
         y = self[item2]

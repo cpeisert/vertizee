@@ -125,14 +125,14 @@ def get_weight_function_all_pairs_shortest_paths(
         corresponding edge weight.
     """
 
-    def default_weight_function(edge: EdgeType):
+    def default_weight_function(edge: EdgeType) -> float:
         w = edge.weight
         if len(edge.parallel_edge_weights) > 0:
             min_parallel = min(edge.parallel_edge_weights)
             w = min(w, min_parallel)
         return w
 
-    def attr_weight_function(edge: EdgeType):
+    def attr_weight_function(edge: EdgeType) -> float:
         w = edge.attr.get(weight, 1.0)
         if len(edge.parallel_edge_weights) > 0:
             min_parallel = min(edge.parallel_edge_weights)

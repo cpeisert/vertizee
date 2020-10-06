@@ -49,7 +49,7 @@ from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.parsed_primitives import ParsedPrimitives
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import DiEdge
+    from vertizee.classes.edge import DiEdge, EdgeType
     from vertizee.classes.parsed_primitives import GraphPrimitive
     from vertizee.classes.vertex import VertexType
 
@@ -60,7 +60,7 @@ if TYPE_CHECKING:
 class DiGraph(GraphBase):
     """A digraph is a directed graph without parallel edges. Self loops are allowed."""
 
-    def __init__(self, *args: "GraphPrimitive"):
+    def __init__(self, *args: "GraphPrimitive") -> None:
         super().__init__(
             GraphBase._create_key,
             is_directed_graph=True,
@@ -77,7 +77,7 @@ class DiGraph(GraphBase):
         weight: float = DEFAULT_WEIGHT,
         parallel_edge_count: int = 0,
         parallel_edge_weights: Optional[List[float]] = None,
-    ) -> "DiEdge":
+    ) -> "EdgeType":
         """Adds a new directed edge to the graph.
 
         If there is already an edge with matching vertices, then the internal :class:`DiEdge
@@ -104,29 +104,6 @@ class DiGraph(GraphBase):
         super()._deepcopy_into(graph_copy)
         return graph_copy
 
-    @property
-    def edges(self) -> Set[DiEdge]:
-        return super().edges
-
-    def get_all_graph_edges_from_parsed_primitives(
-        self, parsed_primitives: ParsedPrimitives
-    ) -> List[DiEdge]:
-        return super().get_all_graph_edges_from_parsed_primitives(parsed_primitives)
-
-    def get_edge(self, *args: GraphPrimitive) -> Optional[DiEdge]:
-        """Gets the edge specified by the graph primitives, or None if no such edge exists.
-
-        Args:
-            *args: graph primitives (i.e. vertices or edges)
-
-        Returns:
-            DiEdge: The edge or None if not found.
-        """
-        return super().get_edge(*args)
-
-    def get_random_edge(self) -> Optional[DiEdge]:
-        return super().get_random_edge()
-
     def get_reverse_graph(self) -> "DiGraph":
         """Creates a new graph that is the reverse of this graph (i.e. all directed edges
         pointing in the opposite direction).
@@ -145,7 +122,7 @@ class DiGraph(GraphBase):
 class MultiDiGraph(GraphBase):
     """A multidigraph is a directed graph that allows parallel edges and self loops."""
 
-    def __init__(self, *args: "GraphPrimitive"):
+    def __init__(self, *args: "GraphPrimitive") -> None:
         super().__init__(
             GraphBase._create_key, is_directed_graph=True, is_multigraph=True, is_simple_graph=False
         )
@@ -159,7 +136,7 @@ class MultiDiGraph(GraphBase):
         weight: float = DEFAULT_WEIGHT,
         parallel_edge_count: int = 0,
         parallel_edge_weights: Optional[List[float]] = None,
-    ) -> "DiEdge":
+    ) -> "EdgeType":
         """Adds a new directed edge to the graph.
 
         If there is already an edge with matching vertices, then the internal :class:`DiEdge
@@ -186,10 +163,6 @@ class MultiDiGraph(GraphBase):
         super()._deepcopy_into(graph_copy)
         return graph_copy
 
-    @property
-    def edges(self) -> Set[DiEdge]:
-        return super().edges
-
     def edge_count_ignoring_parallel_edges(self) -> int:
         """The number of edges excluding parallel edges."""
         edge_count = len(self._edges)
@@ -198,30 +171,11 @@ class MultiDiGraph(GraphBase):
 
         edges_inverted_tails_and_heads_count = 0
         for edge in self.edges:
-            parallel = self.get_edge(edge.head, edge.tail)
+            parallel = self.get_edge(edge.vertex2, edge.vertex1)
             if parallel is not None and not parallel.is_loop():
                 edges_inverted_tails_and_heads_count += 1
         edge_count -= int(edges_inverted_tails_and_heads_count / 2)
         return edge_count
-
-    def get_all_graph_edges_from_parsed_primitives(
-        self, parsed_primitives: "ParsedPrimitives"
-    ) -> List["DiEdge"]:
-        return super().get_all_graph_edges_from_parsed_primitives(parsed_primitives)
-
-    def get_edge(self, *args: GraphPrimitive) -> Optional[DiEdge]:
-        """Gets the edge specified by the graph primitives, or None if no such edge exists.
-
-        Args:
-            *args: graph primitives (i.e. vertices or edges)
-
-        Returns:
-            DiEdge: The edge or None if not found.
-        """
-        return super().get_edge(*args)
-
-    def get_random_edge(self) -> Optional[DiEdge]:
-        return super().get_random_edge()
 
     def get_reverse_graph(self) -> "MultiDiGraph":
         """Creates a new graph that is the reverse of this graph (i.e. all directed edges

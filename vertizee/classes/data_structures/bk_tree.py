@@ -15,10 +15,13 @@
 """Burkhard-Keller tree data structure."""
 
 from __future__ import annotations
-from typing import Callable, Dict, Generic, List, TypeVar, Union
+from typing import Callable, Dict, Generic, Iterator, List, Optional, TypeVar, Union
 
 #:Type variable for values in a generic BKTree data structure.
 T = TypeVar("T")
+
+#:Type variable for BKNode and its subclasses.
+T_NODE = TypeVar("T_NODE", bound="BKNode")
 
 GC_DEFAULT_THRESHOLD = 0.3  # % of deleted nodes relative to tree size prior to garbage collection
 GC_MIN_TREE_SIZE = 1000  # minimum tree size required before performing garbage collection
@@ -33,50 +36,50 @@ class BKNode(Generic[T]):
             between other nodes in the metric space.
 
     Attributes:
-        key_value (:class:`T`): The value associated with the node used for calculating distances between other
-            nodes in the metric space.
+        key_value (:class:`T`): The value associated with the node used for calculating distances
+            between other nodes in the metric space.
         children: Dictionary where the keys are the non-negative integer distances between this
             node and child nodes and the values are the child nodes.
     """
 
-    def __init__(self, key_value: T):
+    def __init__(self: T_NODE, key_value: T) -> None:
         self._deleted = False
         self.key_value: T = key_value
-        self.children: Dict[int, BKNode] = {}
+        self.children: Dict[int, T_NODE] = {}
 
     def __contains__(self, distance: int) -> bool:
         return distance in self.children
 
-    def __eq__(self, other: "BKNode"):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, BKNode):
             return False
         return self.key_value == other.key_value
 
-    def __getitem__(self, distance: int) -> "BKNode":
+    def __getitem__(self, distance: int) -> T_NODE:
         """Support index accessor notation to retrieve child node based on its distance from this
         node."""
         return self.children[distance]
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.key_value)
 
-    def __iter__(self):
-        return iter(self.children)
+    def __iter__(self) -> Iterator[T_NODE]:
+        return iter(self.children.values())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.children)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"BKNode({self.key_value})"
 
-    def __setitem__(self, distance: int, child_node: "BKNode"):
+    def __setitem__(self: T_NODE, distance: int, child_node: T_NODE) -> None:
         self.children[distance] = child_node
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"BKNode({self.key_value})"
 
 
-class BKNodeLabeled(BKNode[T]):
+class BKNodeLabeled(BKNode, Generic[T]):
     """A labeled BK tree node, where each node has a unique string label as well as a value used
     to calculate the distance between other nodes in the metric space.
 
@@ -86,36 +89,28 @@ class BKNodeLabeled(BKNode[T]):
         key_label: A string representing the node name (e.g. the name of a vertex in a graph).
     """
 
-    def __init__(self, key_value: T, key_label: str):
+    def __init__(self, key_value: T, key_label: str) -> None:
         if key_label is None:
             raise KeyError("key_label was None")
         self.key_label: str = str(key_label)
         super().__init__(key_value)
 
-    def __eq__(self, other: "BKNodeLabeled"):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, BKNodeLabeled):
             return False
         return self.key_label == other.key_label
 
-    def __getitem__(self, distance: int) -> "BKNodeLabeled":
-        """Support index accessor notation to retrieve child node based on its distance from this
-        node."""
-        return self.children[distance]
-
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.key_label)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"BKNodeLabeled(key_label={self.key_label}, key_value={self.key_value})"
 
-    def __setitem__(self, distance: int, child_node: "BKNodeLabeled"):
-        self.children[distance] = child_node
-
-    def __str__(self):
+    def __str__(self) -> str:
         return f"BKNodeLabeled(key_label={self.key_label}, key_value={self.key_value})"
 
 
-class BKTree(Generic[T]):
+class BKTree(Generic[T, T_NODE]):
     """A Burkhard-Keller tree data structure.
 
     A BK-tree is designed to perform efficient key queries that determine all keys in the tree that
@@ -164,7 +159,7 @@ class BKTree(Generic[T]):
         labeled_nodes: bool = False,
         garbage_collection_threshold: float = GC_DEFAULT_THRESHOLD,
     ):
-        self.root: Union[BKNode, BKNodeLabeled] = None
+        self.root: Optional[T_NODE] = None
         self._dist_func: Callable[[T, T], int] = distance_function
         self._deleted_item_count = 0
         self._labeled_nodes = labeled_nodes
@@ -175,10 +170,10 @@ class BKTree(Generic[T]):
             self._gc_threshold = GC_DEFAULT_THRESHOLD
         self._gc_min_tree_size = GC_MIN_TREE_SIZE
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._length
 
-    def delete_node(self, node: Union["BKNode", "BKNodeLabeled"]):
+    def delete_node(self, node: T_NODE) -> None:
         if not node._deleted:
             node._deleted = True
             self._deleted_item_count += 1
@@ -186,7 +181,7 @@ class BKTree(Generic[T]):
             if self._length < 0:
                 self._length = 0
 
-    def insert(self, key_value: T, key_label: str = None):
+    def insert(self, key_value: T, key_label: Optional[str] = None) -> None:
         """Insert key value, and in the case of labeled nodes, a unique key label, into the tree.
 
         Args:
@@ -201,33 +196,39 @@ class BKTree(Generic[T]):
             self.root = self._create_new_node(key_value, key_label)
             return
 
-        current_node = self.root
+        current_node: T_NODE = self.root
         while True:
             distance = self._dist_func(current_node.key_value, key_value)
 
             if distance in current_node:
                 current_node = current_node[distance]
             else:
-                new_node = self._create_new_node(key_value, key_label)
+                new_node: T_NODE = self._create_new_node(key_value, key_label)
                 current_node[distance] = new_node
                 break
 
-    def search(
-        self, key_value: int, radius: int, key_label: str = None
-    ) -> Union[List["BKNode"], List["BKNodeLabeled"]]:
+    def search(self, key_value: T, radius: int, key_label: str = None) -> List[T_NODE]:
+        """Searches for nodes in the metric space whose values are less than or equal to the
+        distance of ``radius`` from ``key_value``.
+
+        Returns:
+            List[T_NODE]: List of nodes whose value is within distance ``radius`` of ``key_value``.
+        """
         if self._length == 0:
             return []
         if key_label is not None:
             key_label = str(key_label)
-        remaining: Union[List[BKNode], List[BKNodeLabeled]] = [self.root]
-        results: Union[List[BKNode], List[BKNodeLabeled]] = []
+        remaining: List[Optional[T_NODE]] = [self.root]
+        results: List[T_NODE] = []
         while remaining:
             node = remaining.pop()
+            if node is None:
+                continue
             node_qualifies = False
             distance = self._dist_func(node.key_value, key_value)
             if distance <= radius:
                 if self._labeled_nodes:
-                    labeled_node: BKNodeLabeled = node
+                    labeled_node: BKNodeLabeled[T] = node
                     if key_label is not None and labeled_node.key_label != key_label:
                         node_qualifies = True
                 elif not self._labeled_nodes:
@@ -250,11 +251,11 @@ class BKTree(Generic[T]):
 
         return results
 
-    def _collect_garbage(self):
+    def _collect_garbage(self) -> None:
         # Collect nodes that have not been deleted.
-        active_nodes: Union[List[BKNode], List[BKNodeLabeled]] = []
+        active_nodes: List[T_NODE] = []
 
-        remaining: Union[List[BKNode], List[BKNodeLabeled]] = [self.root]
+        remaining: List[T_NODE] = [self.root]
         while remaining:
             node = remaining.pop()
             if not node._deleted:
@@ -273,8 +274,7 @@ class BKTree(Generic[T]):
             else:
                 self.insert(key_value=node.key_value)
 
-    def _create_new_node(self, key_value: T, key_label: str) -> Union[BKNode, BKNodeLabeled]:
+    def _create_new_node(self, key_value: T, key_label: Optional[str] = None) -> T_NODE:
         if self._labeled_nodes:
             return BKNodeLabeled(key_value, key_label)
-        else:
-            return BKNode(key_value)
+        return BKNode(key_value)

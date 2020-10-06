@@ -207,7 +207,7 @@ def spanning_tree_prim(
         else:
             return iter([])
 
-    def prim_priority_function(v: Vertex):
+    def prim_priority_function(v: Vertex) -> float:
         return v.attr[PRIM_PRIORITY_KEY]
 
     priority_queue: PriorityQueue[Vertex] = PriorityQueue(prim_priority_function)
@@ -302,7 +302,7 @@ def spanning_tree_prim_fibonacci(
         else:
             return iter([])
 
-    def prim_priority_function(v: Vertex):
+    def prim_priority_function(v: Vertex) -> float:
         return v.attr[PRIM_PRIORITY_KEY]
 
     fib_heap: FibonacciHeap[Vertex] = FibonacciHeap(prim_priority_function)

@@ -96,19 +96,22 @@ Alternatively, the same graph could be represented with the following adjacency 
     3   1,50    2,25
 """
 
+from __future__ import annotations
 from collections import Counter
 import re
-from typing import List, Set, TYPE_CHECKING, Tuple
+from typing import Dict, List, Set, TYPE_CHECKING, Tuple
 
+from vertizee.classes.edge import create_edge_label
 from vertizee.exception import GraphTypeNotSupported
 
 if TYPE_CHECKING:
     from vertizee.classes.edge import EdgeType
     from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.parsed_primitives import EdgeTuple
     from vertizee.classes.vertex import Vertex
 
 
-def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s+"):
+def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s+") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
@@ -129,6 +132,8 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
     if lines is None or len(lines) == 0:
         return
 
+    # Keep track of the source vertex (column one of adj. list) for each edge to avoid duplicates.
+    edge_label_to_source: Dict[str, str] = {}
     for line in lines:
         vertices = re.split(delimiters, line)
         vertices = [v for v in vertices if len(v) > 0]
@@ -141,16 +146,17 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
 
         source = vertices[0]
         destination_vertices = vertices[1:]
-        edge_tuples: List[Tuple[str, str]] = [(source, t) for t in destination_vertices]
+        edge_tuples: List[EdgeTuple] = [(source, t) for t in destination_vertices]
         if len(edge_tuples) == 0:
             new_graph.add_vertex(source)
             continue
         if not new_graph.is_directed_graph():
-            edge_tuples = _remove_duplicate_edges(new_graph, edge_tuples)
+            edge_tuples = _remove_duplicate_undirected_edges(
+                source, edge_tuples, edge_label_to_source)
         new_graph.add_edges_from(edge_tuples)
 
 
-def read_weighted_adj_list(path: str, new_graph: "GraphBase"):
+def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
@@ -169,6 +175,8 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase"):
     if lines is None or len(lines) == 0:
         return
 
+    # Keep track of the source vertex (column one of adj. list) for each edge to avoid duplicates.
+    edge_label_to_source: Dict[str, str] = {}
     for line in lines:
         source_match = re.search(r"\w+\b", line)
         if not source_match:
@@ -176,7 +184,7 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase"):
         source = source_match.group(0)
         line = line[len(source) :]
 
-        edge_tuples: List[Tuple[str, str, float]] = []
+        edge_tuples: List[EdgeTuple] = []
         for match in re.finditer(r"\b(\w+)\s*,\s*(\w+)", line):
             edge_tuples.append((source, match.group(1), float(match.group(2))))
 
@@ -184,7 +192,8 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase"):
             new_graph.add_vertex(source)
             continue
         if not new_graph.is_directed_graph():
-            edge_tuples = _remove_duplicate_edges(new_graph, edge_tuples)
+            edge_tuples = _remove_duplicate_undirected_edges(
+                source, edge_tuples, edge_label_to_source)
         new_graph.add_edges_from(edge_tuples)
 
 
@@ -214,11 +223,11 @@ def write_adj_list_to_file(
 
     vertices = graph.vertices
     if all([x.label.isdecimal() for x in vertices]):
-        vertices = sorted(vertices, key=lambda v: int(v.label))
+        sorted_vertices = sorted(vertices, key=lambda v: int(v.label))
     else:
-        vertices = sorted(vertices, key=lambda v: v.label)
+        sorted_vertices = sorted(vertices, key=lambda v: v.label)
 
-    for vertex in vertices:
+    for vertex in sorted_vertices:
         source_vertex_label = vertex.label
         line = f"{source_vertex_label}"
         if len(vertex.loops) > 0:
@@ -261,17 +270,18 @@ def _add_edge_to_line(
 
     if include_weights:
         if weights_are_integers:
-            weight = int(edge.weight)
+            weight = str(int(edge.weight))
         else:
-            weight = edge.weight
+            weight = str(edge.weight)
+
         line += f"{delimiter}{destination_label},{weight}"
         while len(edge._parallel_edge_weights) < edge.parallel_edge_count:
             edge._parallel_edge_weights.append(1)
         for i in range(0, edge.parallel_edge_count):
             if weights_are_integers:
-                weight = int(edge._parallel_edge_weights[i])
+                weight = str(int(edge._parallel_edge_weights[i]))
             else:
-                weight = edge._parallel_edge_weights[i]
+                weight = str(edge._parallel_edge_weights[i])
             line += f"{delimiter}{destination_label},{weight}"
     else:  # Exclude edge weights.
         line += f"{delimiter}{destination_label}"
@@ -292,9 +302,9 @@ def _add_loop_edges_to_line(
 
     if include_weights:
         if weights_are_integers:
-            weight = int(loop_edge.weight)
+            weight = str(int(loop_edge.weight))
         else:
-            weight = loop_edge.weight
+            weight = str(loop_edge.weight)
         line += f"{delimiter}{source_vertex_label},{weight}"
 
         # If parallel self-loops are missing weights, set to default weight 1.
@@ -302,9 +312,9 @@ def _add_loop_edges_to_line(
             loop_edge._parallel_edge_weights.append(1)
         for i in range(0, loop_edge.parallel_edge_count):
             if weights_are_integers:
-                weight = int(loop_edge._parallel_edge_weights[i])
+                weight = str(int(loop_edge._parallel_edge_weights[i]))
             else:
-                weight = loop_edge._parallel_edge_weights[i]
+                weight = str(loop_edge._parallel_edge_weights[i])
             line += f"{delimiter}{source_vertex_label},{weight}"
     else:
         line += f"{delimiter}{source_vertex_label}"
@@ -331,7 +341,7 @@ def _get_incident_edges_excluding_loops(
     """
     if graph.is_directed_graph():
         if reverse_graph:
-            return vertex.edges_incoming
+            return vertex.incident_edges_incoming
         return vertex.incident_edges_outgoing
 
     # undirected graph
@@ -343,7 +353,9 @@ def _get_incident_edges_excluding_loops(
     return vertex.incident_edges
 
 
-def _remove_duplicate_edges(graph: "GraphBase", edge_tuples: List[Tuple]) -> List[Tuple]:
+def _remove_duplicate_undirected_edges(
+    source_vertex_label: str, edge_tuples: List[EdgeTuple], edge_label_to_source: Dict[str, str]
+) -> List[EdgeTuple]:
     """For undirected graphs, adjacency lists generally repeat edge entries for each endpoint.
     For example, edges (1, 2), (1, 3) would appear as:
 
@@ -351,19 +363,26 @@ def _remove_duplicate_edges(graph: "GraphBase", edge_tuples: List[Tuple]) -> Lis
     2   1
     3   1
 
-    This function checks the graph to see if a given edge has already been added and removes
-    duplicates.
+    This function removes duplicates, where a duplicate is defined as an edge with the same
+    edge label (as defined by the function :func:`create_edge_label
+    <vertizee.classes.edge.create_edge_label>`) that maps to a different source vertex. Source
+    vertice are the vertices defined by the first column of an adjacency list file.
     """
-    if graph.is_directed_graph():
-        raise GraphTypeNotSupported(
-            "graph was a directed graph; function only defined for undirected graphs"
-        )
-    cnt = Counter()
+    cnt: Counter = Counter()
     for t in edge_tuples:
         cnt[t] += 1
 
+    unique_edge_tuples = []
     for t in cnt:
-        if graph.has_edge(t):
-            edge_tuples = [x for x in edge_tuples if x != t]
+        edge_label = create_edge_label(t[0], t[1], is_directed=False)
+        if edge_label not in edge_label_to_source:
+            edge_label_to_source[edge_label] = source_vertex_label
 
-    return edge_tuples
+        if edge_label_to_source[edge_label] == source_vertex_label:
+            for _ in range(cnt[t]):
+                unique_edge_tuples.append(t)
+
+        # if graph.has_edge(t):
+        #     edge_tuples = [x for x in edge_tuples if x != t]
+
+    return unique_edge_tuples

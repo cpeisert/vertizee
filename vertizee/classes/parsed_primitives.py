@@ -78,11 +78,11 @@ class ParsedPrimitives:
         vertex_labels: A list of vertex labels, where all labels are of type ``str``.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Pairs of vertices (no weights).
-        self.edge_tuples: List[EdgeTuple] = list()
+        self.edge_tuples: List[Tuple[str, str]] = list()
         # 3-tuples with two vertices and an edge weight.
-        self.edge_tuples_weighted: List[EdgeTupleWeighted] = list()
+        self.edge_tuples_weighted: List[Tuple[str, str, float]] = list()
         # Standalone vertices (not part of a tuple or Edge object).
         self.vertex_labels: List[str] = list()
 
@@ -132,9 +132,9 @@ def get_all_vertices_from_parsed_primitives(parsed_primitives: "ParsedPrimitives
         vertices.add(t[0])
         vertices.add(t[1])
     while len(parsed_primitives.edge_tuples_weighted) > 0:
-        t = parsed_primitives.edge_tuples_weighted.pop()
-        vertices.add(t[0])
-        vertices.add(t[1])
+        t_weighted = parsed_primitives.edge_tuples_weighted.pop()
+        vertices.add(t_weighted[0])
+        vertices.add(t_weighted[1])
 
     for vertex_label in parsed_primitives.vertex_labels:
         vertices.add(vertex_label)
@@ -155,7 +155,7 @@ def get_edge_tuple_from_parsed_primitives(parsed_primitives: "ParsedPrimitives")
         Tuple: A tuple containing either one or two vertex labels, or None if no vertex labels
         found.
     """
-    t = None
+    t: Union[Tuple[str, Optional[str]], Tuple[str, str, float], None] = None
     if len(parsed_primitives.edge_tuples) > 0:
         t = parsed_primitives.edge_tuples[0]
     elif len(parsed_primitives.edge_tuples_weighted) > 0:
@@ -202,14 +202,14 @@ def parse_graph_primitives(*args: "GraphPrimitive") -> "ParsedPrimitives":
 
 
 def _parse_non_iterable_primitive(
-    arg: "GraphPrimitiveTerminal", parsed_primitives: "ParsedPrimitives"
+    arg: "GraphPrimitive", parsed_primitives: "ParsedPrimitives"
 ) -> bool:
     """Parses a single graph primitive ``arg`` and adds it to ``parsed_primitives`` object.
 
     Args:
-        arg: A graph-primitive terminal item (i.e. non-iterable).
-        parsed_primitives: Collection of parsed primitives to which to add the
-            results of parsing ``arg``.
+        arg: A graph-primitive.
+        parsed_primitives: Collection of parsed primitives to which to add the results of parsing
+            ``arg``.
 
     Returns:
         bool: True if ``arg`` was a non-iterable graph primitive, False otherwise.

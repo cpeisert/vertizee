@@ -29,12 +29,12 @@ T = TypeVar("T")
 class _PriorityQueueItem(Generic[T]):
     """Generic item wrapper for objects stored in a priority queue."""
 
-    def __init__(self, priority: Union[float, int], insertion_count: int, item: T):
+    def __init__(self, priority: Union[float, int], insertion_count: int, item: T) -> None:
         self.priority = priority
         self.insertion_count = insertion_count
         self.item: T = item
 
-    def __compare(self, other: "_PriorityQueueItem", operator: str) -> bool:
+    def __compare(self, other, operator: str) -> bool:
         if not isinstance(other, _PriorityQueueItem):
             return False
         if operator == "==":
@@ -62,22 +62,22 @@ class _PriorityQueueItem(Generic[T]):
                 return True
         return False
 
-    def __eq__(self, other: "_PriorityQueueItem"):
+    def __eq__(self, other) -> bool:
         return self.__compare(other, "==")
 
-    def __ge__(self, other: "_PriorityQueueItem"):
+    def __ge__(self, other) -> bool:
         return self.__compare(other, ">=")
 
-    def __gt__(self, other: "_PriorityQueueItem"):
+    def __gt__(self, other) -> bool:
         return self.__compare(other, ">")
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.priority, self.insertion_count))
 
-    def __le__(self, other: "_PriorityQueueItem"):
+    def __le__(self, other) -> bool:
         return self.__compare(other, "<=")
 
-    def __lt__(self, other: "_PriorityQueueItem"):
+    def __lt__(self, other) -> bool:
         return self.__compare(other, "<")
 
 
@@ -122,15 +122,17 @@ class PriorityQueue(Generic[T]):
         1
     """
 
-    def __init__(self, priority_function: Callable[[T], Union[float, int]], minimum: bool = True):
+    def __init__(
+        self, priority_function: Callable[[T], Union[float, int]], minimum: bool = True
+    ) -> None:
         if minimum:
             self._priority_function: Callable[[T], Union[float, int]] = priority_function
         else:
 
-            def max_priority_func(item: T):
+            def max_priority_func(item: T) -> float:
                 return priority_function(item) * -1
 
-            self._priority_function: Callable[[T], Union[float, int]] = max_priority_func
+            self._priority_function = max_priority_func
         self._priority_queue: List[_PriorityQueueItem[T]] = []
 
         self._heap_item_finder: Dict[T, _PriorityQueueItem[T]] = {}
@@ -141,7 +143,7 @@ class PriorityQueue(Generic[T]):
         # return sum(1 for x in self._priority_queue if x.item is not ITEM_REMOVED)
         return self._length
 
-    def add_or_update(self, item: T):
+    def add_or_update(self, item: T) -> None:
         """Adds a new item or updates an existing item with a new priority.
 
         Args:
@@ -172,7 +174,7 @@ class PriorityQueue(Generic[T]):
                 return item.item
         raise KeyError("pop from an empty priority queue")
 
-    def _mark_item_removed(self, item: T):
+    def _mark_item_removed(self, item: T) -> None:
         """Mark an existing item as removed."""
         queue_item: _PriorityQueueItem = self._heap_item_finder.pop(item)
         queue_item.item = ITEM_REMOVED

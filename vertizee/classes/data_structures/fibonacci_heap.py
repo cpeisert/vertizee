@@ -19,7 +19,7 @@ function."""
 
 from __future__ import annotations
 import math
-from typing import Callable, Dict, Generic, Optional, Set, TypeVar, Union
+from typing import Callable, Dict, Generic, List, Optional, Set, TypeVar, Union
 
 NEG_INFINITY = float("-inf")
 
@@ -28,11 +28,11 @@ T = TypeVar("T")
 
 
 class _FibonacciNode(Generic[T]):
-    def __init__(self, priority: Union[float, int], item: T):
+    def __init__(self, priority: Union[float, int], item: T) -> None:
         self.children: Set[_FibonacciNode] = set()
         self.item: T = item
         self.marked: bool = False
-        self.parent: _FibonacciNode = None
+        self.parent: Optional[_FibonacciNode[T]] = None
         self.priority = priority
 
     @property
@@ -108,23 +108,25 @@ class FibonacciHeap(Generic[T]):
                  Computing Machinery, pages 596-615.
     """
 
-    def __init__(self, priority_function: Callable[[T], Union[float, int]] = None):
+    def __init__(
+        self, priority_function: Optional[Callable[[T], Union[float, int]]] = None
+    ) -> None:
         self._item_to_node: Dict[T, _FibonacciNode[T]] = dict()
         """Maintain a mapping between items and their _FibonacciNode wrappers to facilitate
         efficient DECREASE-KEY operation (see :meth:`update_item_with_decreased_priority`)."""
 
         self._length = 0
-        self._min: _FibonacciNode[T] = None
+        self._min: Optional[_FibonacciNode[T]] = None
         if priority_function is None:
             self._priority_function = lambda x: x
         else:
-            self._priority_function: Callable[[T], Union[float, int]] = priority_function
+            self._priority_function = priority_function
         self._roots: Set[_FibonacciNode[T]] = set()
 
     def __len__(self) -> int:
         return self._length
 
-    def delete(self, item: T):
+    def delete(self, item: T) -> None:
         """Deletes the specified item from the heap.
 
         Args:
@@ -150,7 +152,7 @@ class FibonacciHeap(Generic[T]):
         else:
             return None
 
-    def insert(self, item: T):
+    def insert(self, item: T) -> None:
         """Inserts a new item into the heap."""
         self._length += 1
         x = _FibonacciNode(self._priority_function(item), item)
@@ -169,7 +171,7 @@ class FibonacciHeap(Generic[T]):
         else:
             return None
 
-    def union(self, other: "FibonacciHeap"):
+    def union(self, other: "FibonacciHeap") -> None:
         """Merge ``other`` Fibonacci heap into this heap."""
         self._roots.update(other._roots)
         if self._min is None or (
@@ -178,7 +180,7 @@ class FibonacciHeap(Generic[T]):
             self._min = other._min
         self._length += other._length
 
-    def update_item_with_decreased_priority(self, item: T, priority: float = None):
+    def update_item_with_decreased_priority(self, item: T, priority: float = None) -> None:
         """If the result of ``priority_function(item)`` is a lower priority than when item was
         first inserted into the heap, then this method must be called in order to update the item's
         position in the data structure.
@@ -201,14 +203,14 @@ class FibonacciHeap(Generic[T]):
         if new_priority > x.priority:
             raise ValueError("new priority is greater than current priority")
         x.priority = new_priority
-        y: _FibonacciNode[T] = x.parent
+        y: Optional[_FibonacciNode[T]] = x.parent
         if y is not None and x.priority < y.priority:
             self._cut(x, y)
             self._cascading_cut(y)
-        if x.priority < self._min.priority:
+        if self._min is None or x.priority < self._min.priority:
             self._min = x
 
-    def _cascading_cut(self, y: _FibonacciNode[T]):
+    def _cascading_cut(self, y: _FibonacciNode[T]) -> None:
         """Move up the tree until finding either a root or an unmarked node."""
         while y.parent is not None:
             if not y.marked:
@@ -219,7 +221,7 @@ class FibonacciHeap(Generic[T]):
             self._cut(y, z)
             y = z
 
-    def _consolidate(self):
+    def _consolidate(self) -> None:
         """Consolidate the root list.
 
         Consolidation works as follows:
@@ -230,29 +232,32 @@ class FibonacciHeap(Generic[T]):
                 minimum key to serve as the minimum node of the modified heap.
         """
         max_degree = (int(math.log2(self._length)) + 2) * 2
-        roots_indexed_by_degree = [None for x in range(max_degree)]
+        roots_indexed_by_degree: List[Optional[_FibonacciNode[T]]] = \
+            [None for x in range(max_degree)]
         for w in self._roots.copy():
             x: _FibonacciNode[T] = w
             d = x.degree
             while roots_indexed_by_degree[d] is not None:
-                y: _FibonacciNode[T] = roots_indexed_by_degree[d]
-                if x.priority > y.priority:
+                y: Optional[_FibonacciNode[T]] = roots_indexed_by_degree[d]
+                if y is not None and x.priority > y.priority:
                     x, y = y, x
                 self._link(y, x)
                 roots_indexed_by_degree[d] = None
                 d = d + 1
             roots_indexed_by_degree[d] = x
 
-        self._min = min(self._roots, key=lambda n: n.priority, default=None)
+        self._min = min(self._roots, key=lambda n: n.priority if n is not None else n, default=None)
 
-    def _cut(self, x: _FibonacciNode[T], y: _FibonacciNode[T]):
+    def _cut(self, x: _FibonacciNode[T], y: _FibonacciNode[T]) -> None:
         """Cut the link between x and its parent y, making x a root."""
         y.children.remove(x)
         self._roots.add(x)
         x.parent = None
         x.marked = False
 
-    def _link(self, y: _FibonacciNode[T], x: _FibonacciNode[T]):
+    def _link(self, y: Optional[_FibonacciNode[T]], x: Optional[_FibonacciNode[T]]) -> None:
+        if y is None or x is None:
+            return
         self._roots.remove(y)
         x.children.add(y)
         y.parent = x

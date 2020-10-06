@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 class Graph(GraphBase):
     """An undirected graph without parallel edges. Self loops are allowed."""
 
-    def __init__(self, *args: "GraphPrimitive"):
+    def __init__(self, *args: "GraphPrimitive") -> None:
         super().__init__(
             GraphBase._create_key,
             is_directed_graph=False,
@@ -70,7 +70,7 @@ class Graph(GraphBase):
 class MultiGraph(GraphBase):
     """An undirected graph that allows parallel edges and self loops."""
 
-    def __init__(self, *args: "GraphPrimitive"):
+    def __init__(self, *args: "GraphPrimitive") -> None:
         super().__init__(
             GraphBase._create_key,
             is_directed_graph=False,
@@ -93,7 +93,7 @@ class MultiGraph(GraphBase):
 class SimpleGraph(GraphBase):
     """An undirected graph with no parallel edges and no self loops."""
 
-    def __init__(self, *args: "GraphPrimitive"):
+    def __init__(self, *args: "GraphPrimitive") -> None:
         super().__init__(
             GraphBase._create_key,
             is_directed_graph=False,

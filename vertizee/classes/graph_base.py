@@ -29,10 +29,10 @@ See Also:
 
 from __future__ import annotations
 import random
-from typing import Dict, List, Optional, Set, Tuple, TYPE_CHECKING, Union
+from typing import cast, Dict, List, Iterator, Optional, Set, Tuple, TYPE_CHECKING, Union
 
 from vertizee.classes import parsed_primitives
-from vertizee.classes.parsed_primitives import ParsedPrimitives
+from vertizee.classes.parsed_primitives import EdgeTupleWeighted, ParsedPrimitives
 from vertizee.classes.edge import DEFAULT_WEIGHT
 from vertizee.classes.edge import DiEdge
 from vertizee.classes.edge import Edge
@@ -146,10 +146,10 @@ class GraphBase:
             return self.get_edge(vertex_keys[0], vertex_keys[1])
         return self._get_vertex(vertex_keys)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Vertex]:
         return iter(self._vertices.values())
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Returns the number of vertices in the graph when the built-in ``len`` function is
         applied."""
         return len(self._vertices)
@@ -259,7 +259,9 @@ class GraphBase:
             if len(edge_tuple) == 2:
                 self.add_edge(edge_tuple[0], edge_tuple[1])
             elif len(edge_tuple) == 3:
-                self.add_edge(edge_tuple[0], edge_tuple[1], weight=edge_tuple[2])
+                # mypy: See https://github.com/python/mypy/issues/1178
+                v1, v2, w = cast(EdgeTupleWeighted, edge_tuple)
+                self.add_edge(v1, v2, weight=w)
             else:
                 raise ValueError(
                     f"Expected `edge_tuple` to have either 2 or 3 elements. Actual "
@@ -315,13 +317,13 @@ class GraphBase:
 
         return len(vertices)
 
-    def clear(self):
+    def clear(self) -> None:
         """Removes all edges and vertices from the graph."""
         self._vertices.clear()
         self._edges.clear()
         self._edges_with_freq_weight.clear()
 
-    def convert_to_simple_graph(self):
+    def convert_to_simple_graph(self) -> None:
         """Convert this graph to a simple graph (i.e., no loops and no parallel edges)."""
         temp_edges = self._edges.copy()
         while temp_edges:
@@ -381,10 +383,14 @@ class GraphBase:
         graph_edges: Set[EdgeType] = set()
         while len(primitives.edge_tuples) > 0:
             t = primitives.edge_tuples.pop()
-            graph_edges.add(self.get_edge(t))
+            edge = self.get_edge(t)
+            if edge is not None:
+                graph_edges.add(edge)
         while len(primitives.edge_tuples_weighted) > 0:
-            t = primitives.edge_tuples_weighted.pop()
-            graph_edges.add(self.get_edge(t))
+            t_weighted = primitives.edge_tuples_weighted.pop()
+            edge = self.get_edge(t_weighted)
+            if edge is not None:
+                graph_edges.add(edge)
 
         vertex_prev = None
         for vertex_current in primitives.vertex_labels:
@@ -472,7 +478,7 @@ class GraphBase:
         """Returns True if this is a weighted graph, i.e., contains edges with weights != 1."""
         return self._is_weighted_graph
 
-    def merge_vertices(self, vertex1: VertexType, vertex2: VertexType):
+    def merge_vertices(self, vertex1: VertexType, vertex2: VertexType) -> None:
         """Merge ``vertex2`` into ``vertex1``.
 
         After the merge operation:
@@ -635,7 +641,7 @@ class GraphBase:
             self._vertices.pop(k)
         return len(vertex_labels_to_remove)
 
-    def remove_vertex(self, vertex: VertexType):
+    def remove_vertex(self, vertex: VertexType) -> None:
         """Removes the indicated vertex.
 
         For a vertex to be removed, it must not have any incident edges (except self loops). Any
@@ -659,7 +665,7 @@ class GraphBase:
             self._vertices.pop(lookup_key)
 
     @property
-    def vertex_count(self):
+    def vertex_count(self) -> int:
         """The count of vertices in the graph."""
         return len(self._vertices)
 
@@ -668,7 +674,7 @@ class GraphBase:
         """The set of graph vertices."""
         return set(self._vertices.values())
 
-    def _deepcopy_into(self, graph_copy: "GraphBase"):
+    def _deepcopy_into(self, graph_copy: "GraphBase") -> None:
         """Initializes a ``GraphBase`` instance ``graph_copy`` with a deep copy of this graph's
         properties.
 
@@ -717,7 +723,7 @@ class GraphBase:
             return self._vertices[lookup_key]
         return None
 
-    def _reverse_graph_into(self, reverse_graph: "GraphBase"):
+    def _reverse_graph_into(self, reverse_graph: "GraphBase") -> None:
         """Initializes ``reverse_graph`` with the reverse of this graph (i.e. all directed edges
         pointing in the opposite direction).
 
@@ -743,7 +749,7 @@ class GraphBase:
             )
 
 
-def _merge_parallel_edges(existing: EdgeType, new_edge: EdgeType):
+def _merge_parallel_edges(existing: EdgeType, new_edge: EdgeType) -> None:
     """Helper method to merge an edge into an existing parallel edge."""
     existing._parallel_edge_weights += [new_edge.weight] + new_edge.parallel_edge_weights
     existing._parallel_edge_count += 1 + new_edge.parallel_edge_count

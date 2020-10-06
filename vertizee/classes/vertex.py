@@ -27,7 +27,7 @@ Function summary:
 """
 
 from __future__ import annotations
-from typing import Any, Dict, Optional, Set, TYPE_CHECKING, Union
+from typing import Any, Dict, Iterator, Optional, Set, TYPE_CHECKING, Union
 
 from vertizee.classes import parsed_primitives
 
@@ -102,7 +102,7 @@ class Vertex:
         """Initializes a new Vertex object."""
         return Vertex(cls.__create_key, label, parent_graph)
 
-    def __init__(self, create_key, label: Union[int, str], parent_graph: GraphBase):
+    def __init__(self, create_key, label: Union[int, str], parent_graph: GraphBase) -> None:
         if create_key != Vertex.__create_key:
             raise ValueError(
                 f"{self._runtime_type()} objects should be created using method "
@@ -137,7 +137,8 @@ class Vertex:
                 compare = True
         return compare
 
-    def __eq__(self, other: VertexType):
+    # mypy: See https://github.com/python/mypy/issues/2783#issuecomment-579868936
+    def __eq__(self, other: VertexType) -> bool:  # type: ignore[override]
         return self.__compare(other, "==")
 
     def __getitem__(self, key: Any) -> Any:
@@ -160,28 +161,28 @@ class Vertex:
         """
         return self.attr[key]
 
-    def __ge__(self, other: VertexType):
+    def __ge__(self, other: VertexType) -> bool:
         return self.__compare(other, ">=")
 
-    def __gt__(self, other: VertexType):
+    def __gt__(self, other: VertexType) -> bool:
         return self.__compare(other, ">")
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.label)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[EdgeType]:
         return self._incident_edges.__iter__()
 
-    def __le__(self, other: VertexType):
+    def __le__(self, other: VertexType) -> bool:
         return self.__compare(other, "<=")
 
-    def __lt__(self, other: VertexType):
+    def __lt__(self, other: VertexType) -> bool:
         return self.__compare(other, "<")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.label}"
 
-    def __setitem__(self, key: Any, value: Any):
+    def __setitem__(self, key: Any, value: Any) -> None:
         """Supports index accessor notation to set values in the `attr` dictionary.
 
         Example:
@@ -199,7 +200,7 @@ class Vertex:
         """
         self.attr[key] = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.label}"
         # return f"{self._runtime_type()} {{{self.label}}} with {self._incident_edges}"
 
@@ -370,7 +371,7 @@ class Vertex:
             total += edge.multiplicity
         return total
 
-    def _add_edge(self, edge: EdgeType):
+    def _add_edge(self, edge: EdgeType) -> None:
         """Adds an edge.
 
         If an incident edge already exists with the same vertices, it is overwritten.
@@ -415,7 +416,7 @@ class Vertex:
         self._incident_edges.remove_edge_from(edge)
         return 1 + edge.parallel_edge_count
 
-    def _runtime_type(self):
+    def _runtime_type(self) -> str:
         """Returns the name of the runtime subclass."""
         return self.__class__.__name__
 
@@ -439,7 +440,7 @@ class _IncidentEdges:
         Accessed 29 September 2020.
     """
 
-    def __init__(self, shared_vertex_label: str, parent_graph: GraphBase):
+    def __init__(self, shared_vertex_label: str, parent_graph: GraphBase) -> None:
         self._parent_graph = parent_graph
 
         self._adj_vertices: Set["Vertex"] = set()
@@ -456,14 +457,14 @@ class _IncidentEdges:
         self._incident_edges: Dict[str, EdgeType] = {}
         """The dictionary of all incident edges: parallel, self loops, incoming, and outgoing.
 
-        The dictionary keys are created by :func:`__create_edge_label`, and are a mapping from edge
+        The dictionary keys are created by :func:`_create_edge_label`, and are a mapping from edge
         vertex keys to a consistent string representation.
         """
 
         self._incoming: Set[EdgeType] = set()
         """Directed graphs only: edges whose head vertex is ``_shared_vertex``."""
 
-        self._loops: EdgeType = None
+        self._loops: Optional[EdgeType] = None
         """Loops on ``_shared_vertex``.
 
         Since all loops are parallel to each other, only one Edge object is needed.
@@ -475,7 +476,7 @@ class _IncidentEdges:
         self._shared_vertex_label: str = shared_vertex_label
         """The label of the vertex common between all of the incident edges."""
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, _IncidentEdges):
             return False
         if self._shared_vertex_label != other._shared_vertex_label or len(
@@ -486,17 +487,17 @@ class _IncidentEdges:
             return False
         return True
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[EdgeType]:
         return iter(self._incident_edges.values())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_edges = ", ".join(self._incident_edges.keys())
         return f"_IncidentEdges: {{{str_edges}}}"
 
-    def add_edge(self, edge: EdgeType):
+    def add_edge(self, edge: EdgeType) -> None:
         """Adds an edge incident to the vertex specified by ``shared_vertex_label``.
 
         If an existing edge has the same vertices, it is overwritten.
@@ -626,7 +627,7 @@ class _IncidentEdges:
         """The set of all outgoing edges. This property is only defined for directed graphs."""
         return self._outgoing.copy()
 
-    def remove_edge_from(self, edge: EdgeType):
+    def remove_edge_from(self, edge: EdgeType) -> None:
         """Removes an edge."""
         is_directed = self._parent_graph.is_directed_graph()
         edge_label = _create_edge_label(
@@ -668,17 +669,14 @@ class _IncidentEdges:
 
 def _create_edge_label(v1_label: str, v2_label: str, is_directed: bool) -> str:
     """Creates an edge key based on the keys of two vertices.
-
     For undirected graphs, the vertex keys are sorted, such that if v1_label <= v2_label, then the
     new edge key will contain v1_label followed by v2_label. This provides a consistent mapping of
     undirected edges, such that both (v1_label, v2_label) as well as (v2_label, v1_label) produce
     the same edge key.
-
     Args:
         v1_label (str): The first vertex key of the edge.
         v2_label (str): The second vertex key of the edge.
         is_directed (bool): True indicates a directed graph, False an undirected graph.
-
     Returns:
         str: The edge key.
     """

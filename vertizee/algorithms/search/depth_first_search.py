@@ -42,7 +42,9 @@ NEG_INF = float("-inf")
 
 
 class _StackFrame:
-    def __init__(self, vertex: Vertex, adj_vertices: Set[Vertex], current_depth: int = None):
+    def __init__(
+        self, vertex: Vertex, adj_vertices: Set[Vertex], current_depth: Optional[int] = None
+    ) -> None:
         self.vertex = vertex
         self.adj_vertices = adj_vertices
         self.stack_frame_depth = current_depth
@@ -51,10 +53,10 @@ class _StackFrame:
 class _Timer:
     """Class to track the relative times when vertices were first discovered and last visited."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.time: int = 0
 
-    def increment(self):
+    def increment(self) -> None:
         self.time += 1
 
 
@@ -361,7 +363,9 @@ def dfs_preorder_traversal(
     return (child for parent, child, label, direction in edges if direction == "preorder")
 
 
-def _check_for_parallel_edge_cycle(graph: GraphBase, dfs_results: DepthFirstSearchResults, edge: EdgeType):
+def _check_for_parallel_edge_cycle(
+    graph: GraphBase, dfs_results: DepthFirstSearchResults, edge: EdgeType
+) -> None:
     """DFS helper function to check for parallel edge cycles."""
     if edge is None:
         return
@@ -438,7 +442,7 @@ def _get_tree_edge_to_parent(graph: GraphBase, v: Vertex) -> Optional[EdgeType]:
     return None
 
 
-def _initialize_dfs_graph(graph):
+def _initialize_dfs_graph(graph) -> None:
     """Initialize vertex attributes associated with depth-first search."""
     for v in graph.vertices:
         v.attr[COLOR] = WHITE
