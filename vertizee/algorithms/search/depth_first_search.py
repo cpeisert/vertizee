@@ -43,7 +43,7 @@ NEG_INF = float("-inf")
 
 class _StackFrame:
     def __init__(
-        self, vertex: Vertex, adj_vertices: Set[Vertex], current_depth: Optional[int] = None
+        self, vertex: Vertex, adj_vertices: Set[Vertex], current_depth: int = 0
     ) -> None:
         self.vertex = vertex
         self.adj_vertices = adj_vertices
@@ -399,7 +399,8 @@ def _dfs_on_tree(
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
             False.
     """
-    v: Vertex = dfs_tree.root
+    v = dfs_tree.root
+    assert v is not None  # For mypy static type checker.
     adj_vertices = v.get_adj_for_search(parent=v.attr[PARENT], reverse_graph=reverse_graph)
     stack: List[_StackFrame] = [_StackFrame(v, adj_vertices)]
 
@@ -412,7 +413,7 @@ def _dfs_on_tree(
                 new_vertex=v, dfs_tree=dfs_tree, dfs_results=dfs_results, timer=timer
             )
 
-            edge: EdgeType = _get_tree_edge_to_parent(graph, v)
+            edge: Optional[EdgeType] = _get_tree_edge_to_parent(graph, v)
             if edge is not None:
                 dfs_results.edges_in_discovery_order.append(edge)
                 dfs_tree.edges_in_discovery_order.append(edge)

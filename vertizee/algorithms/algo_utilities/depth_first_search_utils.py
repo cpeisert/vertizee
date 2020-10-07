@@ -132,7 +132,7 @@ class DepthFirstSearchTree:
     """
 
     def __init__(self, root: Optional["Vertex"] = None) -> None:
-        self.root: Vertex = root
+        self.root = root
         self.edges_in_discovery_order: List[EdgeType] = []
         self.vertices: Set[Vertex] = set()
         if root is not None:

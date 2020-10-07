@@ -15,7 +15,7 @@
 """Graph algorithms for finding and evaluating cuts in a graph."""
 
 import math
-from typing import Dict
+from typing import Dict, Optional
 
 from vertizee.classes.edge import EdgeType
 from vertizee.classes.graph_base import GraphBase
@@ -28,19 +28,19 @@ class KargerResults:
     """Container class to store the results of computing the minimum cut.
 
     Attributes:
-        contracted_graph: The modified graph after edge contractions.
-        cut_edge: The final edge comprising the minimum cut.
+        contracted_graph: Optional; The modified graph after edge contractions.
+        cut_edge: Optional; The final edge comprising the minimum cut.
         karger_contract_run_count: Count of algorithm iterations.
     """
 
     def __init__(
         self,
-        contracted_graph: GraphBase = None,
-        cut_edge: EdgeType = None,
+        contracted_graph: Optional[GraphBase] = None,
+        cut_edge: Optional[EdgeType] = None,
         karger_contract_run_count: int = 0,
     ):
-        self.contracted_graph: GraphBase = contracted_graph
-        self.cut_edge: EdgeType = cut_edge
+        self.contracted_graph: Optional[GraphBase] = contracted_graph
+        self.cut_edge: Optional[EdgeType] = cut_edge
         self.karger_contract_run_count = karger_contract_run_count
 
 
@@ -104,8 +104,14 @@ def fast_min_cut(graph: GraphBase) -> KargerResults:
     t = math.ceil(1 + (graph.vertex_count / math.sqrt(2)))
     results1: KargerResults = karger_contract(graph, t)
     results2: KargerResults = karger_contract(graph, t)
+    assert results1.contracted_graph is not None  # For mypy static type checker.
+    assert results2.contracted_graph is not None
+
     fmc_results1 = fast_min_cut(results1.contracted_graph)
     fmc_results2 = fast_min_cut(results2.contracted_graph)
+    assert fmc_results1.cut_edge is not None  # For mypy static type checker.
+    assert fmc_results2.cut_edge is not None
+
     total_contract_runs = (
         2 + fmc_results1.karger_contract_run_count + fmc_results2.karger_contract_run_count
     )
@@ -113,10 +119,9 @@ def fast_min_cut(graph: GraphBase) -> KargerResults:
         return KargerResults(
             cut_edge=fmc_results1.cut_edge, karger_contract_run_count=total_contract_runs
         )
-    else:
-        return KargerResults(
-            cut_edge=fmc_results2.cut_edge, karger_contract_run_count=total_contract_runs
-        )
+    return KargerResults(
+        cut_edge=fmc_results2.cut_edge, karger_contract_run_count=total_contract_runs
+    )
 
 
 def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResults:
@@ -143,7 +148,8 @@ def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResult
 
     contracted_graph = graph.deepcopy()
     while contracted_graph.vertex_count > minimum_vertices:
-        random_edge: EdgeType = contracted_graph.get_random_edge()
+        random_edge: Optional[EdgeType] = contracted_graph.get_random_edge()
+        assert random_edge is not None
         merged_vertex: Vertex = random_edge.vertex1
         contracted_graph.remove_edge_from(random_edge)
         contracted_graph.merge_vertices(merged_vertex, random_edge.vertex2)

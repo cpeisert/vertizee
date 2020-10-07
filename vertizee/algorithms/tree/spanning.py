@@ -198,7 +198,7 @@ def spanning_tree_prim(
     if graph.is_directed_graph():
         raise GraphTypeNotSupported("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
-        r: Vertex = graph[root]
+        r: Optional[Vertex] = graph[root]
         if r is None:
             raise VertexNotFound("root vertex not found in the graph")
     else:
@@ -219,7 +219,7 @@ def spanning_tree_prim(
     priority_queue.add_or_update(r)
 
     vertices_in_tree = set()
-    tree_edge: EdgeType = None
+    tree_edge: EdgeType
 
     while len(priority_queue) > 0:
         u = priority_queue.pop()
@@ -314,10 +314,11 @@ def spanning_tree_prim_fibonacci(
     fib_heap.update_item_with_decreased_priority(r)
 
     vertices_in_tree = set()
-    tree_edge: EdgeType = None
+    tree_edge: EdgeType
 
     while len(fib_heap) > 0:
         u = fib_heap.extract_min()
+        assert u is not None  #  For mypy static type checker.
         vertices_in_tree.add(u)
         if u.attr[PRIM_PARENT_KEY] is not None:
             parent = u.attr[PRIM_PARENT_KEY]

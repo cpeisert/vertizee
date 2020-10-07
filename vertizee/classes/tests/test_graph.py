@@ -27,6 +27,7 @@ pytestmark = pytest.mark.skipif(
     False, reason="Set first param to False to run tests, or True to skip."
 )
 
+# TODO(cpeisert): Write separate test for index accessor notation including raising KeyError.
 
 @pytest.mark.usefixtures()
 class TestUndirectedGraphs:

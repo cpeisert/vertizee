@@ -38,7 +38,7 @@ See Also:
 """
 
 from __future__ import annotations
-from typing import Callable, List, Optional, TYPE_CHECKING, Union
+from typing import Callable, cast, List, Optional, TYPE_CHECKING, Union
 
 # pylint: disable=cyclic-import
 from vertizee.exception import AlgorithmError
@@ -79,15 +79,16 @@ def reconstruct_path(
         List[Vertex]: The list of vertices comprising the path ``source`` :math:`\\leadsto`
         ``destination``, or an empty list if no such path exists.
     """
-    path_dict = paths
     if source in paths:
         if isinstance(paths[source], VertexDict):
-            path_dict = paths[source]
+            path_dict = cast(VertexDict["ShortestPath"], paths[source])
+    if not path_dict:
+        path_dict = cast(VertexDict["ShortestPath"], paths)
 
     path = []
-    v = destination
+    v: Optional[VertexType] = destination
     while v is not None:
-        path_v: ShortestPath = path_dict.get(v, None)
+        path_v: Optional[ShortestPath] = path_dict.get(v, None)
         if path_v is None:
             break
         if path_v.source != source:
@@ -95,7 +96,7 @@ def reconstruct_path(
                 "the ShortestPath object in the paths dictionary for "
                 f'vertex "{v}" does not have source vertex "{source}"'
             )
-        path.append(v)
+        path.append(path_v.destination)
         v = path_v.predecessor
 
     if len(path) > 1:
@@ -195,13 +196,13 @@ class ShortestPath:
 
         self._edge_count: int = 0
         self._length: float = initial_length
-        self._predecessor: Vertex = None
+        self._predecessor: Optional[Vertex] = None
         self._store_full_path = save_paths
 
         if self._store_full_path:
             self._path: List[Vertex] = [self.source]
         else:
-            self._path: List[Vertex] = []
+            self._path = []
 
         if add_initial_s_d_edge:
             self._add_s_d_edge_if_exists()
@@ -259,13 +260,13 @@ class ShortestPath:
                 infinity and there exists an edge connecting source to destination, the edge is
                 added to the path. Defaults to True.
         """
-        self._length: float = initial_length
-        self._edge_count: int = 0
+        self._length = initial_length
+        self._edge_count = 0
 
         if self._store_full_path:
-            self._path: List[Vertex] = [self.source]
+            self._path = [self.source]
         else:
-            self._path: List[Vertex] = []
+            self._path = []
 
         if add_initial_s_d_edge:
             self._add_s_d_edge_if_exists()

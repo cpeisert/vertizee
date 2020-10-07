@@ -31,7 +31,7 @@ INFINITY = float("inf")
 
 def get_weight_function(
     weight: Union[Callable, str] = "Edge__weight"
-) -> Callable[["VertexType", "VertexType", bool], float]:
+) -> Callable[["Vertex", "Vertex", bool], float]:
     """Returns a function that accepts two vertices and a boolean indicating if the graph should be
     treated as if it were reversed (i.e. edges of directed graphs in the opposite direction) and
     returns the corresponding edge weight.
@@ -44,7 +44,7 @@ def get_weight_function(
 
         .. code-block:: python
 
-            def get_min_weight(v1: VertexType, v2: VertexType, reverse_graph: bool) -> float:
+            def get_min_weight(v1: Vertex, v2: Vertex, reverse_graph: bool) -> float:
                 graph = v1._parent_graph
                 if reverse_graph:
                     edge: EdgeType = graph[v2, v1]
@@ -85,13 +85,13 @@ def get_weight_function(
     if not isinstance(weight, str):
         raise ValueError("`weight` must be a callable function or a string")
 
-    def get_min_weight(v1: VertexType, v2: VertexType, reverse_graph: bool) -> float:
+    def get_min_weight(v1: Vertex, v2: Vertex, reverse_graph: bool) -> float:
         graph = v1._parent_graph
         if reverse_graph:
             edge: EdgeType = graph[v2, v1]
             edge_str = f"({v2.label}, {v1.label})"
         else:
-            edge: EdgeType = graph[v1, v2]
+            edge = graph[v1, v2]
             edge_str = f"({v1.label}, {v2.label})"
         if edge is None:
             raise vertizee.AlgorithmError(f"graph does not have edge {edge_str}")
@@ -527,10 +527,12 @@ def shortest_paths_bellman_ford(
         vertex_to_path_map[v] = ShortestPath(s, v, initial_length=INFINITY, save_paths=save_paths)
     vertex_to_path_map[s].reinitialize(initial_length=0)
 
+    u_path: ShortestPath
+    w_path: ShortestPath
     for _ in range(graph.vertex_count):
         for e in graph.edges:
-            u_path: ShortestPath = vertex_to_path_map[e.vertex1]
-            w_path: ShortestPath = vertex_to_path_map[e.vertex2]
+            u_path = vertex_to_path_map[e.vertex1]
+            w_path = vertex_to_path_map[e.vertex2]
 
             if reverse_graph:
                 u_path, w_path = w_path, u_path
@@ -543,8 +545,8 @@ def shortest_paths_bellman_ford(
     for e in graph.edges:
         u = e.vertex1
         w = e.vertex2
-        u_path: ShortestPath = vertex_to_path_map[u]
-        w_path: ShortestPath = vertex_to_path_map[w]
+        u_path = vertex_to_path_map[u]
+        w_path = vertex_to_path_map[w]
         if reverse_graph:
             u_path, w_path = w_path, u_path
             u, w = w, u
@@ -720,7 +722,8 @@ def shortest_paths_dijkstra_fibonacci(
             False.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`.
+            Defaults to False.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -729,8 +732,10 @@ def shortest_paths_dijkstra_fibonacci(
     See Also:
         * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
-        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
+        * :func:`reconstruct_path
+          <vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path>`
+        * :class:`ShortestPath
+          <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
         * :func:`shortest_paths_bellman_ford`
         * :func:`shortest_paths_dijkstra`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
@@ -757,6 +762,7 @@ def shortest_paths_dijkstra_fibonacci(
 
     while len(fib_heap) > 0:
         u_path = fib_heap.extract_min()
+        assert u_path is not None  # For mypy static type checker.
         u: Vertex = u_path.destination
         set_of_min_path_vertices.add(u)
         u_adj_list = u.get_adj_for_search(parent=u_path.predecessor, reverse_graph=reverse_graph)

@@ -29,7 +29,7 @@ See Also:
 
 from __future__ import annotations
 import random
-from typing import cast, Dict, List, Iterator, Optional, Set, Tuple, TYPE_CHECKING, Union
+from typing import cast, Dict, List, Iterator, Optional, overload, Set, Tuple, TYPE_CHECKING
 
 from vertizee.classes import parsed_primitives
 from vertizee.classes.parsed_primitives import EdgeTupleWeighted, ParsedPrimitives
@@ -43,8 +43,6 @@ if TYPE_CHECKING:
     from vertizee.classes.edge import EdgeType
     from vertizee.classes.parsed_primitives import GraphPrimitive
     from vertizee.classes.vertex import VertexType
-
-VertexOrPair = Union["VertexType", Tuple["VertexType", "VertexType"]]
 
 
 class GraphBase:
@@ -114,7 +112,15 @@ class GraphBase:
             )
         return primitives.vertex_labels[0] in self._vertices
 
-    def __getitem__(self, vertex_keys: VertexOrPair) -> Union[Vertex, EdgeType, None]:
+    @overload
+    def __getitem__(self, vertex_key: "VertexType") -> Vertex:
+        ...
+
+    @overload
+    def __getitem__(self, edge_endpoints: Tuple["VertexType", "VertexType"]) -> EdgeType:
+        ...
+
+    def __getitem__(self, keys):
         """Supports index accessor notation to retrieve vertices (one vertex index) and edges (two
         vertex indices).
 
@@ -129,22 +135,26 @@ class GraphBase:
             (1, 2)
 
         Args:
-            vertex_keys: The vertex keys. One vertex indicates a `Vertex` lookup and two vertices
-                indicates an `Edge` (or `DiEdge`) lookup.
+            vertex_keys: The vertex keys. One vertex indicates a ``Vertex`` lookup and two vertices
+                indicates an ``Edge`` (or ``DiEdge``) lookup.
 
         Returns:
             Union[Vertex, EdgeType, None]: The vertex specified by the vertex label or the edge
                 specified by two vertices. If no matching vertex or edge found, returns None.
         """
-        if isinstance(vertex_keys, tuple):
-            if len(vertex_keys) > 2:
+        if isinstance(keys, tuple):
+            if len(keys) > 2:
                 raise ValueError(
-                    "graph index lookup supports one or two vertices; " f"{len(vertex_keys)} found"
+                    "graph index lookup supports one or two vertices; " f"{len(keys)} found"
                 )
-            if len(vertex_keys) == 1:
-                return self._get_vertex(vertex_keys[0])
-            return self.get_edge(vertex_keys[0], vertex_keys[1])
-        return self._get_vertex(vertex_keys)
+            if len(keys) == 1:
+                return_value = self._get_vertex(keys[0])
+            return_value = self.get_edge(keys[0], keys[1])
+        return_value = self._get_vertex(keys)
+
+        if return_value is None:
+            raise KeyError(keys)
+        return return_value
 
     def __iter__(self) -> Iterator[Vertex]:
         return iter(self._vertices.values())
@@ -347,6 +357,10 @@ class GraphBase:
                     return False
             self._graph_state_is_simple_graph = True
         return True
+
+    def deepcopy(self) -> "GraphBase":
+        """Returns a deep copy of this graph."""
+        raise NotImplementedError("this method must be implemented by subclasses")
 
     @property
     def edge_count(self) -> int:

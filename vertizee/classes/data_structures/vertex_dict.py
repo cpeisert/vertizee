@@ -15,8 +15,8 @@
 """A dictionary mapping vertices to values."""
 
 from __future__ import annotations
-from collections.abc import Iterable, Mapping
-from typing import Dict, TYPE_CHECKING, TypeVar
+from collections.abc import Mapping
+from typing import Dict, Iterable, Iterator, MutableMapping, TYPE_CHECKING, TypeVar
 
 from vertizee.classes.vertex import Vertex
 
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 VT = TypeVar("VT")
 
 
-class VertexDict(dict, Dict["VertexType", VT]):
+class VertexDict(MutableMapping["VertexType", VT]):
     """A dictionary mapping vertices to values.
 
     The dictionary keys are of type :mod:`VertexType <vertizee.classes.vertex>`, which is an
@@ -60,19 +60,21 @@ class VertexDict(dict, Dict["VertexType", VT]):
         >>> print(d[3])
         three
     """
+    def __init__(self, dict=None, /, **kwargs) -> None:
+        self.data: Dict[str, VT] = {}
+        if dict is not None:
+            self.update(dict)
+        if kwargs:
+            self.update(kwargs)
 
-    def __init__(self, iterable_or_mapping=None, **kwargs) -> None:
-        if iterable_or_mapping is None:
-            super().__init__(kwargs)
-        else:
-            parsed_arg = parse_iterable_or_mapping_arg(iterable_or_mapping)
-            if len(kwargs) == 0:
-                super().__init__(parsed_arg)
-            else:
-                super().__init__(kwargs.update(parsed_arg))
+    # Intentionally omitted `vertex` type-hint due to incompatibility with supertype "Mapping".
+    def __contains__(self, vertex) -> bool:
+        key = _normalize_vertex(vertex)
+        return key in self.data
 
-    def __contains__(self, vertex: "VertexType") -> bool:
-        return super().__contains__(_normalize_vertex(vertex))
+    def __delitem__(self, vertex: "VertexType") -> None:
+        key = _normalize_vertex(vertex)
+        del self.data[key]
 
     def __getitem__(self, vertex: "VertexType") -> VT:
         """Supports index accessor notation to retrieve items.
@@ -80,57 +82,83 @@ class VertexDict(dict, Dict["VertexType", VT]):
         Example:
             x.__getitem__(y) :math:`\\Longleftrightarrow` x[y]
         """
-        return super().__getitem__(_normalize_vertex(vertex))
+        key = _normalize_vertex(vertex)
+        if key in self.data:
+            return self.data[key]
+        raise KeyError(vertex)
 
-    def __setitem__(self, vertex: "VertexType", val: VT) -> None:
-        super().__setitem__(_normalize_vertex(vertex), val)
+    def __len__(self) -> int:
+        return len(self.data)
 
+    def __iter__(self) -> Iterator["VertexType"]:
+        return iter(self.data)
+
+    def __setitem__(self, vertex: "VertexType", value: VT) -> None:
+        key = _normalize_vertex(vertex)
+        self.data[key] = value
+
+    # Now, add the methods in dicts but not in MutableMapping
     def __repr__(self) -> str:
-        dictrepr = super().__repr__()
-        return f"{type(self).__name__}({dictrepr})"
+        return repr(self.data)
 
-    def update(self, iterable_or_mapping) -> None:
+    def __copy__(self) -> "VertexDict":
+        inst = self.__class__.__new__(self.__class__)
+        inst.__dict__.update(self.__dict__)
+        # Create a copy and avoid triggering descriptors
+        inst.__dict__["data"] = self.__dict__["data"].copy()
+        return inst
+
+    def copy(self) -> "VertexDict":
+        """Make a copy of this VertexDict."""
+        if self.__class__ is VertexDict:
+            return VertexDict(self.data.copy())
+        import copy
+        data = self.data
+        try:
+            self.data = {}
+            c = copy.copy(self)
+        finally:
+            self.data = data
+        c.update(self)
+        return c
+
+    @classmethod
+    def fromkeys(cls, iterable: Iterable["VertexType"], value: VT) -> "VertexDict":
+        """Create a new dictionary with keys from ``iterable`` and values set to ``value``.
+
+        Args:
+            iterable: A collection of vertices.
+            value: The default value. All of the values refer to just a single instance,
+                so it generally does not make sense for ``value`` to be a mutable object such as an
+                empty list. To get distinct values, use a dict comprehension instead.
+
+        Returns:
+            VertexDict: A new VertexDict.
+        """
+        d = cls()
+        for vertex in iterable:
+            key = _normalize_vertex(vertex)
+            d[key] = value
+        return d
+
+    def update(self, other=(), /, **kwds) -> None:
         """Updates the dictionary from an iterable or mapping object.
 
         Args:
-            iterable_or_mapping: An iterable or mapping object over key-value pairs, where the keys
+            other: An iterable or mapping object over key-value pairs, where the keys
                 represent vertices.
         """
-        parsed_arg = parse_iterable_or_mapping_arg(iterable_or_mapping)
-        super().update(parsed_arg)
-
-
-def parse_iterable_or_mapping_arg(iterable_or_mapping) -> dict:
-    """Helper method to parse initialization arguments given in the form of an iterable or mapping
-    object.
-
-    Args:
-        iterable_or_mapping: An iterable or mapping object (e.g. a dictionary).
-
-    Returns:
-        dict: A dictionary containing the parsed arguments.
-    """
-    parsed_arg = dict()
-
-    if isinstance(iterable_or_mapping, Mapping):
-        for k, v in iterable_or_mapping.items():
-            parsed_arg[_normalize_vertex(k)] = v
-    elif isinstance(iterable_or_mapping, Iterable):
-        for i in iterable_or_mapping:
-            if len(i) != 2:
-                raise ValueError(
-                    "Each item in the iterable must itself be an iterable "
-                    f"with exactly two objects. Found {len(i)} objects."
-                )
-            vertex = None
-            for obj in i:
-                if vertex is None:
-                    vertex = obj
-                else:
-                    parsed_arg[_normalize_vertex(vertex)] = obj
-    else:
-        raise TypeError(f"{type(iterable_or_mapping).__name__} object is not iterable")
-    return parsed_arg
+        if isinstance(other, Mapping):
+            for vertex in other:
+                self.data[_normalize_vertex(vertex)] = other[vertex]
+        elif hasattr(other, "keys"):
+            for vertex in other.keys():
+                self.data[_normalize_vertex(vertex)] = other[vertex]
+        else:
+            for vertex, value in other:
+                self.data[_normalize_vertex(vertex)] = value
+        for vertex, value in kwds.items():
+            self.data[_normalize_vertex(vertex)] = value
 
 
 def _normalize_vertex(vertex: "VertexType") -> str:
