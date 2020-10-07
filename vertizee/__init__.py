@@ -1,4 +1,5 @@
 """
+========
 Vertizee
 ========
 Vertizee is an object-oriented, typed, graph library for the analysis and study of graphs.
@@ -9,7 +10,6 @@ See https://<TODO> for complete documentation.
 # pylint: disable=wrong-import-position
 from vertizee.exception import *
 
-from vertizee.classes.data_structures.bk_tree import BKTree
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.union_find import UnionFind
