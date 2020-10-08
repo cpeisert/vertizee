@@ -60,6 +60,7 @@ class VertexDict(MutableMapping["VertexType", VT]):
         >>> print(d[3])
         three
     """
+
     def __init__(self, dict=None, /, **kwargs) -> None:
         self.data: Dict[str, VT] = {}
         if dict is not None:
@@ -113,6 +114,7 @@ class VertexDict(MutableMapping["VertexType", VT]):
         if self.__class__ is VertexDict:
             return VertexDict(self.data.copy())
         import copy
+
         data = self.data
         try:
             self.data = {}

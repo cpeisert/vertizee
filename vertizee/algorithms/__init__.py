@@ -21,6 +21,6 @@ from vertizee.algorithms.tree.spanning import (
 
 from vertizee.algorithms.algo_utilities.depth_first_search_utils import (
     DepthFirstSearchResults,
-    DepthFirstSearchTree
+    DepthFirstSearchTree,
 )
 from vertizee.algorithms.algo_utilities.shortest_path_utils import reconstruct_path, ShortestPath

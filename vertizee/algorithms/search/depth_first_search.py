@@ -19,7 +19,7 @@ from typing import Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from vertizee.algorithms.algo_utilities.depth_first_search_utils import (
     DepthFirstSearchResults,
-    DepthFirstSearchTree
+    DepthFirstSearchTree,
 )
 from vertizee.classes.edge import EdgeType
 from vertizee.classes.graph_base import GraphBase
@@ -42,9 +42,7 @@ NEG_INF = float("-inf")
 
 
 class _StackFrame:
-    def __init__(
-        self, vertex: Vertex, adj_vertices: Set[Vertex], current_depth: int = 0
-    ) -> None:
+    def __init__(self, vertex: Vertex, adj_vertices: Set[Vertex], current_depth: int = 0) -> None:
         self.vertex = vertex
         self.adj_vertices = adj_vertices
         self.stack_frame_depth = current_depth
@@ -373,8 +371,11 @@ def _check_for_parallel_edge_cycle(
         dfs_results._is_acyclic = False
     elif graph.is_directed_graph() and dfs_results.is_acyclic():
         # Check if parallel edge in opposite direction.
-        if graph[edge.vertex2, edge.vertex1] is not None:
+        try:
+            _ = graph[edge.vertex2, edge.vertex1]
             dfs_results._is_acyclic = False
+        except KeyError:
+            pass
 
 
 def _dfs_on_tree(
@@ -453,7 +454,10 @@ def _initialize_dfs_graph(graph) -> None:
 
 
 def _mark_vertex_discovered_and_update(
-    new_vertex: Vertex, dfs_tree: DepthFirstSearchTree, dfs_results: DepthFirstSearchResults, timer: _Timer
+    new_vertex: Vertex,
+    dfs_tree: DepthFirstSearchTree,
+    dfs_results: DepthFirstSearchResults,
+    timer: _Timer,
 ):
     """Helper function to process newly discovered vertex."""
     new_vertex.attr[COLOR] = GRAY  # Mark discovered.

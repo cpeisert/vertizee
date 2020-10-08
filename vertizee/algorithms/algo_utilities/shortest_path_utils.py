@@ -79,11 +79,10 @@ def reconstruct_path(
         List[Vertex]: The list of vertices comprising the path ``source`` :math:`\\leadsto`
         ``destination``, or an empty list if no such path exists.
     """
+    path_dict = cast(VertexDict["ShortestPath"], paths)
     if source in paths:
         if isinstance(paths[source], VertexDict):
             path_dict = cast(VertexDict["ShortestPath"], paths[source])
-    if not path_dict:
-        path_dict = cast(VertexDict["ShortestPath"], paths)
 
     path = []
     v: Optional[VertexType] = destination

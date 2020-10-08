@@ -152,7 +152,8 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
             continue
         if not new_graph.is_directed_graph():
             edge_tuples = _remove_duplicate_undirected_edges(
-                source, edge_tuples, edge_label_to_source)
+                source, edge_tuples, edge_label_to_source
+            )
         new_graph.add_edges_from(edge_tuples)
 
 
@@ -193,7 +194,8 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
             continue
         if not new_graph.is_directed_graph():
             edge_tuples = _remove_duplicate_undirected_edges(
-                source, edge_tuples, edge_label_to_source)
+                source, edge_tuples, edge_label_to_source
+            )
         new_graph.add_edges_from(edge_tuples)
 
 

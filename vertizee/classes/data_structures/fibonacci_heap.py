@@ -232,8 +232,9 @@ class FibonacciHeap(Generic[T]):
                 minimum key to serve as the minimum node of the modified heap.
         """
         max_degree = (int(math.log2(self._length)) + 2) * 2
-        roots_indexed_by_degree: List[Optional[_FibonacciNode[T]]] = \
-            [None for x in range(max_degree)]
+        roots_indexed_by_degree: List[Optional[_FibonacciNode[T]]] = [
+            None for x in range(max_degree)
+        ]
         for w in self._roots.copy():
             x: _FibonacciNode[T] = w
             d = x.degree

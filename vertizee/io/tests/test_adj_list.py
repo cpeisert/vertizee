@@ -59,7 +59,9 @@ class TestGraphIOAdjList:
         assert v5_loop_edge.parallel_edge_count == 1, "v5 should have 2 loops"
         assert len(g[5].incident_edges_incoming) == 1, "v5 should have 1 incoming edge (self-loop)"
 
-        assert g[4, 3] is None, "graph should not have edge (4, 3)"
+        with pytest.raises(KeyError):
+            assert g[4, 3] is None, "graph should not have edge (4, 3)"
+
         assert g[3, 4] is not None, "graph should have edge (3, 4)"
 
     def test_digraph_write_adj_list(self):
@@ -88,7 +90,10 @@ class TestGraphIOAdjList:
         ), "there should be 2 parallel edges between (2, 3) [3 edges total]"
         assert g[4].degree == 1, "v4 should have degree 1"
         assert g[5].degree == 0, "v5 should have degree 0 (i.e. isolated vertex)"
-        assert g[1, 5] is None, "There should be no edge connected to v5"
+
+        with pytest.raises(KeyError):
+            assert g[1, 5] is None, "There should be no edge connected to v5"
+
         assert g[1, 4] is not None, "There should be an edge (1, 4)"
         assert g[1, 2] is not None, "There should be an edge (1, 2)"
 
@@ -119,7 +124,9 @@ class TestGraphIOAdjList:
         assert g[1].degree == 3, "v1 should have degree 3"
         assert g[2].degree == 4, "v2 should have degree 4"
         assert g[2, 4] is not None, "graph should have edge (2, 4)"
-        assert g[2, 6] is None, "graph should not have edge (2, 6)"
+
+        with pytest.raises(KeyError):
+            assert g[2, 6] is None, "graph should not have edge (2, 6)"
 
     def test_multigraph_write_adj_list01(self):
         g = MultiGraph()

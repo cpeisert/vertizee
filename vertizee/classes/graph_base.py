@@ -150,7 +150,8 @@ class GraphBase:
             if len(keys) == 1:
                 return_value = self._get_vertex(keys[0])
             return_value = self.get_edge(keys[0], keys[1])
-        return_value = self._get_vertex(keys)
+        else:
+            return_value = self._get_vertex(keys)
 
         if return_value is None:
             raise KeyError(keys)

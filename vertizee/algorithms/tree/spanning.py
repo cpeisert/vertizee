@@ -219,7 +219,7 @@ def spanning_tree_prim(
     priority_queue.add_or_update(r)
 
     vertices_in_tree = set()
-    tree_edge: EdgeType
+    tree_edge: Optional[EdgeType] = None
 
     while len(priority_queue) > 0:
         u = priority_queue.pop()
@@ -314,7 +314,7 @@ def spanning_tree_prim_fibonacci(
     fib_heap.update_item_with_decreased_priority(r)
 
     vertices_in_tree = set()
-    tree_edge: EdgeType
+    tree_edge: Optional[EdgeType] = None
 
     while len(fib_heap) > 0:
         u = fib_heap.extract_min()

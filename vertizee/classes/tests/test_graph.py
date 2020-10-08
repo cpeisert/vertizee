@@ -29,6 +29,7 @@ pytestmark = pytest.mark.skipif(
 
 # TODO(cpeisert): Write separate test for index accessor notation including raising KeyError.
 
+
 @pytest.mark.usefixtures()
 class TestUndirectedGraphs:
     def test_graph_initialization_and_parallel_edges(self):
@@ -120,8 +121,11 @@ class TestUndirectedGraphs:
         g.add_vertex(5)
         count = g.remove_isolated_vertices()
         assert count == 2, "Should have removed two vertices."
-        assert g[0] is None, "Vertex 0 should have been removed."
-        assert g[5] is None, "Vertex 5 should have been removed."
+
+        with pytest.raises(KeyError):
+            assert g[0] is None, "Vertex 0 should have been removed."
+        with pytest.raises(KeyError):
+            assert g[5] is None, "Vertex 5 should have been removed."
         assert (
             g[1] is not None and g[2] is not None and g[3] is not None and g[4] is not None
         ), "Vertices with incident edges should not have been removed."
