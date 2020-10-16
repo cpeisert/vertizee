@@ -14,36 +14,59 @@
 
 """Data types supporting directed and undirected graph edges.
 
-* :class:`Edge` - An undirected connection between two vertices.
-  The order of the vertices does not matter. However, the string representation will always
-  print vertices sorted in lexicographic order.
 * :class:`DiEdge` - A directed connection between two vertices that
-  defines the ``tail`` as the starting vertex and the ``head`` as the destination vertex.
-* :class:`EdgeType` - A type alias for the union of the edge classes: ``Union[DiEdge, Edge]``
+  defines the ``tail`` as the starting vertex and the ``head`` as the destination vertex. Parallel
+  connections are not allowed.
+* :class:`Edge` - An undirected connection between two vertices. The order of the vertices does not
+  matter. However, the string representation will always show vertices sorted in lexicographic
+  order. Parallel connections are not allowed.
+* :class:`EdgeType` - A type alias defined as
+  Union[DiEdge, Edge, EdgeLiteral, MultiDiEdge, MultiEdge] and where EdgeLiteral is an alias for
+  various edge-tuple formats.
+* :class:`MultiDiEdge` - A directed connection between two vertices that defines the ``tail`` as
+  the starting vertex and the ``head`` as the destination vertex. Multi-edges support parallel
+  connections.
+* :class:`MultiEdge` - An undirected connection between two vertices. The order of the vertices
+  does not matter. However, the string representation will always show vertices sorted in
+  lexicographic order. Multi-edges support parallel connections.
 """
 
 from __future__ import annotations
-from typing import Any, List, Optional, TYPE_CHECKING, Union
+from abc import ABC, abstractmethod
+from typing import Any, List, Tuple, TYPE_CHECKING, Union
 
-from vertizee.classes.vertex import get_vertex_label
+from vertizee.utils import abc_utils
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
     from vertizee.classes.graph_base import GraphBase
     from vertizee.classes.vertex import Vertex, VertexType
 
-EdgeType = Union["DiEdge", "Edge"]
+# Type aliases
+AttributesDict = dict
+Weight = float
+EdgeTuple = Tuple["VertexType", "VertexType"]
+EdgeTupleWeighted = Tuple["VertexType", "VertexType", Weight]
+EdgeTupleAttr = Tuple["VertexType", "VertexType", AttributesDict]
+EdgeTupleWeightedAttr = Tuple["VertexType", "VertexType", Weight, AttributesDict]
+EdgeLiteral = Union[EdgeTuple, EdgeTupleWeighted, EdgeTupleAttr, EdgeTupleWeightedAttr]
 
-DEFAULT_WEIGHT = 1
+#: EdgeType: A type alias defined as Union[DiEdge, Edge, EdgeLiteral, MultiDiEdge, MultiEdge] and
+# where EdgeLiteral is an alias for various edge-tuple formats.
+EdgeType = Union["DiEdge", "Edge", EdgeLiteral, "MultiDiEdge", "MultiEdge"]
 
 
-def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed: bool) -> str:
-    """Creates an edge key string based on two Vertex endpoints.
+DEFAULT_WEIGHT = 1.0
 
-    For undirected graphs, the vertex keys are sorted, such that if v1_label <= v2_label, then the
-    new edge key will contain v1_label followed by v2_label. This provides a consistent mapping of
-    undirected edges, such that both (v1_label, v2_label) as well as (v2_label, v1_label) produce
-    the same edge key.
+
+def create_label(vertex1: "VertexType", vertex2: "VertexType", is_directed: bool) -> str:
+    """Creates a string representation of the edge connecting ``vertex1`` and ``vertex2``, for
+    example "(1, 2)".
+
+    Directed edges have labels with the vertices ordered based on the instantiation order.
+    Undirected edges have labels with vertices lexicographically sorted, which provides a consistent
+    representation; for example, both :math:`(1, 2)` and :math:`(2, 1)` refer to the same undirected
+    edge, but the edge label would always be "(1, 2)".
 
     Args:
         vertex1: The first vertex of the edge.
@@ -53,147 +76,70 @@ def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed:
     Returns:
         str: The edge key.
     """
-    v1_label = get_vertex_label(vertex1)
-    v2_label = get_vertex_label(vertex2)
+    # Local import to avoid circular dependency.
+    # pylint: disable=import-outside-toplevel
+    from vertizee.classes import vertex
 
-    if is_directed:
-        return f"({v1_label}, {v2_label})"
+    v1_label = vertex.get_vertex_label(vertex1)
+    v2_label = vertex.get_vertex_label(vertex2)
 
-    # undirected edge
-    if v1_label > v2_label:
+    if not is_directed and v1_label > v2_label:
         return f"({v2_label}, {v1_label})"
     return f"({v1_label}, {v2_label})"
 
 
-class Edge:
-    """Edge is a graph primitive that represents an undirected connection between two vertices.
+class Edge(ABC):
+    """An undirected edge that does not allow parallel connections between its vertices.
 
-    To ensure the integrity of graphs, edges should never be initialized directly. Attempting
-    to initialize an edge using its ``__init__`` method will raise an error. To create edges, use
-    :class:`GraphBase <vertizee.classes.graph_base.GraphBase>` methods such as
-    :meth:`GraphBase.add_edge <vertizee.classes.graph_base.GraphBase.add_edge>`.
+    To help ensure the integrity of graphs, the ``Edge`` class is abstract and cannot be
+    instantiated directly. To create edges, use :meth:`Graph.add_edge
+    <vertizee.classes.graph.Graph.add_edge>` and :meth:`Graph.add_edges_from
+    <vertizee.classes.graph.Graph.add_edges_from>`.
 
     Edges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
 
     Note:
-        Directed graphs use the subclass :class:`DiEdge`, which provides ``tail`` and ``head``
-        Vertex properties.
-
-    Note:
-        If multiple edges are added with the same vertices, then a single ``Edge`` instance
-        is used to store the parallel edges. When working with edges, use the
-        ``parallel_edge_count`` property to determine if the edge represents more than one edge
-        connection. Edges represented by vertex pairs :math:`(a, b)` and :math:`(b, a)` map to the
-        same ``Edge`` object in undirected graphs, but different ``DiEdge`` objects in directed
-        graphs.
-
-    Note:
-        When new edges are created, the incident edge lists for each ``Vertex`` object are updated
-        with references to the new edge. This process is handled automatically as long as vertices
-        and edges are initialized using the ``GraphBase`` API (e.g. :meth:`GraphBase.add_edge
-        <vertizee.classes.graph_base.GraphBase.add_edge>` and :meth:`GraphBase.add_vertex
-        <vertizee.classes.graph_base.GraphBase.add_vertex>`).
+        In an undirected graph, edges :math:`(s, t)` and :math:`(t, s)` represent the same edge.
+        Therefore, attempting to add :math:`(s, t)` and :math:`(t, s)` would raise an exception,
+        since ``Edge`` objects do not support parallel connections. For parallel edge support,
+        see :class:`MultiEdge` and :class:`MultiDiEdge`.
 
     Args:
-        v1: The first vertex (the order does not matter, since this is an
-            undirected edge).
-        v2: The second vertex.
-        weight: Optional; Edge weight. Defaults to 1.
-        parallel_edge_count: Optional; The number of parallel edges from vertex1 to vertex2.
-            Defaults to 0.
-        parallel_edge_weights: Optional; List of weights for the parallel edges.
-            Defaults to None.
+        vertex1: The first vertex (the order does not matter, since this is an undirected edge).
+        vertex2: The second vertex.
+        weight: Optional; Edge weight. Defaults to 1.0.
+        **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
 
     Attributes:
         attr: Attribute dictionary to store ad hoc data associated with the edge.
     """
-
-    # Limit initialization to protected method `_create`.
-    _create_key = object()
-
-    @classmethod
-    def _create(
-        cls,
-        v1: "Vertex",
-        v2: "Vertex",
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ):
-        """Initializes a new Edge."""
-        return Edge(
-            cls._create_key,
-            v1=v1,
-            v2=v2,
-            weight=weight,
-            parallel_edge_count=parallel_edge_count,
-            parallel_edge_weights=parallel_edge_weights,
-        )
-
-    def __init__(
-        self,
-        create_key,
-        v1: "Vertex",
-        v2: "Vertex",
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ):
-        if create_key != Edge._create_key:
-            raise ValueError(
-                f"{self._runtime_type()} objects should be created using method "
-                "GraphBase.add_edge(); do not use __init__"
-            )
-
+    def __init__(self, vertex1: Vertex, vertex2: Vertex, weight: float = DEFAULT_WEIGHT, **attr):
         # IMPORTANT: _vertex1 and _vertex2 are used in Edge.__hash__, and must therefore be
-        # treated as immutable (read-only). If the vertex keys need to change, first delete the
+        # treated as immutable (read-only). If the vertices need to change, first delete the
         # edge instance and then create a new instance.
-        self._vertex1 = v1
-        self._vertex2 = v2
+        self._vertex1 = vertex1
+        self._vertex2 = vertex2
 
-        self.attr: dict = {}
+        if vertex1.label <= vertex2.label:
+            self._label = f"({vertex1.label}, {vertex2.label})"
+        else:
+            self._label = f"({vertex2.label}, {vertex1.label})"
+
+        self._attr: dict = {}
+        for k, v in attr.items():
+            self._attr[k] = v
+
         self._weight: float = float(weight)
 
-        self._parallel_edge_count = parallel_edge_count
-        if parallel_edge_weights is None:
-            self._parallel_edge_weights = []
-        else:
-            self._parallel_edge_weights = [float(x) for x in parallel_edge_weights]
+        # Parallel edge count included as protected property (even on Edge classes that do not
+        # support multi-edges) for efficiency when writing generic code that works on both standard
+        # graphs and multigraphs.
+        self._parallel_edge_count: int = 0
+        self._parent_graph: GraphBase = vertex1._parent_graph
 
-        self._parent_graph: GraphBase = self.vertex1._parent_graph
-
-        # Don't raise warning, unless edge has non-default weight.
-        if self._weight != DEFAULT_WEIGHT and self._parallel_edge_count != len(
-            self._parallel_edge_weights
-        ):
-            raise RuntimeWarning(
-                f"The parallel edge count ({self._parallel_edge_count})"
-                f" is not equal to the number of parallel edge weight entries "
-                f"({len(self._parallel_edge_weights)})."
-            )
-
+    @abstractmethod
     def __eq__(self, other) -> bool:
-        if not isinstance(other, Edge):
-            return False
-
-        directed_graph = self.vertex1._parent_graph.is_directed_graph()
-        v1 = self.vertex1
-        v2 = self.vertex2
-        o_v1 = other.vertex1
-        o_v2 = other.vertex2
-        if not directed_graph:
-            if v1.label > v2.label:
-                v1, v2 = v2, v1
-            if o_v1.label > o_v2.label:
-                o_v1, o_v2 = o_v2, o_v1
-        if (
-            v1 != o_v1
-            or v2 != o_v2
-            or self._parallel_edge_count != other._parallel_edge_count
-            or self._weight != other._weight
-        ):
-            return False
-        return True
+        pass
 
     def __getitem__(self, key: Any) -> Any:
         """Supports index accessor notation to retrieve values from the `attr` dictionary.
@@ -204,7 +150,7 @@ class Edge:
             >>> g.add_edge(1, 2)
             (1, 2)
             >>> g[1, 2]["color"] = "blue"
-            >>> g[1, 2]["color"]
+            >>> g[1, 2]["color"]  # <== calls __getitem__()
             'blue'
 
         Args:
@@ -213,32 +159,11 @@ class Edge:
         Returns:
             Any: The value indexed by `key`.
         """
-        return self.attr[key]
+        return self._attr[key]
 
+    @abstractmethod
     def __hash__(self) -> int:
-        """Create a hash key using the edge vertices.
-
-        Note that __eq__ is defined to take `_weight`, and `_parallel_edge_count` into
-        consideration, whereas `__hash__` does not. This is because `_weight` and
-        `_parallel_ege_count` are not intended to be immutable throughout the lifetime of the
-        object.
-
-        From: "Python Hashes and Equality" <https://hynek.me/articles/hashes-and-equality/>:
-
-        "Hashes can be less picky than equality checks. Since key lookups are always followed by
-        an equality check, your hashes don’t have to be unique. That means that you can compute
-        your hash over an immutable subset of attributes that may or may not be a unique
-        'primary key' for the instance."
-        """
-        directed_graph = self.vertex1._parent_graph.is_directed_graph()
-        if directed_graph:
-            return hash((self.vertex1, self.vertex2))
-
-        # undirected graph
-        if self.vertex1.label > self.vertex2.label:
-            return hash((self.vertex2, self.vertex1))
-
-        return hash((self.vertex1, self.vertex2))
+        """Creates a hash key using the edge's vertices."""
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -251,7 +176,7 @@ class Edge:
             >>> g = vz.Graph()
             >>> g.add_edge(1, 2)
             (1, 2)
-            >>> g[1, 2]["color"] = "blue"
+            >>> g[1, 2]["color"] = "blue"  # <== calls __setitem__()
             >>> g[1, 2]["color"]
             "blue"
 
@@ -259,37 +184,193 @@ class Edge:
             key: The `attr` dictionary key.
             value: The value to assign to `key` in the `attr` dictionary.
         """
-        self.attr[key] = value
+        self._attr[key] = value
 
+    @abstractmethod
     def __str__(self) -> str:
-        directed_graph = self.vertex1._parent_graph.is_directed_graph()
-        if directed_graph:
-            edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
-        else:
-            # undirected edge
-            if self.vertex1.label > self.vertex2.label:
-                edge_str = f"({self.vertex2.label}, {self.vertex1.label}"
-            else:
-                edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
 
-        if self.vertex1._parent_graph.is_weighted():
-            edge_str = f"{edge_str}, {self._weight})"
-        else:
-            edge_str = f"{edge_str})"
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are lexicographically sorted.
+        """
 
-        edges = [edge_str for _ in range(self.parallel_edge_count + 1)]
-        return ", ".join(edges)
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is Edge:
+            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__hash__", "__setitem__",
+                "__str__", "attr", "label", "is_loop", "vertex1", "vertex2", "weight")
+        return NotImplemented
+
+    @property
+    def attr(self) -> dict:
+        """Attribute dictionary to store ad hoc data associated with an edge."""
+        return self._attr
+
+    @property
+    def label(self) -> str:
+        """A string representation of the edge that includes the vertex endpoints, for example
+        "(1, 2)". Directed edges have labels with the vertices ordered based on the instantiation
+        order. Undirected edges have labels with vertices lexicographically sorted, which provides a
+        consistent representation; for example, both :math:`(1, 2)` and :math:`(2, 1)` refer to the
+        same undirected edge, but the edge label would always be "(1, 2)".
+        """
+        return self._label
 
     def is_loop(self) -> bool:
-        """Returns True if this edge is a loop back to itself."""
-        return self.vertex1.label == self.vertex2.label
+        """Returns True if this edge connects a vertex to itself."""
+        return self._vertex1.label == self._vertex2.label
+
+    @property
+    def vertex1(self) -> Vertex:
+        """The first vertex. For DiEdge objects, this is a synonym for the ``tail`` property."""
+        return self._vertex1
+
+    @property
+    def vertex2(self) -> Vertex:
+        """The second vertex. For DiEdge objects, this is a synonym for the ``head`` property."""
+        return self._vertex2
+
+    @property
+    def weight(self) -> float:
+        """The edge weight."""
+        return self._weight
+
+
+class DiEdge(Edge):
+    """A directed edge that does not allow parallel connections between its vertices.
+
+    To help ensure the integrity of graphs, the ``DiEdge`` class is abstract and cannot be
+    instantiated directly. To create directed edges, use :meth:`DiGraph.add_edge
+    <vertizee.classes.graph.DiGraph.add_edge>` and :meth:`DiGraph.add_edges_from
+    <vertizee.classes.graph.DiGraph.add_edges_from>`.
+
+    Edges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
+
+    Note:
+        In a directed graph, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`. Therefore,
+        it is legal for a ``DiGraph`` to contain parallel edges, as long as the edges are in the
+        opposite direction. Each ``DiEdge`` object represents exactly one directed connection.
+
+    Args:
+        tail: The first vertex (the origin of the directed edge).
+        head: The second vertex (the destination of the directed edge).
+        weight: Optional; Edge weight. Defaults to 1.0.
+        **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
+
+    Attributes:
+        attr: Attribute dictionary to store ad hoc data associated with the edge.
+    """
+    def __init__(self, tail: Vertex, head: Vertex, weight: float = DEFAULT_WEIGHT, **attr):
+        super().__init__(vertex1=tail, vertex2=head, weight=weight, **attr)
+        self._label = f"({tail.label}, {head.label})"
+
+    @abstractmethod
+    def __eq__(self, other) -> bool:
+        pass
+
+    @abstractmethod
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices."""
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted].
+        """
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is DiEdge:
+            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__hash__", "__setitem__",
+                "__str__", "attr", "head", "label", "is_loop", "tail", "vertex1", "vertex2",
+                "weight")
+        return NotImplemented
+
+    @property
+    def head(self) -> Vertex:
+        """The head vertex, which is the destination of the directed edge."""
+        return self._vertex2
+
+    @property
+    def tail(self) -> Vertex:
+        """The tail vertex, which is the origin of the directed edge."""
+        return self._vertex1
+
+
+class MultiEdge(Edge):
+    """An undirected edge that allows multiple parallel connections between its vertices.
+
+    To help ensure the integrity of graphs, the ``MultiEdge`` class is abstract and cannot be
+    instantiated directly. To create ``MultiEdge`` objects, use :meth:`MultiGraph.add_edge
+    <vertizee.classes.graph.MultiGraph.add_edge>` and :meth:`MultiGraph.add_edges_from
+    <vertizee.classes.graph.MultiGraph.add_edges_from>`.
+
+    Edges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
+
+    Note:
+        In an undirected multigraph, edges :math:`(s, t)` and :math:`(t, s)` represent the same
+        multi-edge. If multiple edges are added with the same vertices, then a single ``MultiEdge``
+        instance is used to store the parallel edges. When working with multi-edges, use the
+        ``parallel_edge_count`` or ``multiplicity`` properties to determine if the edge represents
+        more than one edge connection.
+
+    Args:
+        vertex1: The first vertex (the order does not matter, since this is an undirected edge).
+        vertex2: The second vertex.
+        weight: Optional; Edge weight. Defaults to 1.0.
+        **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
+
+    Attributes:
+        attr: Attribute dictionary to store ad hoc data associated with the edge.
+    """
+    def __init__(self, vertex1: Vertex, vertex2: Vertex, weight: float = DEFAULT_WEIGHT, **attr):
+        super().__init__(vertex1, vertex2, weight, **attr)
+
+        if vertex1.label <= vertex2.label:
+            self._label = f"({vertex1.label}, {vertex2.label})"
+        else:
+            self._label = f"({vertex2.label}, {vertex1.label})"
+
+        self._parallel_edge_count: int = 0
+        self._parallel_edge_weights: List[float] = []
+
+    @abstractmethod
+    def __eq__(self, other) -> bool:
+        pass
+
+    @abstractmethod
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices."""
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are lexicographically sorted. In multigraphs, the string will show separate vertex
+        tuples for each parallel edge, such as "(a, b), (a, b), (a, b)" for a multi-edge with
+        multiplicity 3.
+        """
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is MultiEdge:
+            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__hash__", "__setitem__",
+                "__str__", "attr", "head", "is_loop", "label", "parallel_edge_count",
+                "parallel_edge_weights", "tail", "vertex1", "vertex2", "weight",
+                "weight_with_parallel_edges")
+        return NotImplemented
 
     @property
     def multiplicity(self) -> int:
-        """The multiplicity is the number of edges within a multi-edge.
+        """The multiplicity is the number of edges within the multi-edge.
 
         For edges without parallel connections, the multiplicity is 1. Each parallel edge adds 1 to
-        the multiplicity. A edge with one parallel connection has multiplicity 2.
+        the multiplicity. An edge with one parallel connection has multiplicity 2.
         """
         return self._parallel_edge_count + 1
 
@@ -319,116 +400,299 @@ class Edge:
         return self._parallel_edge_weights.copy()
 
     @property
-    def vertex1(self) -> Vertex:
-        """The first vertex. For DiEdge objects, this is a synonym for the ``tail`` property."""
-        return self._vertex1
-
-    @property
-    def vertex2(self) -> Vertex:
-        """The second vertex. For DiEdge objects, this is a synonym for the ``head`` property."""
-        return self._vertex2
-
-    @property
-    def weight(self) -> float:
-        """The edge weight."""
-        return self._weight
-
-    @property
     def weight_with_parallel_edges(self) -> float:
         """The total weight, including parallel edges.
 
-        Note:
-            For directed graphs, this method returns the total weight of all edges between
-            (vertex1, vertex2), but it does not include the weights of directed edges from
-            (vertex2, vertex1).
-
         Returns:
-            float: The total edge weight, including parallel edges.
+            float: The total multi-edge weight, including parallel edges.
         """
         total = self._weight
-        for w in self._parallel_edge_weights:
-            total += w
+        total += sum(self._parallel_edge_weights)
         return total
 
-    def _runtime_type(self) -> str:
-        """Returns the name of the runtime subclass."""
-        return self.__class__.__name__
 
+class MultiDiEdge(DiEdge, MultiEdge):
+    """Edge that supports multiple directed edges between two vertices.
 
-class DiEdge(Edge):
-    """DiEdge is a graph primitive that represents a directed connection between two vertices.
+    To help ensure the integrity of graphs, ``MultiDiEdge`` is abstract and cannot be instantiated
+    directly. To create edges, use :meth:`MultiDiGraph.add_edge
+    <vertizee.classes.graph.MultiDiGraph.add_edge>` and :meth:`MultiDiGraph.add_edges_from
+    <vertizee.classes.graph.MultiDiGraph.add_edges_from>`.
 
-    To ensure the integrity of graphs, edges should never be initialized directly. Attempting
-    to initialize an edge using its ``__init__`` method will raise an error. To create edges, use
-    :class:`GraphBase <vertizee.classes.graph_base.GraphBase>` methods such as
-    :meth:`GraphBase.add_edge <vertizee.classes.graph_base.GraphBase.add_edge>`.
+    Edges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
 
-    The starting vertex is called the ``tail`` and the destination vertex is called the ``head``.
-    The edge points from the tail to the head.
-
-    DiEdges may be assigned a weight as well as custom attributes using the :attr:`attr` dictionary.
+    Note:
+        In a directed graph, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`. Therefore,
+        it is legal for a ``DiGraph`` to contain parallel edges, as long as the edges are in the
+        opposite direction. Each ``DiEdge`` object represents exactly one directed connection.
 
     Args:
-        tail: The starting vertex.
-        head: The destination vertex.
-        weight: Optional; Edge weight. Defaults to 0.0.
-        parallel_edge_count: Optional; The number of parallel edges from tail to head.
-            Defaults to 0.
-        parallel_edge_weights: Optional; List of weights for the parallel edges.
-            Defaults to None.
+        tail: The first vertex (the origin of the directed edge).
+        head: The second vertex (the destination of the directed edge).
+        weight: Optional; Edge weight. Defaults to 1.0.
+        **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
 
     Attributes:
         attr: Attribute dictionary to store ad hoc data associated with the edge.
     """
+    def __init__(self, tail: Vertex, head: Vertex, weight: float = DEFAULT_WEIGHT, **attr):
+        super().__init__(vertex1=tail, vertex2=head, weight=weight, **attr)
+        self._label = f"({tail.label}, {head.label})"
 
-    # Limit initialization to protected method `_create`.
-    __create_key = object()
+    @abstractmethod
+    def __eq__(self, other) -> bool:
+        pass
 
-    # pylint: disable=arguments-differ
+    @abstractmethod
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices."""
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. In multigraphs, the string
+        will show separate vertex tuples for each parallel edge, such as "(a, b), (a, b), (a, b)"
+        for a multi-edge with multiplicity 3.
+        """
+
     @classmethod
-    def _create(
-        cls,
-        tail: Vertex,
-        head: Vertex,
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ) -> "DiEdge":
-        """Initializes a new Edge."""
-        return DiEdge(
-            cls.__create_key,
-            tail=tail,
-            head=head,
-            weight=weight,
-            parallel_edge_count=parallel_edge_count,
-            parallel_edge_weights=parallel_edge_weights,
-        )
+    def __subclasshook__(cls, C):
+        if cls is MultiDiEdge:
+            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__hash__", "__setitem__",
+                "__str__", "attr", "head", "is_loop", "label", "parallel_edge_count",
+                "parallel_edge_weights", "tail", "vertex1", "vertex2", "weight",
+                "weight_with_parallel_edges")
+        return NotImplemented
 
-    def __init__(
-        self,
-        create_key,
-        tail: Vertex,
-        head: Vertex,
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ):
-        if create_key != DiEdge.__create_key:
-            raise ValueError(
-                f"{self._runtime_type()} objects must be initialized using " "`_create`."
-            )
-        super().__init__(
-            Edge._create_key, tail, head, weight, parallel_edge_count, parallel_edge_weights
-        )
 
-    @property
-    def head(self) -> Vertex:
-        """The destination vertex that the tail points to. This is a synonym for the ``vertex2``
-        property."""
-        return self._vertex2
+#
+# Protected concrete implementations.
+#
 
-    @property
-    def tail(self) -> Vertex:
-        """The starting vertex that points to the head. This is a synonym for the ``vertex1``
-        property."""
-        return self._vertex1
+
+class _Edge(Edge):
+    """Concrete implementation of the abstract :class:`Edge` class."""
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Edge):
+            return False
+
+        v1 = self.vertex1
+        v2 = self.vertex2
+        o_v1 = other.vertex1
+        o_v2 = other.vertex2
+        if v1.label > v2.label:
+            v1, v2 = v2, v1
+        if o_v1.label > o_v2.label:
+            o_v1, o_v2 = o_v2, o_v1
+        if v1 != o_v1 or v2 != o_v2 or self._weight != other._weight:
+            return False
+        return True
+
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices.
+
+        Note that ``__eq__`` is defined to take ``_weight`` into consideration, whereas ``__hash__``
+        does not. This is because ``_weight`` is not intended to be immutable throughout the
+        lifetime of the object.
+
+        From: "Python Hashes and Equality" <https://hynek.me/articles/hashes-and-equality/>:
+
+        "Hashes can be less picky than equality checks. Since key lookups are always followed by
+        an equality check, your hashes don’t have to be unique. That means that you can compute
+        your hash over an immutable subset of attributes that may or may not be a unique
+        "primary key" for the instance."
+        """
+        if self.vertex1.label > self.vertex2.label:
+            return hash((self.vertex2, self.vertex1))
+
+        return hash((self.vertex1, self.vertex2))
+
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are lexicographically sorted.
+        """
+        if self.vertex1.label > self.vertex2.label:
+            edge_str = f"({self.vertex2.label}, {self.vertex1.label}"
+        else:
+            edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
+
+        if self._parent_graph.is_weighted():
+            edge_str = f"{edge_str}, {self._weight})"
+        else:
+            edge_str = f"{edge_str})"
+
+        return edge_str
+
+
+class _DiEdge(DiEdge):
+    """Concrete implementation of the abstract :class:`DiEdge` class."""
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, DiEdge):
+            return False
+
+        v1 = self.vertex1
+        v2 = self.vertex2
+        o_v1 = other.vertex1
+        o_v2 = other.vertex2
+        if (v1 != o_v1 or v2 != o_v2 or self._weight != other._weight):
+            return False
+        return True
+
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices.
+
+        Note that ``__eq__`` is defined to take ``_weight`` into consideration, whereas ``__hash__``
+        does not. This is because ``_weight`` is not intended to be immutable throughout the
+        lifetime of the object.
+
+        From: "Python Hashes and Equality" <https://hynek.me/articles/hashes-and-equality/>:
+
+        "Hashes can be less picky than equality checks. Since key lookups are always followed by
+        an equality check, your hashes don’t have to be unique. That means that you can compute
+        your hash over an immutable subset of attributes that may or may not be a unique
+        "primary key" for the instance."
+        """
+        return hash((self.vertex1, self.vertex2))
+
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted].
+        """
+        edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
+
+        if self._parent_graph.is_weighted():
+            edge_str = f"{edge_str}, {self._weight})"
+        else:
+            edge_str = f"{edge_str})"
+
+        return edge_str
+
+
+class _MultiEdge(MultiEdge):
+    """Concrete implementation of the abstract :class:`MultiEdge` class."""
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, MultiEdge):
+            return False
+
+        v1 = self.vertex1
+        v2 = self.vertex2
+        o_v1 = other.vertex1
+        o_v2 = other.vertex2
+        if v1.label > v2.label:
+            v1, v2 = v2, v1
+        if o_v1.label > o_v2.label:
+            o_v1, o_v2 = o_v2, o_v1
+        if (
+            v1 != o_v1
+            or v2 != o_v2
+            or self._parallel_edge_count != other._parallel_edge_count
+            or self._weight != other._weight
+        ):
+            return False
+        return True
+
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices.
+
+        Note that ``__eq__`` is defined to take ``_weight`` and ``_parallel_edge_count`` into
+        consideration, whereas ``__hash__`` does not. This is because ``_weight`` and
+        ``_parallel_edge_count``are not intended to be immutable throughout the lifetime of the
+        object.
+
+        From: "Python Hashes and Equality" <https://hynek.me/articles/hashes-and-equality/>:
+
+        "Hashes can be less picky than equality checks. Since key lookups are always followed by
+        an equality check, your hashes don’t have to be unique. That means that you can compute
+        your hash over an immutable subset of attributes that may or may not be a unique
+        "primary key" for the instance."
+        """
+        if self.vertex1.label > self.vertex2.label:
+            return hash((self.vertex2, self.vertex1))
+
+        return hash((self.vertex1, self.vertex2))
+
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are lexicographically sorted. In multigraphs, the string will show separate vertex
+        tuples for each parallel edge, such as "(a, b), (a, b), (a, b)" for a multi-edge with
+        multiplicity 3.
+        """
+        if self.vertex1.label > self.vertex2.label:
+            edge_str = f"({self.vertex2.label}, {self.vertex1.label}"
+        else:
+            edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
+
+        if self.vertex1._parent_graph.is_weighted():
+            edge_str = f"{edge_str}, {self._weight})"
+        else:
+            edge_str = f"{edge_str})"
+
+        edges = [edge_str for _ in range(self.multiplicity)]
+        return ", ".join(edges)
+
+
+class _MultiDiEdge(MultiDiEdge):
+    """Concrete implementation of the abstract :class:`MultiDiEdge` class."""
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, MultiDiEdge):
+            return False
+
+        v1 = self.vertex1
+        v2 = self.vertex2
+        o_v1 = other.vertex1
+        o_v2 = other.vertex2
+        if (
+            v1 != o_v1
+            or v2 != o_v2
+            or self._parallel_edge_count != other._parallel_edge_count
+            or self._weight != other._weight
+        ):
+            return False
+        return True
+
+    def __hash__(self) -> int:
+        """Creates a hash key using the edge's vertices.
+
+        Note that ``__eq__`` is defined to take ``_weight`` and ``_parallel_edge_count`` into
+        consideration, whereas ``__hash__`` does not. This is because ``_weight`` and
+        ``_parallel_edge_count``are not intended to be immutable throughout the lifetime of the
+        object.
+
+        From: "Python Hashes and Equality" <https://hynek.me/articles/hashes-and-equality/>:
+
+        "Hashes can be less picky than equality checks. Since key lookups are always followed by
+        an equality check, your hashes don’t have to be unique. That means that you can compute
+        your hash over an immutable subset of attributes that may or may not be a unique
+        "primary key" for the instance."
+        """
+        return hash((self.vertex1, self.vertex2))
+
+    def __str__(self) -> str:
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
+
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are lexicographically sorted. In multigraphs, the string will show separate vertex
+        tuples for each parallel edge, such as "(a, b), (a, b), (a, b)" for a multi-edge with
+        multiplicity 3.
+        """
+        edge_str = f"({self.vertex1.label}, {self.vertex2.label}"
+
+        if self.vertex1._parent_graph.is_weighted():
+            edge_str = f"{edge_str}, {self._weight})"
+        else:
+            edge_str = f"{edge_str})"
+
+        edges = [edge_str for _ in range(self.multiplicity)]
+        return ", ".join(edges)
