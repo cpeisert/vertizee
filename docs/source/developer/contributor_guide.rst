@@ -97,7 +97,7 @@ First-time contributor
  * **mypy**: we also recommend using the static type checker `mypy <http://mypy-lang.org/>`_
    (included in requirements/developer.txt). Run with::
 
-     mypy vertizee
+     mypy --strict vertizee
 
 Develop your contribution, including appropriate test cases
 -----------------------------------------------------------

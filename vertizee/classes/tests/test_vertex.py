@@ -77,7 +77,7 @@ class TestVertex:
 
     def test_vertex_loop_edges(self):
         g = Graph([(0, 0)])
-        loop: Edge = next(iter(g[0].loops))
+        loop: Edge = g[0].loops
         assert (
             loop.vertex1 == g[0] and loop.vertex2 == g[0]
         ), "Loop should have same vertex endpoints."
@@ -85,7 +85,7 @@ class TestVertex:
         assert edge == loop, "The only incident edge should be the self loop."
         adj_v = next(iter(g[0].adj_vertices))
         assert adj_v == g[0], "Vertex 0 should be adjacent to itself."
-        assert g[0].delete_loops() == 1, "Should have deleted one loop edge."
+        assert g[0].remove_loops() == 1, "Should have deleted one loop edge."
         assert (
             len(g[0].adj_vertices) == 0
         ), "After loop deletion, there should be no adjacent vertices."

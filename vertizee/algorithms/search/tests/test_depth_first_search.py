@@ -16,7 +16,7 @@
 
 import pytest
 
-from vertizee.algorithms import DepthFirstSearchResults, DepthFirstSearchTree
+from vertizee.algorithms import DepthFirstSearchResults, SearchTree
 from vertizee.algorithms.search.depth_first_search import (
     BLACK,
     COLOR,
@@ -25,7 +25,7 @@ from vertizee.algorithms.search.depth_first_search import (
     dfs_postorder_traversal,
     dfs_preorder_traversal,
 )
-from vertizee.classes.edge import EdgeType
+from vertizee.classes.edge import Edge
 from vertizee.classes.graph import Graph
 from vertizee.classes.digraph import DiGraph, MultiDiGraph
 
@@ -41,7 +41,7 @@ class TestDepthFirstSearch:
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         dfs: DepthFirstSearchResults = depth_first_search(g, 0)
         t, *_ = dfs.dfs_forest
-        tree: DepthFirstSearchTree = t
+        tree: SearchTree = t
 
         assert tree.root == 0, "DFS tree should be rooted at vertex 0."
         assert len(dfs.dfs_forest) == 1, "DFS search with source vertex should yield one DFS tree"
@@ -63,7 +63,7 @@ class TestDepthFirstSearch:
         assert topological_sort is None, (
             "Topological sort should be None, since the graph " "contains cycles."
         )
-        first_edge: EdgeType = dfs.edges_in_discovery_order[0]
+        first_edge: Edge = dfs.edges_in_discovery_order[0]
         assert first_edge.vertex1 == 0, "First edge should have vertex1 of 0."
         assert first_edge.vertex2 == 1, "First edge should have vertex2 of 1."
 
@@ -113,7 +113,7 @@ class TestDepthFirstSearch:
             "DFS search should find 1 DFS tree, since source " "vertex s was specified."
         )
         t, *_ = dfs.dfs_forest
-        tree: DepthFirstSearchTree = t
+        tree: SearchTree = t
 
         assert len(tree.edges_in_discovery_order) == 4, (
             "DFS tree rooted at vertex s should " "have 4 edges."

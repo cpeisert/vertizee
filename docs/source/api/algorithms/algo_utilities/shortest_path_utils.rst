@@ -4,4 +4,4 @@
 Shortest Path Utilities
 ============================================================================
 
-.. automodule:: vertizee.algorithms.algo_utilities.shortest_path_utils
+.. automodule:: vertizee.algorithms.algo_utils.shortest_path_utils

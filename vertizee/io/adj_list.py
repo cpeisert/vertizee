@@ -101,13 +101,13 @@ from collections import Counter
 import re
 from typing import Dict, List, Set, TYPE_CHECKING, Tuple
 
-from vertizee.classes.edge import create_edge_label
+from vertizee.classes.edge import create_label
 from vertizee.exception import GraphTypeNotSupported
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import EdgeType
+    from vertizee.classes.edge import Edge
     from vertizee.classes.graph_base import GraphBase
-    from vertizee.classes.parsed_primitives import EdgeTuple
+    from vertizee.classes.primitives_parsing import EdgeTuple
     from vertizee.classes.vertex import Vertex
 
 
@@ -129,7 +129,7 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
     new_graph.clear()
     with open(path, mode="r") as f:
         lines = f.read().splitlines()
-    if lines is None or len(lines) == 0:
+    if not lines:
         return
 
     # Keep track of the source vertex (column one of adj. list) for each edge to avoid duplicates.
@@ -138,7 +138,7 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
         vertices = re.split(delimiters, line)
         vertices = [v for v in vertices if len(v) > 0]
 
-        if len(vertices) == 0:
+        if not vertices:
             continue
         if len(vertices) == 1:
             new_graph.add_vertex(vertices[0])
@@ -147,7 +147,7 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
         source = vertices[0]
         destination_vertices = vertices[1:]
         edge_tuples: List[EdgeTuple] = [(source, t) for t in destination_vertices]
-        if len(edge_tuples) == 0:
+        if not edge_tuples:
             new_graph.add_vertex(source)
             continue
         if not new_graph.is_directed_graph():
@@ -173,7 +173,7 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
     new_graph.clear()
     with open(path, mode="r") as f:
         lines = f.read().splitlines()
-    if lines is None or len(lines) == 0:
+    if not lines:
         return
 
     # Keep track of the source vertex (column one of adj. list) for each edge to avoid duplicates.
@@ -189,7 +189,7 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
         for match in re.finditer(r"\b(\w+)\s*,\s*(\w+)", line):
             edge_tuples.append((source, match.group(1), float(match.group(2))))
 
-        if len(edge_tuples) == 0:
+        if not edge_tuples:
             new_graph.add_vertex(source)
             continue
         if not new_graph.is_directed_graph():
@@ -232,8 +232,8 @@ def write_adj_list_to_file(
     for vertex in sorted_vertices:
         source_vertex_label = vertex.label
         line = f"{source_vertex_label}"
-        if len(vertex.loops) > 0:
-            loop_edge: "EdgeType" = next(iter(vertex.loops))
+        if vertex.loops is not None:
+            loop_edge: "Edge" = vertex.loops
             line = _add_loop_edges_to_line(
                 line, loop_edge, delimiter, include_weights, weights_are_integers
             )
@@ -258,7 +258,7 @@ def write_adj_list_to_file(
 
 def _add_edge_to_line(
     line: str,
-    edge: "EdgeType",
+    edge: "Edge",
     source_vertex: "Vertex",
     delimiter: str = "\t",
     include_weights: bool = False,
@@ -294,7 +294,7 @@ def _add_edge_to_line(
 
 def _add_loop_edges_to_line(
     line: str,
-    loop_edge: "EdgeType",
+    loop_edge: "Edge",
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -327,7 +327,7 @@ def _add_loop_edges_to_line(
 
 def _get_incident_edges_excluding_loops(
     graph: "GraphBase", vertex: "Vertex", reverse_graph: bool = False
-) -> Set["EdgeType"]:
+) -> Set["Edge"]:
     """Helper function to retrieve the incident edges of a vertex, excluding self loops.
 
     If `reverse_graph` is True and it is a directed graph, then the child's incoming adjacency
@@ -347,8 +347,8 @@ def _get_incident_edges_excluding_loops(
         return vertex.incident_edges_outgoing
 
     # undirected graph
-    if len(vertex.loops) > 0:
-        loop_edges = next(iter(vertex.loops))
+    if vertex.loops is not None:
+        loop_edges = vertex.loops
         edges = vertex.incident_edges
         edges.remove(loop_edges)
         return edges
@@ -366,8 +366,8 @@ def _remove_duplicate_undirected_edges(
     3   1
 
     This function removes duplicates, where a duplicate is defined as an edge with the same
-    edge label (as defined by the function :func:`create_edge_label
-    <vertizee.classes.edge.create_edge_label>`) that maps to a different source vertex. Source
+    edge label (as defined by the function :func:`create_label
+    <vertizee.classes.edge.create_label>`) that maps to a different source vertex. Source
     vertice are the vertices defined by the first column of an adjacency list file.
     """
     cnt: Counter = Counter()

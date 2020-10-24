@@ -71,7 +71,7 @@ class TestUndirectedGraphs:
         assert v4 in g, "Graph should contain isolated vertex v4."
         assert v0 in g, "Graph should contain vertex with label 0."
         assert g.has_vertex(v0), "Graph should contain vertex with label 0."
-        assert g.graph_weight == 4971.5, "Graph should have weight of 4971.5."
+        assert g.weight == 4971.5, "Graph should have weight of 4971.5."
 
         edge00 = g[0, 0]
         assert (
@@ -89,14 +89,14 @@ class TestUndirectedGraphs:
             edge00.parallel_edge_count == 4
         ), "Edge (0, 0) should have 4 parallel edges after deleting a parallel loop."
 
-        assert v0.delete_loops() == 5, "Vertex v0 should have deleted 5 loops."
+        assert v0.remove_loops() == 5, "Vertex v0 should have deleted 5 loops."
 
-        edge01 = g.get_edge(v0, v1)
+        edge01 = g._get_edge(v0, v1)
         # Test accessor notation.
         edge10 = g[1, 0]
-        edge12 = g.get_edge(v1, v2)
+        edge12 = g._get_edge(v1, v2)
         edge20 = g[2, 0]
-        edge32 = g.get_edge(v3, v2)
+        edge32 = g._get_edge(v3, v2)
 
         assert not g.has_edge(edge00), "Graph should not contain edge (0, 0)."
         assert g.has_edge(edge01), "Graph should contain edge (0, 1)."
@@ -107,7 +107,7 @@ class TestUndirectedGraphs:
         assert g.has_edge(edge20), "Graph should contain edge (2, 0)."
         assert g.has_edge(edge32), "Graph should contain edge (3, 2)."
 
-        assert g.graph_weight == 4961, "Graph should have weight 4961 after deleting loops on v0."
+        assert g.weight == 4961, "Graph should have weight 4961 after deleting loops on v0."
         assert g.edge_count == 109, "Graph should have 109 edges after deleting loops on v0."
 
         g.remove_all_edges_from(edge01)
@@ -182,7 +182,7 @@ class TestUndirectedGraphs:
 
         v1_old_edges = v1.incident_edges
 
-        g.merge_vertices(v0, v1)
+        g.contract_edge(v0, v1)
         """
         POST CONDITIONS
         - Pre-merge total degree of deg(v0) + deg(v1) must equal new merged deg(v0).
@@ -284,9 +284,9 @@ class TestUndirectedGraphs:
         edge01 = g[v0, v1]
 
         ###
-        # edge00 = v0.get_edge(v0, v0)
-        # edge12 = v1.get_edge(v1, v2)
-        # edge32 = v3.get_edge(v3, v2)
+        # edge00 = v0._get_edge(v0, v0)
+        # edge12 = v1._get_edge(v1, v2)
+        # edge32 = v3._get_edge(v3, v2)
         # print('\n\nRANDOM SAMPLE RESULTS')
         # print(f'(0,0) => {cnt[edge00] / total_samples}')
         # print(f'(0,1) => {cnt[edge01] / total_samples}')
@@ -299,6 +299,18 @@ class TestUndirectedGraphs:
             "Random edge sampling should yield edge (0, 1) 92% of time due to 106 "
             f"parallel edges in a graph of 115 total edges. Actual frequency was {frequency}."
         )
+
+    def test_contains(self):
+        # TODO(cpeisert): implement
+        pass
+
+    def test_deepcopy(self):
+        # TODO(cpeisert): implement
+        pass
+
+    def test_getitem_and_setitem(self):
+        # TODO(cpeisert): implement
+        pass
 
 
 def _build_parallel_weighted_graph(g: MultiGraph, v: List[Vertex]) -> MultiGraph:

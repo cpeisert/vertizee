@@ -17,7 +17,7 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING
 
-from vertizee.algorithms.algo_utilities.depth_first_search_utils import DepthFirstSearchTree
+from vertizee.algorithms.algo_utils.search_utils import SearchTree
 from vertizee.algorithms.search.depth_first_search import (
     _initialize_dfs_graph,
     _StackFrame,
@@ -25,7 +25,7 @@ from vertizee.algorithms.search.depth_first_search import (
     COLOR,
     dfs_postorder_traversal,
     GRAY,
-    PARENT,
+    PREDECESSOR,
     WHITE,
 )
 from vertizee.exception import GraphTypeNotSupported
@@ -35,8 +35,8 @@ if TYPE_CHECKING:
     from vertizee.classes.vertex import Vertex
 
 
-def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFirstSearchTree"]:
-    """Returns strongly connected components, where each component is a DepthFirstSearchTree.
+def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["SearchTree"]:
+    """Returns strongly connected components, where each component is a SearchTree.
 
     This function uses Kosaraju's algorithm [R2018]_, with the caveat that the strongly-connected
     components (SCC) are returned in reverse topological order. This ordering refers to
@@ -47,8 +47,8 @@ def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFir
         graph (GraphBase): The graph to search.
 
     Returns:
-        List[DepthFirstSearchTree]: A list of strongly-connected components, where each component
-        is stored in a DepthFirstSearchTree object.
+        List[SearchTree]: A list of strongly-connected components, where each component
+        is stored in a SearchTree object.
 
     References:
      .. [R2018] Algorithms Illuminated (Part 2): Graph Algorithms and Data Structures.
@@ -68,7 +68,7 @@ def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["DepthFir
     return strongly_connected_components
 
 
-def _dfs_scc(graph: "GraphBase", source: "Vertex") -> DepthFirstSearchTree:
+def _dfs_scc(graph: "GraphBase", source: "Vertex") -> SearchTree:
     """Helper function Depth-First Search for Strongly Connected Components to implement
     Kosaraju's algorithm.
 
@@ -78,9 +78,9 @@ def _dfs_scc(graph: "GraphBase", source: "Vertex") -> DepthFirstSearchTree:
             vertices.
 
     Returns:
-        DepthFirstSearchTree: A strongly-connected component stored as a depth-first-search tree.
+        SearchTree: A strongly-connected component stored as a depth-first-search tree.
     """
-    scc = DepthFirstSearchTree(root=source)
+    scc = SearchTree(root=source)
     stack: List[_StackFrame] = [_StackFrame(source, source.adj_vertices_outgoing)]
 
     while stack:
@@ -91,8 +91,8 @@ def _dfs_scc(graph: "GraphBase", source: "Vertex") -> DepthFirstSearchTree:
             v.attr[COLOR] = GRAY  # Mark as explored.
             scc.vertices.add(v)
 
-            if v.attr[PARENT]:
-                parent_v = v.attr[PARENT]
+            if v.attr[PREDECESSOR]:
+                parent_v = v.attr[PREDECESSOR]
                 edge = graph[parent_v, v]
                 scc.edges_in_discovery_order.append(edge)
 
@@ -100,7 +100,7 @@ def _dfs_scc(graph: "GraphBase", source: "Vertex") -> DepthFirstSearchTree:
             w = adj_vertices.pop()
 
             if w.attr[COLOR] == WHITE:  # Undiscovered vertex w adjacent to v.
-                w.attr[PARENT] = v
+                w.attr[PREDECESSOR] = v
                 stack.append(_StackFrame(w, w.adj_vertices_outgoing))
         elif v.attr[COLOR] != BLACK:  # FINISHED visiting vertex v.
             stack.pop()

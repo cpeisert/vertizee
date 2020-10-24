@@ -25,13 +25,13 @@ from vertizee.exception import GraphTypeNotSupported, VertexNotFound
 
 if TYPE_CHECKING:
     from vertizee.classes.graph_base import GraphBase
-    from vertizee.classes.edge import DiEdge, EdgeType
+    from vertizee.classes.edge import DiEdge, Edge
     from vertizee.classes.vertex import VertexType
 
 INFINITY = float("inf")
 
 
-def _weight_function(edge: "EdgeType", weight: str = "Edge__weight", minimum: bool = True) -> float:
+def _weight_function(edge: "Edge", weight: str = "Edge__weight", minimum: bool = True) -> float:
     """Returns the weight of a given edge.
 
     If there is no edge weight, then the edge weight is assumed to be one.  If ``graph`` is a
@@ -87,7 +87,7 @@ def spanning_arborescence_ggst(
 
 def spanning_tree_kruskal(
     graph: "GraphBase", weight: str = "Edge__weight", minimum: bool = True
-) -> Iterator["EdgeType"]:
+) -> Iterator["Edge"]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted, undirected graph using
     Kruskal's algorithm.
 
@@ -112,7 +112,7 @@ def spanning_tree_kruskal(
             the maximum spanning tree. Defaults to True.
 
     Returns:
-        Iterator[EdgeType]: An iterator over the edges of the minimum (or maximum) spanning tree
+        Iterator[Edge]: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Kruskal's algorithm.
 
     See Also:
@@ -144,7 +144,7 @@ def spanning_tree_prim(
     root: Optional["VertexType"] = None,
     weight: str = "Edge__weight",
     minimum: bool = True,
-) -> Iterator["EdgeType"]:
+) -> Iterator["Edge"]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted, undirected graph using
     Prim's algorithm.
 
@@ -178,7 +178,7 @@ def spanning_tree_prim(
             the maximum spanning tree. Defaults to True.
 
     Returns:
-        Iterator[EdgeType]: An iterator over the edges of the minimum (or maximum) spanning tree
+        Iterator[Edge]: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Prim's algorithm.
 
     See Also:
@@ -192,15 +192,16 @@ def spanning_tree_prim(
      .. [CLRS2009_6] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
                      Introduction to Algorithms: Third Edition, page 634. The MIT Press, 2009.
     """
-    PRIM_PARENT_KEY = "__prim_parent"
+    PRIM_PREDECESSOR_KEY = "__prim_parent"
     PRIM_PRIORITY_KEY = "__prim_priority"
 
     if graph.is_directed_graph():
         raise GraphTypeNotSupported("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
-        r: Optional[Vertex] = graph[root]
-        if r is None:
-            raise VertexNotFound("root vertex not found in the graph")
+        try:
+            r: Vertex = graph[root]
+        except KeyError:
+            raise VertexNotFound("root vertex was not found in the graph")
     else:
         if graph.vertex_count > 0:
             r = next(iter(graph.vertices))
@@ -212,20 +213,20 @@ def spanning_tree_prim(
 
     priority_queue: PriorityQueue[Vertex] = PriorityQueue(prim_priority_function)
     for v in graph:
-        v.attr[PRIM_PARENT_KEY] = None
+        v.attr[PRIM_PREDECESSOR_KEY] = None
         v.attr[PRIM_PRIORITY_KEY] = INFINITY
         priority_queue.add_or_update(v)
     r.attr[PRIM_PRIORITY_KEY] = 0
     priority_queue.add_or_update(r)
 
     vertices_in_tree = set()
-    tree_edge: Optional[EdgeType] = None
+    tree_edge: Optional[Edge] = None
 
     while len(priority_queue) > 0:
         u = priority_queue.pop()
         vertices_in_tree.add(u)
-        if u.attr[PRIM_PARENT_KEY] is not None:
-            parent = u.attr[PRIM_PARENT_KEY]
+        if u.attr[PRIM_PREDECESSOR_KEY] is not None:
+            parent = u.attr[PRIM_PREDECESSOR_KEY]
             adj_vertices = u.adj_vertices - {parent}
             tree_edge = graph[parent, u]
         else:
@@ -234,7 +235,7 @@ def spanning_tree_prim(
         for v in adj_vertices:
             u_v_weight = _weight_function(graph[u, v], weight, minimum)
             if v not in vertices_in_tree and u_v_weight < v.attr[PRIM_PRIORITY_KEY]:
-                v.attr[PRIM_PARENT_KEY] = u
+                v.attr[PRIM_PREDECESSOR_KEY] = u
                 v.attr[PRIM_PRIORITY_KEY] = u_v_weight
                 priority_queue.add_or_update(v)
         if tree_edge:
@@ -243,7 +244,7 @@ def spanning_tree_prim(
 
 def spanning_tree_prim_fibonacci(
     graph: "GraphBase", root: Vertex = None, weight: str = "Edge__weight", minimum: bool = True
-) -> Iterator["EdgeType"]:
+) -> Iterator["Edge"]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted, undirected graph using
     Prim's algorithm implemented using a Fibonacci heap.
 
@@ -277,7 +278,7 @@ def spanning_tree_prim_fibonacci(
             the maximum spanning tree. Defaults to True.
 
     Returns:
-        Iterator[EdgeType]: An iterator over the edges of the minimum (or maximum) spanning tree
+        Iterator[Edge]: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Prim's algorithm.
 
     See Also:
@@ -287,18 +288,19 @@ def spanning_tree_prim_fibonacci(
         * :func:`spanning_tree_kruskal`
         * :func:`spanning_tree_prim`
     """
-    PRIM_PARENT_KEY = "__prim_parent"
+    PRIM_PREDECESSOR_KEY = "__prim_parent"
     PRIM_PRIORITY_KEY = "__prim_priority"
 
     if graph.is_directed_graph():
         raise GraphTypeNotSupported("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
-        r: Vertex = graph[root]
-        if r is None:
-            raise VertexNotFound("root vertex not found in the graph")
+        try:
+            r: Vertex = graph[root]
+        except KeyError:
+            raise VertexNotFound("root vertex was not found in the graph")
     else:
-        if len(graph.vertices) > 0:
-            r = next(iter(graph.vertices))
+        if graph.vertex_count > 0:
+            r = next(iter(graph.vertices), None)
         else:
             return iter([])
 
@@ -307,21 +309,21 @@ def spanning_tree_prim_fibonacci(
 
     fib_heap: FibonacciHeap[Vertex] = FibonacciHeap(prim_priority_function)
     for v in graph:
-        v.attr[PRIM_PARENT_KEY] = None
+        v.attr[PRIM_PREDECESSOR_KEY] = None
         v.attr[PRIM_PRIORITY_KEY] = INFINITY
         fib_heap.insert(v)
     r.attr[PRIM_PRIORITY_KEY] = 0
     fib_heap.update_item_with_decreased_priority(r)
 
     vertices_in_tree = set()
-    tree_edge: Optional[EdgeType] = None
+    tree_edge: Optional[Edge] = None
 
     while len(fib_heap) > 0:
         u = fib_heap.extract_min()
         assert u is not None  #  For mypy static type checker.
         vertices_in_tree.add(u)
-        if u.attr[PRIM_PARENT_KEY] is not None:
-            parent = u.attr[PRIM_PARENT_KEY]
+        if u.attr[PRIM_PREDECESSOR_KEY] is not None:
+            parent = u.attr[PRIM_PREDECESSOR_KEY]
             adj_vertices = u.adj_vertices - {parent}
             tree_edge = graph[parent, u]
         else:
@@ -330,7 +332,7 @@ def spanning_tree_prim_fibonacci(
         for v in adj_vertices:
             u_v_weight = _weight_function(graph[u, v], weight, minimum)
             if v not in vertices_in_tree and u_v_weight < v.attr[PRIM_PRIORITY_KEY]:
-                v.attr[PRIM_PARENT_KEY] = u
+                v.attr[PRIM_PREDECESSOR_KEY] = u
                 v.attr[PRIM_PRIORITY_KEY] = u_v_weight
                 fib_heap.update_item_with_decreased_priority(v)
         if tree_edge:

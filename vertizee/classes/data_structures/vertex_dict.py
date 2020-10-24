@@ -15,7 +15,8 @@
 """A dictionary mapping vertices to values."""
 
 from __future__ import annotations
-from collections.abc import Mapping
+from collections import abc
+import copy
 from typing import Dict, Iterable, Iterator, MutableMapping, TYPE_CHECKING, TypeVar
 
 from vertizee.classes.vertex import Vertex
@@ -113,7 +114,6 @@ class VertexDict(MutableMapping["VertexType", VT]):
         """Make a copy of this VertexDict."""
         if self.__class__ is VertexDict:
             return VertexDict(self.data.copy())
-        import copy
 
         data = self.data
         try:
@@ -149,8 +149,9 @@ class VertexDict(MutableMapping["VertexType", VT]):
         Args:
             other: An iterable or mapping object over key-value pairs, where the keys
                 represent vertices.
+            **kwds: Keyword arguments.
         """
-        if isinstance(other, Mapping):
+        if isinstance(other, abc.Mapping):
             for vertex in other:
                 self.data[_normalize_vertex(vertex)] = other[vertex]
         elif hasattr(other, "keys"):

@@ -384,7 +384,7 @@ class ShortestPath:
         destination, then the edge is added to the path and predecessor is set to source."""
         if self._length < INFINITY and self._source != self._destination:
             graph = self._source._parent_graph
-            edge = graph.get_edge(self._source, self._destination)
+            edge = graph._get_edge(self._source, self._destination)
             if edge is not None:
                 self._edge_count += 1
                 self._predecessor = self._source

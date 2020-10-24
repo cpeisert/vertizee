@@ -16,6 +16,6 @@ from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 from vertizee.classes.digraph import DiGraph, MultiDiGraph
-from vertizee.classes.edge import DiEdge, Edge, EdgeType
-from vertizee.classes.graph import Graph, GraphBase, MultiGraph, SimpleGraph
+from vertizee.classes.edge import DiEdge, Edge
+from vertizee.classes.graph import Graph, MultiGraph, SimpleGraph
 from vertizee.classes.vertex import Vertex, VertexType

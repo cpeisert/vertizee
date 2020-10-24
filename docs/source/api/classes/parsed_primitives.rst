@@ -2,4 +2,4 @@
 Parsed Primitives
 ============================================================================
 
-.. automodule:: vertizee.classes.parsed_primitives
+.. automodule:: vertizee.classes.primitives_parsing

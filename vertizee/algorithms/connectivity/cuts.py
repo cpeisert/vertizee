@@ -17,13 +17,14 @@
 import math
 from typing import Dict, Optional
 
-from vertizee.classes.edge import EdgeType
+from vertizee.classes.edge import Edge
 from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex
 
 
 # TODO(cpeisert): simplify return type of cut algorithms.
 # TODO(cpeisert): rename algorithms to reflect popular names (e.g. fast_min_cut_karger_stein)
+# See: https://en.wikipedia.org/wiki/Minimum_cut
 class KargerResults:
     """Container class to store the results of computing the minimum cut.
 
@@ -36,11 +37,11 @@ class KargerResults:
     def __init__(
         self,
         contracted_graph: Optional[GraphBase] = None,
-        cut_edge: Optional[EdgeType] = None,
+        cut_edge: Optional[Edge] = None,
         karger_contract_run_count: int = 0,
     ):
         self.contracted_graph: Optional[GraphBase] = contracted_graph
-        self.cut_edge: Optional[EdgeType] = cut_edge
+        self.cut_edge: Optional[Edge] = cut_edge
         self.karger_contract_run_count = karger_contract_run_count
 
 
@@ -54,7 +55,7 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
         graph: The multigraph in which to find the minimum cut.
 
     Returns:
-        The minimum cut, which is the final EdgeType object containing the last two vertices after
+        The minimum cut, which is the final Edge object containing the last two vertices after
         all other vertices have been merged through the edge contraction process.
 
     See Also:
@@ -65,7 +66,7 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
     if n > 2:
         run_iterations = int((n ** 2) * math.log2(n))
 
-    cuts: Dict[int, EdgeType] = {}
+    cuts: Dict[int, Edge] = {}
     for _ in range(run_iterations):
         results: KargerResults = karger_contract(graph)
         if results.cut_edge is not None:
@@ -80,7 +81,7 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
     Use the Karger-Stein algorithm (https://en.wikipedia.org/wiki/Karger%27s_algorithm) to find
     the minimum cut size of the graph.
     :param graph: The multi-graph to cut.
-    :return: The cut, which is the final EdgeType object containing the last two vertices after all
+    :return: The cut, which is the final Edge object containing the last two vertices after all
         other vertices have been merged through the edge contraction process.
     """
 
@@ -92,7 +93,7 @@ def fast_min_cut(graph: GraphBase) -> KargerResults:
         graph: The multigraph in which to find the minimum cut.
 
     Returns:
-        The minimum cut, which is the final EdgeType object containing the last two vertices after
+        The minimum cut, which is the final Edge object containing the last two vertices after
         all other vertices have been merged through the edge contraction process.
 
     See Also:
@@ -138,22 +139,22 @@ def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResult
             performing repeated edge removal and vertex merging. Defaults to 2.
 
     Returns:
-        The minimum cut, which is the final EdgeType object containing the last two vertices after
+        The minimum cut, which is the final Edge object containing the last two vertices after
         all other vertices have been merged through the edge contraction process.
     """
-    if len(graph.edges) < 1:
+    if graph.edge_count < 1:
         return KargerResults(contracted_graph=graph, cut_edge=None)
     if minimum_vertices < 2:
         minimum_vertices = 2
 
     contracted_graph = graph.deepcopy()
     while contracted_graph.vertex_count > minimum_vertices:
-        random_edge: Optional[EdgeType] = contracted_graph.get_random_edge()
+        random_edge: Optional[Edge] = contracted_graph.get_random_edge()
         assert random_edge is not None
         merged_vertex: Vertex = random_edge.vertex1
         contracted_graph.remove_edge_from(random_edge)
-        contracted_graph.merge_vertices(merged_vertex, random_edge.vertex2)
-        merged_vertex.delete_loops()
+        contracted_graph.contract_edge(merged_vertex, random_edge.vertex2)
+        merged_vertex.remove_loops()
 
     cut_edge = None
     if len(contracted_graph.edges) == 1:

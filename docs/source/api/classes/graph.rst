@@ -13,23 +13,20 @@ Which graph class should I use?
 ===============================
 
 +-----------------------------------------+------------+--------------------+------------------------+
-| Vertizee Class                          | Type       | Self-loops allowed | Parallel edges allowed |
-+=========================================+============+====================+========================+
-| :class:`SimpleGraph                     | undirected | No                 | No                     |
-| <vertizee.classes.graph.SimpleGraph>`   |            |                    |                        |
-+-----------------------------------------+------------+--------------------+------------------------+
-| :class:`Graph                           | undirected | Yes                | No                     |
-| <vertizee.classes.graph.Graph>`         |            |                    |                        |
-+-----------------------------------------+------------+--------------------+------------------------+
-| :class:`MultiGraph                      | undirected | Yes                | Yes                    |
-| <vertizee.classes.graph.MultiGraph>`    |            |                    |                        |
-+-----------------------------------------+------------+--------------------+------------------------+
-| :class:`DiGraph                         | directed   | Yes                | No                     |
-| <vertizee.classes.digraph.DiGraph>`     |            |                    |                        |
-+-----------------------------------------+------------+--------------------+------------------------+
-| :class:`MultiDiGraph                    | directed   | Yes                | Yes                    |
-| <vertizee.classes.digraph.MultiDiGraph>`|            |                    |                        |
-+-----------------------------------------+------------+--------------------+------------------------+
+| Vertizee Class                          | Type       | Parallel edges allowed | Self loops allowed |
++=========================================+============+========================+====================+
+| :class:`Graph                           | undirected | No                     | Yes                |
+| <vertizee.classes.graph.Graph>`         |            |                        |                    |
++-----------------------------------------+------------+------------------------+--------------------+
+| :class:`MultiGraph                      | undirected | Yes                    | Yes                |
+| <vertizee.classes.graph.MultiGraph>`    |            |                        |                    |
++-----------------------------------------+------------+------------------------+--------------------+
+| :class:`DiGraph                         | directed   | No                     | Yes                |
+| <vertizee.classes.digraph.DiGraph>`     |            |                        |                    |
++-----------------------------------------+------------+------------------------+--------------------+
+| :class:`MultiDiGraph                    | directed   | Yes                    | Yes                |
+| <vertizee.classes.digraph.MultiDiGraph>`|            |                        |                    |
++-----------------------------------------+------------+------------------------+--------------------+
 
 
 Recommended Tutorial

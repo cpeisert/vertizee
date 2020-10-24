@@ -21,7 +21,7 @@ Directed graph types:
 See Also:
     * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
     * :class:`GraphBase <vertizee.classes.graph_base.GraphBase>`
-    * :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+    * :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
     * :class:`Vertex <vertizee.classes.vertex.Vertex>`
 
 Example:
@@ -42,15 +42,14 @@ Example:
 # annotations must be imported and type aliases that should not be unfolded must be quoted.
 from __future__ import annotations
 
-from typing import List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from vertizee.classes.edge import DEFAULT_WEIGHT
+from vertizee.classes import edge
 from vertizee.classes.graph_base import GraphBase
-from vertizee.classes.parsed_primitives import ParsedPrimitives
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import DiEdge, EdgeType
-    from vertizee.classes.parsed_primitives import GraphPrimitive
+    from vertizee.classes.edge import DiEdge, Edge
+    from vertizee.classes.primitives_parsing import GraphPrimitive
     from vertizee.classes.vertex import VertexType
 
 
@@ -74,10 +73,9 @@ class DiGraph(GraphBase):
         self,
         tail: "VertexType",
         head: "VertexType",
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ) -> "EdgeType":
+        weight: float = edge.DEFAULT_WEIGHT,
+        **attr
+    ) -> "Edge":
         """Adds a new directed edge to the graph.
 
         If there is already an edge with matching vertices, then the internal :class:`DiEdge
@@ -88,21 +86,13 @@ class DiGraph(GraphBase):
             head: The destination vertex to which the ``tail`` points. This is a synonym for
                 ``vertex2``.
             weight: Optional; The edge weight. Defaults to 1.
-            parallel_edge_count: Optional; The number of parallel edges, not including the
-                initial edge between the vertices. Defaults to 0.
-            parallel_edge_weights: Optional; The weights of parallel edges. Defaults to None.
+            **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
 
         Returns:
             DiEdge: The newly added directed edge (or pre-existing edge if a parallel edge was
             added).
         """
-        return super().add_edge(tail, head, weight, parallel_edge_count, parallel_edge_weights)
-
-    def deepcopy(self) -> "DiGraph":
-        """Returns a deep copy of this graph."""
-        graph_copy = DiGraph()
-        super()._deepcopy_into(graph_copy)
-        return graph_copy
+        return super().add_edge(tail, head, weight, **attr)
 
     def get_reverse_graph(self) -> "DiGraph":
         """Creates a new graph that is the reverse of this graph (i.e. all directed edges
@@ -133,10 +123,9 @@ class MultiDiGraph(GraphBase):
         self,
         tail: "VertexType",
         head: "VertexType",
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ) -> "EdgeType":
+        weight: float = edge.DEFAULT_WEIGHT,
+        **attr
+    ) -> "Edge":
         """Adds a new directed edge to the graph.
 
         If there is already an edge with matching vertices, then the internal :class:`DiEdge
@@ -147,22 +136,15 @@ class MultiDiGraph(GraphBase):
             head: The destination vertex to which the ``tail`` points. This is a synonym for
                 ``vertex2``.
             weight: Optional; The edge weight. Defaults to 1.
-            parallel_edge_count: Optional; The number of parallel edges, not including the
-                initial edge between the vertices. Defaults to 0.
-            parallel_edge_weights: Optional; The weights of parallel edges. Defaults to None.
+            **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
 
         Returns:
             DiEdge: The newly added directed edge (or pre-existing edge if a parallel edge was
             added).
         """
-        return super().add_edge(tail, head, weight, parallel_edge_count, parallel_edge_weights)
+        return super().add_edge(tail, head, weight, **attr)
 
-    def deepcopy(self) -> "MultiDiGraph":
-        """Returns a deep copy of this graph."""
-        graph_copy = MultiDiGraph()
-        super()._deepcopy_into(graph_copy)
-        return graph_copy
-
+    @property
     def edge_count_ignoring_parallel_edges(self) -> int:
         """The number of edges excluding parallel edges."""
         edge_count = len(self._edges)
@@ -171,7 +153,7 @@ class MultiDiGraph(GraphBase):
 
         edges_inverted_tails_and_heads_count = 0
         for edge in self.edges:
-            parallel = self.get_edge(edge.vertex2, edge.vertex1)
+            parallel = self._get_edge(edge.vertex2, edge.vertex1)
             if parallel is not None and not parallel.is_loop():
                 edges_inverted_tails_and_heads_count += 1
         edge_count -= int(edges_inverted_tails_and_heads_count / 2)

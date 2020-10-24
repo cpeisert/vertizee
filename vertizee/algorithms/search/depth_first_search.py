@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for depth-first graph search."""
+"""Algorithms for depth-first search."""
 
 from __future__ import annotations
 from typing import Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
 
-from vertizee.algorithms.algo_utilities.depth_first_search_utils import (
+from vertizee.algorithms.algo_utils.search_utils import (
     DepthFirstSearchResults,
-    DepthFirstSearchTree,
+    SearchTree,
 )
-from vertizee.classes.edge import EdgeType
-from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex
 
 if TYPE_CHECKING:
+    from vertizee.classes.edge import Edge
+    from vertizee.classes.graph_base import GraphBase
     from vertizee.classes.vertex import VertexType
 
 # Internal constants
@@ -33,8 +33,14 @@ BLACK = "black"
 GRAY = "gray"
 WHITE = "white"
 
+#
+# TODO(cpeisert): Refactor algorithms so that instead of using vertex and edge `attr` dictionaries,
+# local dictionaries are used. This will prevent memory blowing by avoiding the lazy initialization
+# of `attr` dictionaries for potentially all vertices and edges in a graph.
+#
+
 COLOR = "__dfs_color"
-PARENT = "__dfs_parent"
+PREDECESSOR = "__dfs_predecessor"
 TIME_DISCOVERED = "__dfs_time_discovered"
 TIME_FINISHED = "__dfs_time_finished"
 
@@ -98,9 +104,9 @@ def depth_first_search(
 
     See Also:
         * :class:`DepthFirstSearchResults
-          <vertizee.algorithms.algo_utilities.depth_first_search_utils.DepthFirstSearchResults>`
-        * :class:`DepthFirstSearchTree
-          <vertizee.algorithms.algo_utilities.depth_first_search_utils.DepthFirstSearchTree>`
+          <vertizee.algorithms.algo_utils.search_utils.DepthFirstSearchResults>`
+        * :class:`SearchTree
+          <vertizee.algorithms.algo_utils.search_utils.SearchTree>`
         * :func:`dfs_postorder_traversal`
         * :func:`dfs_preorder_traversal`
         * :func:`dfs_labeled_edge_traversal`
@@ -116,11 +122,12 @@ def depth_first_search(
     if source is None:
         vertices = graph.vertices
     else:
-        vertices = {graph[source]}
+        s: Vertex = graph[source]
+        vertices = {s}
 
     for v in vertices:
         if v.attr[COLOR] == WHITE:
-            current_dfs_tree = DepthFirstSearchTree(root=v)
+            current_dfs_tree = SearchTree(root=v)
             dfs_results.dfs_forest.add(current_dfs_tree)
             _dfs_on_tree(
                 graph=graph,
@@ -150,6 +157,9 @@ def dfs_labeled_edge_traversal(
 
     The NetworkX function was in turn adapted from David Eppstein's depth-first search function in
     `PADS`. [E2004]_
+
+    The edge labeling of this function is based on the treatment in *Introduction to Algorithms*.
+    [CLRS2009_10]_
 
     For directed graphs, setting ``reverse_graph`` to True will generate edges as if the graph
     were reversed (i.e. all directed edges pointing in the opposite direction).
@@ -208,12 +218,15 @@ def dfs_labeled_edge_traversal(
 
     See Also:
         * :func:`depth_first_search`
-        * :class:`DepthFirstSearchTree`
+        * :class:`SearchTree`
         * :func:`dfs_postorder_traversal`
         * :func:`dfs_preorder_traversal`
         * :class:`DepthFirstSearchResults`
 
     References:
+     .. [CLRS2009_10] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+                   Introduction to Algorithms: Third Edition, page 603-610. The MIT Press, 2009.
+
      .. [E2004] David Eppstein's depth-first search function.
                 http://www.ics.uci.edu/~eppstein/PADS
 
@@ -226,14 +239,15 @@ def dfs_labeled_edge_traversal(
     if source is None:
         vertices = graph.vertices
     else:
-        vertices = {graph[source]}
+        s: Vertex = graph[source]
+        vertices = {s}
     if depth_limit is None:
-        depth_limit = len(graph.vertices)
+        depth_limit = graph.vertex_count
 
     for v in vertices:
         if v.attr[COLOR] != WHITE:  # already discovered
             continue
-        adj_vertices = v.get_adj_for_search(parent=v.attr[PARENT], reverse_graph=reverse_graph)
+        adj_vertices = v.get_adj_for_search(parent=v.attr[PREDECESSOR], reverse_graph=reverse_graph)
         stack: List[_StackFrame] = [_StackFrame(v, adj_vertices, depth_limit)]
 
         while stack:
@@ -245,16 +259,16 @@ def dfs_labeled_edge_traversal(
                 v.attr[COLOR] = GRAY  # Mark discovered.
                 timer.increment()
                 v.attr[TIME_DISCOVERED] = timer.time
-                if not v.attr[PARENT]:
+                if not v.attr[PREDECESSOR]:
                     yield v, v, "dfs_tree_root", "preorder"
                 else:
-                    yield v.attr[PARENT], v, "tree_edge", "preorder"
+                    yield v.attr[PREDECESSOR], v, "tree_edge", "preorder"
 
             if adj_vertices:  # Continue depth-first search with next adjacent vertex.
                 w = adj_vertices.pop()
 
                 if w.attr[COLOR] == WHITE:  # Undiscovered vertex w adjacent to v.
-                    w.attr[PARENT] = v
+                    w.attr[PREDECESSOR] = v
                     w_adj_vertices = w.get_adj_for_search(parent=v, reverse_graph=reverse_graph)
                     if depth_now > 1:
                         stack.append(_StackFrame(w, w_adj_vertices, depth_now - 1))
@@ -270,10 +284,10 @@ def dfs_labeled_edge_traversal(
                 v.attr[COLOR] = BLACK
                 timer.increment()
                 v.attr[TIME_FINISHED] = timer.time
-                if not v.attr[PARENT]:
+                if not v.attr[PREDECESSOR]:
                     yield v, v, "dfs_tree_root", "postorder"
                 else:
-                    yield v.attr[PARENT], v, "tree_edge", "postorder"
+                    yield v.attr[PREDECESSOR], v, "tree_edge", "postorder"
 
 
 def dfs_postorder_traversal(
@@ -311,7 +325,7 @@ def dfs_postorder_traversal(
 
     See Also:
         * :func:`depth_first_search`
-        * :class:`DepthFirstSearchTree`
+        * :class:`SearchTree`
         * :func:`dfs_preorder_traversal`
         * :func:`dfs_labeled_edge_traversal`
         * :class:`DepthFirstSearchResults`
@@ -350,7 +364,7 @@ def dfs_preorder_traversal(
 
     See Also:
         * :func:`depth_first_search`
-        * :class:`DepthFirstSearchTree`
+        * :class:`SearchTree`
         * :func:`dfs_postorder_traversal`
         * :func:`dfs_labeled_edge_traversal`
         * :class:`DepthFirstSearchResults`
@@ -362,7 +376,7 @@ def dfs_preorder_traversal(
 
 
 def _check_for_parallel_edge_cycle(
-    graph: GraphBase, dfs_results: DepthFirstSearchResults, edge: EdgeType
+    graph: GraphBase, dfs_results: DepthFirstSearchResults, edge: Edge
 ) -> None:
     """DFS helper function to check for parallel edge cycles."""
     if edge is None:
@@ -380,7 +394,7 @@ def _check_for_parallel_edge_cycle(
 
 def _dfs_on_tree(
     graph: GraphBase,
-    dfs_tree: DepthFirstSearchTree,
+    dfs_tree: SearchTree,
     dfs_results: DepthFirstSearchResults,
     timer: _Timer,
     reverse_graph: bool = False,
@@ -390,7 +404,7 @@ def _dfs_on_tree(
 
     Args:
         graph (GraphBase): The graph to search.
-        dfs_tree (DepthFirstSearchTree): A new tree to populate by performing a depth-first search
+        dfs_tree (SearchTree): A new tree to populate by performing a depth-first search
             starting at vertex `dfs_tree.root`.
         dfs_results (DepthFirstSearchResults): The object to store the results.
         timer (_Timer): _Timer to track when vertices are first discovered (or first visited) and
@@ -402,7 +416,7 @@ def _dfs_on_tree(
     """
     v = dfs_tree.root
     assert v is not None  # For mypy static type checker.
-    adj_vertices = v.get_adj_for_search(parent=v.attr[PARENT], reverse_graph=reverse_graph)
+    adj_vertices = v.get_adj_for_search(parent=v.attr[PREDECESSOR], reverse_graph=reverse_graph)
     stack: List[_StackFrame] = [_StackFrame(v, adj_vertices)]
 
     while stack:
@@ -414,7 +428,7 @@ def _dfs_on_tree(
                 new_vertex=v, dfs_tree=dfs_tree, dfs_results=dfs_results, timer=timer
             )
 
-            edge: Optional[EdgeType] = _get_tree_edge_to_parent(graph, v)
+            edge: Optional[Edge] = _get_tree_edge_to_parent(graph, v)
             if edge is not None:
                 dfs_results.edges_in_discovery_order.append(edge)
                 dfs_tree.edges_in_discovery_order.append(edge)
@@ -436,10 +450,10 @@ def _dfs_on_tree(
             dfs_results.vertices_post_order.append(v)
 
 
-def _get_tree_edge_to_parent(graph: GraphBase, v: Vertex) -> Optional[EdgeType]:
+def _get_tree_edge_to_parent(graph: GraphBase, v: Vertex) -> Optional[Edge]:
     """DFS helper function to retrieve the DFS tree edge leading from `v` to its parent vertex."""
-    if v.attr[PARENT]:
-        parent_v = v.attr[PARENT]
+    if v.attr[PREDECESSOR]:
+        parent_v = v.attr[PREDECESSOR]
         return graph[parent_v, v]
     return None
 
@@ -448,14 +462,14 @@ def _initialize_dfs_graph(graph) -> None:
     """Initialize vertex attributes associated with depth-first search."""
     for v in graph.vertices:
         v.attr[COLOR] = WHITE
-        v.attr[PARENT] = None
+        v.attr[PREDECESSOR] = None
         v.attr[TIME_DISCOVERED] = NEG_INF
         v.attr[TIME_FINISHED] = NEG_INF
 
 
 def _mark_vertex_discovered_and_update(
     new_vertex: Vertex,
-    dfs_tree: DepthFirstSearchTree,
+    dfs_tree: SearchTree,
     dfs_results: DepthFirstSearchResults,
     timer: _Timer,
 ):
@@ -466,7 +480,7 @@ def _mark_vertex_discovered_and_update(
 
     dfs_results.vertices_pre_order.append(new_vertex)
     dfs_tree.vertices.add(new_vertex)
-    if len(new_vertex.loops) > 0:
+    if new_vertex.loops is not None:
         dfs_results._is_acyclic = False
 
 
@@ -484,8 +498,9 @@ def _push_next_undiscovered_adj_vertex_to_stack(
 
     if w.attr[COLOR] == WHITE:  # UNDISCOVERED vertex w adjacent to v.
         dfs_results.tree_edges.add(edge)
-        w.attr[PARENT] = prev_vertex
-        w_adj_vertices = w.get_adj_for_search(parent=w.attr[PARENT], reverse_graph=reverse_graph)
+        w.attr[PREDECESSOR] = prev_vertex
+        w_adj_vertices = w.get_adj_for_search(
+            parent=w.attr[PREDECESSOR], reverse_graph=reverse_graph)
         stack.append(_StackFrame(w, w_adj_vertices))
     elif w.attr[COLOR] == GRAY:  # ALREADY DISCOVERED, but still in the process of being visited.
         dfs_results.back_edges.add(edge)

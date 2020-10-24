@@ -18,7 +18,7 @@ from typing import List
 
 import pytest
 
-from vertizee.algorithms.algo_utilities.depth_first_search_utils import DepthFirstSearchTree
+from vertizee.algorithms.algo_utils.search_utils import SearchTree
 from vertizee.algorithms.components.strongly_connected import kosaraju_strongly_connected_components
 from vertizee.algorithms.search.depth_first_search import dfs_postorder_traversal
 from vertizee.classes.digraph import MultiDiGraph
@@ -50,7 +50,7 @@ class TestStronglyConnectedComponents:
             ]
         )
 
-        sccs: List[DepthFirstSearchTree] = kosaraju_strongly_connected_components(g)
+        sccs: List[SearchTree] = kosaraju_strongly_connected_components(g)
 
         assert len(sccs) == 4, "Graph should have 4 strong-connected components."
         for scc in sccs:
@@ -95,7 +95,7 @@ class TestStronglyConnectedComponents:
             ]
         )
 
-        sccs: List[DepthFirstSearchTree] = kosaraju_strongly_connected_components(g)
+        sccs: List[SearchTree] = kosaraju_strongly_connected_components(g)
 
         assert len(sccs) == 4, "Graph should have 4 strong-connected components."
         for scc in sccs:

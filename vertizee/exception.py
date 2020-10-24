@@ -27,6 +27,10 @@ class AlgorithmError(VertizeeException):
     """Exception for unexpected termination of algorithms."""
 
 
+class EdgeNotFound(VertizeeException):
+    """Exception raised if indicated edge is not present in the graph"""
+
+
 class Unfeasible(VertizeeException):
     """Exception raised by algorithms trying to solve a problem
     instance that has no feasible solution."""
@@ -47,5 +51,15 @@ class NoPath(Unfeasible):
     on graphs where such a path does not exist."""
 
 
+class ParallelEdgesNotAllowed(VertizeeException):
+    """Exception raised when attempting to add a parallel edge to a graph that is not a
+    multigraph."""
+
+
+class SelfLoopsNotAllowed(VertizeeException):
+    """Exception raised when attempting to add a self loop to a graph instantiated with
+    ``allow_self_loops`` set to False."""
+
+
 class VertexNotFound(VertizeeException):
-    """Exception raised if requested vertex is not present in the graph"""
+    """Exception raised if indicated vertex is not present in the graph"""

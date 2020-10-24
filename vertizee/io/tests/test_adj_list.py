@@ -55,7 +55,7 @@ class TestGraphIOAdjList:
         assert len(g[3].incident_edges_incoming) == 2, "v3 should have 2 incoming edges"
         assert len(g[3].incident_edges_outgoing) == 1, "v3 should have 1 outgoing edge"
         assert len(g[4].incident_edges_outgoing) == 0, "v4 should have 0 outgoing edges"
-        v5_loop_edge = g[5].loops.pop()
+        v5_loop_edge = g[5].loops
         assert v5_loop_edge.parallel_edge_count == 1, "v5 should have 2 loops"
         assert len(g[5].incident_edges_incoming) == 1, "v5 should have 1 incoming edge (self-loop)"
 
@@ -73,7 +73,7 @@ class TestGraphIOAdjList:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE01), g)
 
-        v1_loop_edge = g[1].loops.pop()
+        v1_loop_edge = g[1].loops
         assert v1_loop_edge.multiplicity == 2, "v1 should have 2 loops"
         assert g[1].degree == 6, "deg(v1) should be 6"
         assert len(g[2].incident_edges) == 2, (

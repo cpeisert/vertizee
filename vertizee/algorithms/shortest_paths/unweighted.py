@@ -19,7 +19,7 @@ from collections import deque
 from typing import Set, TYPE_CHECKING
 
 from vertizee import VertexNotFound
-from vertizee.algorithms.algo_utilities.shortest_path_utils import ShortestPath
+from vertizee.algorithms.algo_utils.shortest_path_utils import ShortestPath
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.vertex import Vertex
 
@@ -42,7 +42,7 @@ def shortest_paths_breadth_first_search(
     infinity (``float("inf")``). In additional, ``ShortestPath.is_unreachable()`` will return True.
 
     Note:
-        This is adapted from BFS [CLRS2009_10]_, but with the generalization of updating shortest
+        This is adapted from BFS [CLRS2009_11]_, but with the generalization of updating shortest
         paths and predecessor vertices using the concept of edge relaxation.
 
     Args:
@@ -50,14 +50,16 @@ def shortest_paths_breadth_first_search(
         source: The source vertex from which to find shortest paths to all other reachable vertices.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.algorithms.algo_utilities.shortest_path_utils.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utils.shortest_path_utils.reconstruct_path`.
+            Defaults to False.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
-        * :class:`ShortestPath <vertizee.algorithms.algo_utilities.shortest_path_utils.ShortestPath>`
+        * :class:`ShortestPath
+          <vertizee.algorithms.algo_utils.shortest_path_utils.ShortestPath>`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 
     Example:
@@ -74,11 +76,12 @@ def shortest_paths_breadth_first_search(
         True
 
     References:
-     .. [CLRS2009_10] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
+     .. [CLRS2009_11] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
                       Introduction to Algorithms: Third Edition, page 595. The MIT Press, 2009.
     """
-    s: Vertex = graph[source]
-    if s is None:
+    try:
+        s: Vertex = graph[source]
+    except KeyError:
         raise VertexNotFound("source vertex was not found in the graph")
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
 

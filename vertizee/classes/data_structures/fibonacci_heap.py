@@ -144,7 +144,7 @@ class FibonacciHeap(Generic[T]):
             for x in z.children:
                 self._roots.add(x)
                 x.parent = None
-            if len(self._roots) == 0:  # if z == z.right (see: Introduction to Algorithms [1])
+            if not self._roots:  # if z == z.right (see: Introduction to Algorithms [1])
                 self._min = None
             else:
                 self._consolidate()

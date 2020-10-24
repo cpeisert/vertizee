@@ -15,14 +15,14 @@
 """Utility classes supporting depth-first graph search.
 
 * :class:`DepthFirstSearchResults` - Stores the results of a depth-first search.
-* :class:`DepthFirstSearchTree` - A tree comprised of vertices and edges discovered during a
+* :class:`SearchTree` - A tree comprised of vertices and edges discovered during a
   depth-first search.
 """
 
 from __future__ import annotations
 from typing import List, Optional, Set
 
-from vertizee.classes.edge import EdgeType
+from vertizee.classes.edge import Edge
 from vertizee.classes.graph_base import GraphBase
 from vertizee.classes.vertex import Vertex
 
@@ -32,7 +32,7 @@ class DepthFirstSearchResults:
 
     A depth-first search produces the following output:
 
-        * A forest of depth-first-search trees.
+        * A forest of depth-first search trees.
         * An ordering of vertices sorted from last to first finishing time. The finishing time of a
           vertex is the time at which the search of the vertex's subtree finished.
         * Topological sort: If the graph is a DAG (directed, acyclic), then reverse postordering
@@ -65,7 +65,7 @@ class DepthFirstSearchResults:
         cross_edges: The set of cross edges.
         forward_edges: The set of forward edges.
         graph: The graph that was searched.
-        dfs_forest: A depth-first forest, which is a set of :class:`DepthFirstSearchTree` objects.
+        dfs_forest: A depth-first forest, which is a set of :class:`SearchTree` objects.
         edges_in_discovery_order: The edges in the order traversed by the depth-first search.
         tree_edges: The set of tree edges.
         vertices_pre_order: The list of vertices in ascending order of first discovery times during
@@ -78,7 +78,7 @@ class DepthFirstSearchResults:
     See Also:
         * :func:`depth_first_search
           <vertizee.algorithms.search.depth_first_search.depth_first_search>`
-        * :class:`DepthFirstSearchTree`
+        * :class:`SearchTree`
         * :func:`dfs_preorder_traversal
           <vertizee.algorithms.search.depth_first_search.dfs_preorder_traversal>`
         * :func:`dfs_postorder_traversal
@@ -89,14 +89,14 @@ class DepthFirstSearchResults:
 
     def __init__(self, graph: "GraphBase") -> None:
         self.graph: GraphBase = graph
-        self.edges_in_discovery_order: List[EdgeType] = []
-        self.dfs_forest: Set["DepthFirstSearchTree"] = set()
+        self.edges_in_discovery_order: List[Edge] = []
+        self.dfs_forest: Set["SearchTree"] = set()
 
         # Edge classification.
-        self.back_edges: Set[EdgeType] = set()
-        self.cross_edges: Set[EdgeType] = set()
-        self.forward_edges: Set[EdgeType] = set()
-        self.tree_edges: Set[EdgeType] = set()
+        self.back_edges: Set[Edge] = set()
+        self.cross_edges: Set[Edge] = set()
+        self.forward_edges: Set[Edge] = set()
+        self.tree_edges: Set[Edge] = set()
 
         self._is_acyclic = True
 
@@ -120,20 +120,19 @@ class DepthFirstSearchResults:
         return self._is_acyclic
 
 
-class DepthFirstSearchTree:
-    """A depth-first tree is a tree comprised of vertices and edges discovered during a
-    depth-first search.
+class SearchTree:
+    """A search tree is a tree comprised of vertices and edges discovered during a
+    breadth-first or depth-first search.
 
     Attributes:
-        root: Optional; The root vertex of the DFS tree.
-        edges_in_discovery_order: The edges in the order traversed by the depth-first search of the
-            tree.
-        vertices: The set of vertices visited during the depth-first search.
+        root: The root vertex of the search tree.
+        edges_in_discovery_order: The edges in the order traversed by the breadth-first or
+            depth-first search of the tree.
+        vertices: The set of vertices visited during the search.
     """
 
-    def __init__(self, root: Optional["Vertex"] = None) -> None:
+    def __init__(self, root: "Vertex") -> None:
         self.root = root
-        self.edges_in_discovery_order: List[EdgeType] = []
+        self.edges_in_discovery_order: List[Edge] = []
         self.vertices: Set[Vertex] = set()
-        if root is not None:
-            self.vertices.add(root)
+        self.vertices.add(root)

@@ -16,7 +16,7 @@
 
 import pytest
 
-from vertizee.algorithms.algo_utilities.shortest_path_utils import ShortestPath
+from vertizee.algorithms.algo_utils.shortest_path_utils import ShortestPath
 from vertizee.algorithms.shortest_paths.unweighted import shortest_paths_breadth_first_search
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.graph import Graph

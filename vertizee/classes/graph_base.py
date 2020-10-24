@@ -19,7 +19,7 @@ See Also:
     * :class:`DiGraph <vertizee.classes.digraph.DiGraph>`
     * :class:`Edge <vertizee.classes.edge.Edge>`
     * :class:`Graph <vertizee.classes.graph.Graph>`
-    * :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+    * :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
     * :class:`MultiDiGraph <vertizee.classes.digraph.MultiDiGraph>`
     * :class:`MultiGraph <vertizee.classes.graph.MultiGraph>`
     * :class:`SimpleGraph <vertizee.classes.graph.SimpleGraph>`
@@ -28,21 +28,21 @@ See Also:
 # pylint: disable=too-many-public-methods
 
 from __future__ import annotations
+from collections import abc
+import copy
 import random
-from typing import cast, Dict, List, Iterator, Optional, overload, Set, Tuple, TYPE_CHECKING
+from typing import Dict, List, Iterable, Iterator, Optional, overload, Set, Tuple, TYPE_CHECKING
 
-from vertizee.classes import parsed_primitives
-from vertizee.classes.parsed_primitives import EdgeTupleWeighted, ParsedPrimitives
-from vertizee.classes.edge import DEFAULT_WEIGHT
-from vertizee.classes.edge import DiEdge
-from vertizee.classes.edge import Edge
-from vertizee.classes.vertex import Vertex
+from vertizee.classes import primitives_parsing
+from vertizee.classes import edge
+from vertizee import exception
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
-    from vertizee.classes.edge import EdgeType
-    from vertizee.classes.parsed_primitives import GraphPrimitive
-    from vertizee.classes.vertex import VertexType
+    from vertizee.classes.primitives_parsing import _EdgeData, _VertexData
+    from vertizee.classes.primitives_parsing import GraphPrimitive
+    from vertizee.classes.edge import Edge, EdgeType
+    from vertizee.classes.vertex import Vertex, VertexLabel, VertexType
 
 
 class GraphBase:
@@ -85,12 +85,6 @@ class GraphBase:
         if create_key != GraphBase._create_key:
             raise ValueError("GraphBase objects must be initialized using `_create`.")
 
-        self._edges: Set[EdgeType] = set()
-        self._edges_with_freq_weight: Dict[EdgeType, int] = {}
-        """ A dictionary mapping each edge to its frequency in the graph. This is used for
-        correctly weighting the random sampling of edges. For non-parallel edges, this count is 1.
-        """
-
         self._graph_state_is_simple_graph = True
         """Tracks the current state of the graph as edges are added. If a parallel edge or
         self loop is added, then this flag is set to False."""
@@ -102,22 +96,39 @@ class GraphBase:
         """If an edge is added with a weight that is not equal to `DEFAULT_WEIGHT`, then this flag
         is set to True."""
 
+        self._edges: Dict[str, Edge] = set()
+        """A dictionary mapping edge labels (keys) to Edge objects. See
+        :func:`create_label <vertizee.classes.edge.create_label>`."""
+
+        self._edges_with_freq_weight: Dict[Edge, int] = {}
+        """A dictionary mapping each edge to its frequency in the graph. This is used for
+        correctly weighting the random sampling of edges. For non-parallel edges, this count is 1.
+        """
         self._vertices: Dict[str, Vertex] = {}
 
     def __contains__(self, vertex: VertexType) -> bool:
-        primitives = parsed_primitives.parse_graph_primitives(vertex)
-        if len(primitives.vertex_labels) == 0:
-            raise ValueError(
-                "Must specify a vertex when checking for Graph membership with `in` operator."
-            )
-        return primitives.vertex_labels[0] in self._vertices
+        vertex_data: _VertexData = primitives_parsing.parse_vertex_type(vertex)
+        return vertex_data.label in self._vertices
+
+    def __deepcopy__(self, memo):
+        new = self.__class__(
+            self._create_key,
+            self._is_directed_graph,
+            self._is_multigraph,
+            self._is_simple_graph
+        )
+        for vertex in self._vertices.values():
+            new.add_vertex(vertex)
+        for edge in self._edges:
+            new._add_edge_from_edge(edge)
+        return new
 
     @overload
-    def __getitem__(self, vertex_key: "VertexType") -> Vertex:
+    def __getitem__(self, vertex: "VertexType") -> Vertex:
         ...
 
     @overload
-    def __getitem__(self, edge_endpoints: Tuple["VertexType", "VertexType"]) -> EdgeType:
+    def __getitem__(self, edge_tuple: Tuple["VertexType", "VertexType"]) -> Edge:
         ...
 
     def __getitem__(self, keys):
@@ -135,21 +146,30 @@ class GraphBase:
             (1, 2)
 
         Args:
-            vertex_keys: The vertex keys. One vertex indicates a ``Vertex`` lookup and two vertices
-                indicates an ``Edge`` (or ``DiEdge``) lookup.
+            keys: A vertex label, vertex tuple, vertex object, or edge tuple. Specifying one vertex
+                will retrieve the ``Vertex`` object from the graph. Specifying two vertices will
+                retrieve the associated edge object (``Edge`` or ``DiEdge``) from the graph.
 
         Returns:
-            Union[Vertex, EdgeType, None]: The vertex specified by the vertex label or the edge
+            Union[Vertex, Edge]: The vertex specified by the vertex label or the edge
                 specified by two vertices. If no matching vertex or edge found, returns None.
+
+        Raises:
+            IndexError: If ``keys`` is not exactly 1 or 2 ``VertexType`` keys.
+            KeyError: If the graph does not contain a vertex or an edge matching ``keys``.
         """
+        return_value: Optional[Edge, Vertex] = None
         if isinstance(keys, tuple):
             if len(keys) > 2:
-                raise ValueError(
-                    "graph index lookup supports one or two vertices; " f"{len(keys)} found"
+                raise IndexError(
+                    f"graph index lookup supports one or two vertices; found {len(keys)} keys"
                 )
             if len(keys) == 1:
                 return_value = self._get_vertex(keys[0])
-            return_value = self.get_edge(keys[0], keys[1])
+            elif isinstance(keys[1], dict):
+                return_value = self._get_vertex(keys[0])
+            else:
+                return_value = self._get_edge(keys[0], keys[1])
         else:
             return_value = self._get_vertex(keys)
 
@@ -167,166 +187,144 @@ class GraphBase:
 
     def add_edge(
         self,
-        v1: VertexType,
-        v2: VertexType,
-        weight: float = DEFAULT_WEIGHT,
-        parallel_edge_count: int = 0,
-        parallel_edge_weights: Optional[List[float]] = None,
-    ) -> EdgeType:
+        vertex1: "VertexType",
+        vertex2: "VertexType",
+        weight: float = edge.DEFAULT_WEIGHT,
+        **attr
+    ) -> Edge:
         """Adds a new edge to the graph.
 
-        If there is already an edge with matching vertices, then the internal :class:`Edge
-        <vertizee.classes.edge.Edge>` object is modified by incrementing the parallel edge count.
+        If there is already an edge with matching vertices and the graph is a multigraph, then the
+        existing :class:`Edge <vertizee.classes.edge.Edge>` object is modified by incrementing its
+        parallel edge count.
 
         Args:
-            v1: The first vertex.
-            v2: The second vertex.
+            vertex1: The first vertex.
+            vertex2: The second vertex.
             weight: Optional; The edge weight. Defaults to 1.
-            parallel_edge_count: Optional; The number of parallel edges, not including the
-                initial edge between the vertices. Defaults to 0.
-            parallel_edge_weights: Optional; The weights of parallel edges. Defaults to None.
+            **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
 
         Returns:
-            EdgeType: The newly added edge (or pre-existing edge if a parallel edge was
+            Edge: The newly added edge (or pre-existing edge if a parallel edge was
             added). If the graph is directed, an instance of :class:`DiEdge
             <vertizee.classes.edge.DiEdge>` will be returned, otherwise :class:`Edge
             <vertizee.classes.edge.Edge>`.
         """
-        primitives = parsed_primitives.parse_graph_primitives(v1)
-        vertex1 = self._get_or_add_vertex(primitives.vertex_labels[0])
-        primitives = parsed_primitives.parse_graph_primitives(v2)
-        vertex2 = self._get_or_add_vertex(primitives.vertex_labels[0])
+        existing_v1v2: Optional[Edge] = None
+        edge_label = edge.create_edge_label(vertex1, vertex2, self._is_directed_graph)
+        if edge_label in self._edges:
+            existing_v1v2 = self._edges[edge_label]
 
-        error_msg = None
-        existing_v1v2 = self.get_edge(vertex1, vertex2)
+        vertex1_data = primitives_parsing.parse_vertex_type(vertex1)
+        vertex2_data = primitives_parsing.parse_vertex_type(vertex2)
 
-        if parallel_edge_count > 0 or existing_v1v2 is not None:
-            error_msg = "parallel edge"
-        elif vertex1.label == vertex2.label:
-            error_msg = "edge with a loop"
+        if existing_v1v2 and not self._is_multigraph:
+            raise ValueError("parallel edges are only allowed in multigraphs; attempted to add "
+                f"parallel edge {edge_label}")
+        if vertex1_data.label == vertex2_data.label and self._is_simple_graph:
+            raise ValueError("loops are not allowed in simple graphs; attempted to add loop edge "
+                f"{edge_label}")
 
-        if error_msg is not None:
-            if self._is_simple_graph:
-                raise ValueError(
-                    f"Attempted to add {error_msg}. This graph was initialized as "
-                    "a simple graph (i.e. no loops and no parallel edges)."
-                )
-            if error_msg == "parallel edge" and not self._is_multigraph:
-                raise ValueError(
-                    f"Attempted to add {error_msg}. This graph is not a multigraph and therefore "
-                    "does not support parallel edges."
-                )
+        if existing_v1v2 or vertex1_data.label == vertex2_data.label:
             self._graph_state_is_simple_graph = False
 
-        if weight != DEFAULT_WEIGHT:
+        if weight != edge.DEFAULT_WEIGHT:
             self._is_weighted_graph = True
-        if self._is_directed_graph:
-            new_edge = DiEdge._create(
-                vertex1,
-                vertex2,
-                weight=weight,
-                parallel_edge_count=parallel_edge_count,
-                parallel_edge_weights=parallel_edge_weights,
-            )
+
+        v1 = self._get_or_add_vertex(vertex1_data)
+        v2 = self._get_or_add_vertex(vertex2_data)
+
+        if self.is_directed_graph():
+            new_edge = edge.DiEdge._create(v1, v2, weight=weight, **attr)
         else:
-            new_edge = Edge._create(
-                vertex1,
-                vertex2,
-                weight=weight,
-                parallel_edge_count=parallel_edge_count,
-                parallel_edge_weights=parallel_edge_weights,
-            )
+            new_edge = Edge._create(v1, v2, weight=weight, **attr)
+
         if existing_v1v2 is not None:
-            _merge_parallel_edges(existing_v1v2, new_edge=new_edge)
-            self._edges_with_freq_weight[existing_v1v2] = 1 + existing_v1v2.parallel_edge_count
+            _merge_parallel_edges(existing_v1v2, new_edge)
+            self._edges_with_freq_weight[existing_v1v2] = existing_v1v2.multiplicity
             return existing_v1v2
 
-        self._edges.add(new_edge)
-        self._edges_with_freq_weight[new_edge] = 1 + new_edge.parallel_edge_count
+        self._edges[edge_label] = new_edge
+        self._edges_with_freq_weight[new_edge] = new_edge.multiplicity
         # Handle vertex book keeping.
         new_edge.vertex1._add_edge(new_edge)
         new_edge.vertex2._add_edge(new_edge)
         return new_edge
 
-    def add_edges_from(self, *args: "GraphPrimitive") -> int:
-        """Adds all edges from a sequence of graph primitives.
+    def add_edges_from(self, edge_container: Iterable["EdgeType"], **attr) -> None:
+        """Adds edges from a container where the edges are most often specified as tuples.
 
         Args:
-            *args: Sequence of graph primitives specifying edges to add.
-
-        Returns:
-            int: The number of edges added.
+            edge_container: Sequence of edges to add.
+            **attr: Optional; Keyword arguments to be added to the ``attr`` dictionaries of each
+                edge.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+            :mod:`EdgeType <vertizee.classes.edge>`
 
         Example:
             >>> graph.add_edges_from([(0, 1), (0, 2), (2, 1), (2, 2)])
         """
-        primitives = parsed_primitives.parse_graph_primitives(*args)
-        edge_tuples = parsed_primitives.get_all_edge_tuples_from_parsed_primitives(primitives)
+        if not isinstance(edge_container, abc.Iterable):
+            raise TypeError("edge_container must be iterable")
 
-        for edge_tuple in edge_tuples:
-            if len(edge_tuple) == 2:
-                self.add_edge(edge_tuple[0], edge_tuple[1])
-            elif len(edge_tuple) == 3:
-                # mypy: See https://github.com/python/mypy/issues/1178
-                v1, v2, w = cast(EdgeTupleWeighted, edge_tuple)
-                self.add_edge(v1, v2, weight=w)
-            else:
-                raise ValueError(
-                    f"Expected `edge_tuple` to have either 2 or 3 elements. Actual "
-                    f" length {len(edge_tuple)}."
-                )
+        for e in edge_container:
+            edge_data: _EdgeData = primitives_parsing.parse_edge_type(e)
+            new_edge = self.add_edge(edge_data.vertex1, edge_data.vertex2, weight=edge_data.weight,
+                **edge_data.attr)
+            for k, v in attr.items():
+                new_edge[k] = v
 
-        return len(edge_tuples)
-
-    def add_vertex(self, vertex_label: VertexType) -> Vertex:
+    def add_vertex(self, label: "VertexLabel", **attr) -> Vertex:
         """Adds a vertex to the graph and returns the new Vertex object.
 
         If an existing vertex matches the vertex label, the existing vertex is returned.
 
         Args:
-            vertex_label: The new vertex label (or Vertex object from which to get the label).
+            label: The label to use for the new vertex. In order for a new vertex to be added, the
+                label must not match any existing vertices in the graph.
+            **attr: Optional; Keyword arguments to be added to the ``attr`` dictionary.
 
         Returns:
             Vertex: The new vertex (or an existing vertex matching the vertex label).
         """
-        primitives = parsed_primitives.parse_graph_primitives(vertex_label)
-        if len(primitives.vertex_labels) == 0:
-            raise ValueError("Must specify a valid vertex key.")
-        new_key = primitives.vertex_labels[0]
+        if not isinstance(label, (int, str)):
+            raise ValueError(f"a vertex label must be a string or integer; found {type(label)}")
+        vertex_label = str(label)
 
-        if new_key not in self._vertices:
-            new_vertex = Vertex._create(new_key, parent_graph=self)
-            self._vertices[new_key] = new_vertex
+        if vertex_label not in self._vertices:
+            new_vertex = Vertex._create(vertex_label, parent_graph=self, **attr)
+            self._vertices[vertex_label] = new_vertex
             return new_vertex
 
-        return self._vertices[new_key]
+        existing_vertex = self._vertices[vertex_label]
+        for v, k in attr.items():
+            existing_vertex[k] = v
+        return existing_vertex
 
-    def add_vertices_from(self, *args: "GraphPrimitive") -> int:
-        """Adds all vertices from a sequence of graph primitives.
+    def add_vertices_from(self, vertex_container: Iterable["VertexType"], **attr) -> None:
+        """Adds vertices from a container, where the vertices are most often specified as strings
+        or integers, but may also be tuples of the form ``Tuple[VertexLabel, AttributesDict]``.
 
         Args:
-            *args: Graph primitives specifying vertices to add.
-
-        Returns:
-            int: The number of vertices added.
+            vertex_container: Sequence of vertices to add.
+            **attr: Optional; Keyword arguments to be added to the ``attr`` dictionaries of each
+                vertex.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+            :mod:`VertexType <vertizee.classes.vertex>`
 
         Example:
-            >>> graph.add_vertices_from([0, 1, 2, 3], [('a', 'b'), ('a', 'd')])
-            # Vertices added: 0, 1, 2, 3, a, b, d
+            >>> graph.add_vertices_from([0, 1, 2, 3])
         """
-        primitives = parsed_primitives.parse_graph_primitives(*args)
-        vertices = parsed_primitives.get_all_vertices_from_parsed_primitives(primitives)
+        if not isinstance(vertex_container, abc.Iterable):
+            raise TypeError("vertex_container must be iterable")
 
-        for vertex_label in vertices:
-            self.add_vertex(vertex_label)
-
-        return len(vertices)
+        for vertex in vertex_container:
+            vertex_data: _VertexData = primitives_parsing.parse_vertex_type(vertex)
+            new_vertex = self.add_vertex(vertex_data.label, vertex_data.attr)
+            for k, v in attr.items():
+                new_vertex[k] = v
 
     def clear(self) -> None:
         """Removes all edges and vertices from the graph."""
@@ -361,7 +359,7 @@ class GraphBase:
 
     def deepcopy(self) -> "GraphBase":
         """Returns a deep copy of this graph."""
-        raise NotImplementedError("this method must be implemented by subclasses")
+        return copy.deepcopy(self)
 
     @property
     def edge_count(self) -> int:
@@ -375,78 +373,74 @@ class GraphBase:
         return count
 
     @property
-    def edges(self) -> Set[EdgeType]:
+    def edges(self) -> Set[Edge]:
         """The set of graph edges."""
         return set(self._edges)
 
     def get_all_graph_edges_from_parsed_primitives(
-        self, primitives: ParsedPrimitives
-    ) -> List[EdgeType]:
+        self, primitives: ParsedVerticesAndEdges
+    ) -> List[Edge]:
         """Gets graph edges that match vertex pairs and edge tuples in a
-        :class:`ParsedPrimitives <vertizee.classes.parsed_primitives.ParsedPrimitives>` object.
+        :class:`ParsedVerticesAndEdges <vertizee.classes.primitives_parsing.ParsedVerticesAndEdges>` object.
 
         Args:
             primitives: The vertex labels and edge tuples parsed from graph primitives.
 
         Returns:
-            List[EdgeType]: A list of edges based on the vertex labels and edge tuples in
+            List[Edge]: A list of edges based on the vertex labels and edge tuples in
             ``primitives``.
 
         See Also:
-            :class:`ParsedPrimitives <vertizee.classes.parsed_primitives.ParsedPrimitives>`
+            :class:`ParsedVerticesAndEdges <vertizee.classes.primitives_parsing.ParsedVerticesAndEdges>`
         """
-        graph_edges: Set[EdgeType] = set()
+        graph_edges: Set[Edge] = set()
         while len(primitives.edge_tuples) > 0:
             t = primitives.edge_tuples.pop()
-            edge = self.get_edge(t)
+            edge = self._get_edge(t)
             if edge is not None:
                 graph_edges.add(edge)
         while len(primitives.edge_tuples_weighted) > 0:
             t_weighted = primitives.edge_tuples_weighted.pop()
-            edge = self.get_edge(t_weighted)
+            edge = self._get_edge(t_weighted)
             if edge is not None:
                 graph_edges.add(edge)
 
         vertex_prev = None
         for vertex_current in primitives.vertex_labels:
             if vertex_prev is not None:
-                graph_edges.add(self.get_edge(vertex_prev, vertex_current))
+                graph_edges.add(self._get_edge(vertex_prev, vertex_current))
                 vertex_prev = None
             else:
                 vertex_prev = vertex_current
 
         return [x for x in graph_edges if x is not None]
 
-    def get_edge(self, *args: "GraphPrimitive") -> Optional[EdgeType]:
-        """Gets the edge specified by the graph primitives, or None if no such edge exists.
+    def _get_edge(self, vertex1: VertexType, vertex2: VertexType,) -> Optional[Edge]:
+        """Gets the edge specified by the vertices, or None if no such edge exists.
 
         Args:
-            *args: graph primitives (i.e. vertices or edges)
+            vertex1: The first vertex; in directed graphs this is the *tail*.
+            vertex2: The second vertex; in directed graphs, this is the *head*.
 
         Returns:
-            EdgeType: The edge or None if not found.
+            Edge: The edge or None if not found.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+            :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
         """
-        primitives = parsed_primitives.parse_graph_primitives(*args)
-        edge_tuple = parsed_primitives.get_edge_tuple_from_parsed_primitives(primitives)
-        if edge_tuple is None or edge_tuple[1] is None:
-            return None
-        if edge_tuple[0] not in self._vertices or edge_tuple[1] not in self._vertices:
-            return None
+        edge_label = edge.create_edge_label(vertex1, vertex2, self._is_directed_graph)
+        if edge_label in self._edges:
+            return self._edges[edge_label]
+        return None
 
-        vertex = self._vertices[edge_tuple[0]]
-        return vertex._get_edge(edge_tuple[0], edge_tuple[1])
-
-    def get_random_edge(self) -> Optional[EdgeType]:
+    def get_random_edge(self) -> Optional[Edge]:
         """Returns a randomly selected edge from the graph, or None if there are no edges.
 
         The random sampling is weighted by edge frequency. The default frequency is 1 and
         increases for each additional parallel edge.
 
         Returns:
-            EdgeType: The random edge, or None if there are no edges.
+            Edge: The random edge, or None if there are no edges.
         """
         if len(self._edges) > 0:
             sample = random.choices(
@@ -458,7 +452,7 @@ class GraphBase:
         return None
 
     @property
-    def graph_weight(self) -> float:
+    def weight(self) -> float:
         """Returns the weight of all edges."""
         weight = 0.0
         for edge in self._edges:
@@ -472,9 +466,9 @@ class GraphBase:
             bool: True if there is a matching edge, otherwise False.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+            :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
         """
-        return self.get_edge(*args) is not None
+        return self._get_edge(*args) is not None
 
     def has_vertex(self, vertex: "VertexType") -> bool:
         """Returns True if the graph contains the specified vertex."""
@@ -493,7 +487,7 @@ class GraphBase:
         """Returns True if this is a weighted graph, i.e., contains edges with weights != 1."""
         return self._is_weighted_graph
 
-    def merge_vertices(self, vertex1: VertexType, vertex2: VertexType) -> None:
+    def contract_edge(self, vertex1: VertexType, vertex2: VertexType) -> None:
         """Merge ``vertex2`` into ``vertex1``.
 
         After the merge operation:
@@ -532,14 +526,14 @@ class GraphBase:
         v1 = self._vertices[primitives.vertex_labels[0]]
         v2 = self._vertices[primitives.vertex_labels[1]]
 
-        edges_to_delete: List[EdgeType] = []
+        edges_to_delete: List[Edge] = []
         # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
         for edge in v2.incident_edges:
             edges_to_delete.append(edge)
             if edge.vertex1 == v2:
-                existing_edge = self.get_edge(v1, edge.vertex2)
+                existing_edge = self._get_edge(v1, edge.vertex2)
             else:  # edge.vertex2 == v2
-                existing_edge = self.get_edge(edge.vertex1, v1)
+                existing_edge = self._get_edge(edge.vertex1, v1)
 
             if existing_edge is not None:
                 _merge_parallel_edges(existing_edge, edge)
@@ -562,10 +556,10 @@ class GraphBase:
                     )
 
         # Incident loops on vertex2 become loops on vertex1.
-        if len(v2.loops) > 0:
-            v2_loop_edge = v2.loops.pop()
+        if v2.loops is not None:
+            v2_loop_edge = v2.loops
             edges_to_delete.append(v2_loop_edge)
-            if len(v1.loops) == 0:
+            if v1.loops is None:
                 self.add_edge(
                     v1,
                     v1,
@@ -574,7 +568,7 @@ class GraphBase:
                     parallel_edge_weights=v2_loop_edge.parallel_edge_weights,
                 )
             else:
-                v1_loop_edge, *_ = v1.loops
+                v1_loop_edge = v1.loops
                 _merge_parallel_edges(v1_loop_edge, v2_loop_edge)
         # Delete indicated edges after finishing iteration.
         for deleted_edge in edges_to_delete:
@@ -593,7 +587,7 @@ class GraphBase:
             int: The number of edges deleted.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+            :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
         """
         primitives = parsed_primitives.parse_graph_primitives(*args)
         edges_to_remove = self.get_all_graph_edges_from_parsed_primitives(primitives)
@@ -623,7 +617,7 @@ class GraphBase:
             int: The number of edges deleted.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.parsed_primitives>`
+            :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
         """
         primitives = parsed_primitives.parse_graph_primitives(*args)
         edges_to_remove = self.get_all_graph_edges_from_parsed_primitives(primitives)
@@ -648,8 +642,8 @@ class GraphBase:
         for key, vertex in self._vertices.items():
             if vertex.degree == 0:
                 vertex_labels_to_remove.append(key)
-            elif len(vertex.loops) > 0:
-                if len(vertex.incident_edges) == len(vertex.loops):
+            elif vertex.loops is not None:
+                if len(vertex.incident_edges) == 1:
                     vertex_labels_to_remove.append(key)
 
         for k in vertex_labels_to_remove:
@@ -666,7 +660,7 @@ class GraphBase:
             vertex: The vertex to remove.
         """
         primitives = parsed_primitives.parse_graph_primitives(vertex)
-        if len(primitives.vertex_labels) == 0:
+        if not primitives.vertex_labels:
             raise ValueError("Must specify a valid vertex key or Vertex.")
 
         lookup_key = primitives.vertex_labels[0]
@@ -689,49 +683,43 @@ class GraphBase:
         """The set of graph vertices."""
         return set(self._vertices.values())
 
-    def _deepcopy_into(self, graph_copy: "GraphBase") -> None:
-        """Initializes a ``GraphBase`` instance ``graph_copy`` with a deep copy of this graph's
-        properties.
+    def _add_edge_from_edge(self, edge: Edge) -> Edge:
+        """Protected method for adding edges by copying data from an existing Edge object. This
+        method exists to simplying making copies of graphs. If the edge object is already a member
+        of this graph instance, the edge is returned and no additional edge is added."""
+        if edge._parent_graph == self:  # `edge` is already a member of this graph instance.
+            return edge
 
-        Args:
-            graph_copy (GraphBase): The graph instance into which properties will be copied.
-        """
-        graph_copy._is_directed_graph = self._is_directed_graph
-        graph_copy._is_multigraph = self._is_multigraph
-        graph_copy._is_simple_graph = self._is_simple_graph
-        for vertex_label in self._vertices:
-            graph_copy.add_vertex(vertex_label)
-        for edge in self._edges:
-            graph_copy.add_edge(
-                edge.vertex1,
-                edge.vertex2,
-                weight=edge.weight,
-                parallel_edge_count=edge.parallel_edge_count,
-                parallel_edge_weights=edge.parallel_edge_weights,
-            )
+        new_edge = self.add_edge(edge.vertex1, edge.vertex2, edge.weight, **edge.attr)
 
-    def _get_or_add_vertex(self, vertex: VertexType) -> Vertex:
+        if edge.parallel_edge_count > 0 and not self._is_multigraph:
+            raise ValueError("parallel edges are only allowed in multigraphs; attempted to add "
+                f"parallel edge ({edge.vertex1.label, edge.vertex2.label})")
+
+        new_edge._parallel_edge_count += edge.parallel_edge_count
+        new_edge._parallel_edge_weights += edge.parallel_edge_weights
+        while len(new_edge.parallel_edge_weights) > new_edge.parallel_edge_count:
+            new_edge._parallel_edge_weights.pop()
+        self._edges_with_freq_weight[new_edge] = new_edge.multiplicity
+
+    def _get_or_add_vertex(self, vertex_data: _VertexData) -> Vertex:
         """Helper method to get a vertex, or if not found, add a new vertex.
 
         Args:
-            vertex: The vertex to get or add.
+            vertex_data: The vertex to get or add.
 
         Returns:
             Vertex: The vertex that was either found or added.
         """
-        primitives = parsed_primitives.parse_graph_primitives(vertex)
-        if len(primitives.vertex_labels) == 0:
-            raise ValueError("Must specify a valid vertex label or Vertex object.")
-        key = primitives.vertex_labels[0]
-        if key in self._vertices:
-            return self._vertices[key]
+        if vertex_data.label in self._vertices:
+            return self._vertices[vertex_data.label]
 
-        return self.add_vertex(key)
+        return self.add_vertex([vertex_data.label, vertex_data.attr])
 
     def _get_vertex(self, vertex: VertexType) -> Optional[Vertex]:
         """Returns the specified vertex or None if not found."""
         primitives = parsed_primitives.parse_graph_primitives(vertex)
-        if len(primitives.vertex_labels) == 0:
+        if not primitives.vertex_labels:
             raise ValueError("Must specify a valid vertex label or Vertex object.")
         lookup_key = primitives.vertex_labels[0]
         if lookup_key in self._vertices:
@@ -749,24 +737,27 @@ class GraphBase:
             reverse_graph: The graph instance to initialize with the reverse of this graph.
         """
         if not self._is_directed_graph or not reverse_graph._is_directed_graph:
-            raise ValueError("Reverse graphs may only be created for directed graphs.")
+            raise exception.GraphTypeNotSupported("only directed graphs may be reversed")
         reverse_graph.clear()
 
-        for vertex_label in self._vertices:
-            reverse_graph.add_vertex(vertex_label)
-        for edge in self.edges:
+        for vertex in self._vertices.values():
+            reverse_graph.add_vertex(copy.deepcopy(vertex))
+        for edge in self._edges:
             reverse_graph.add_edge(
                 edge.vertex2,
                 edge.vertex1,
                 weight=edge.weight,
                 parallel_edge_count=edge.parallel_edge_count,
                 parallel_edge_weights=edge.parallel_edge_weights,
+                **(copy.deepcopy(edge.attr))
             )
 
 
-def _merge_parallel_edges(existing: EdgeType, new_edge: EdgeType) -> None:
+def _merge_parallel_edges(existing: Edge, new_edge: Edge) -> None:
     """Helper method to merge an edge into an existing parallel edge."""
     existing._parallel_edge_weights += [new_edge.weight] + new_edge.parallel_edge_weights
-    existing._parallel_edge_count += 1 + new_edge.parallel_edge_count
+    existing._parallel_edge_count += new_edge.multiplicity
+    for k, v in new_edge.attr.items():
+        existing[k] = v
     while len(existing.parallel_edge_weights) > existing.parallel_edge_count:
         existing._parallel_edge_weights.pop()
