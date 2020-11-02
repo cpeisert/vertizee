@@ -150,7 +150,7 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
         if not edge_tuples:
             new_graph.add_vertex(source)
             continue
-        if not new_graph.is_directed_graph():
+        if not new_graph.is_directed():
             edge_tuples = _remove_duplicate_undirected_edges(
                 source, edge_tuples, edge_label_to_source
             )
@@ -192,7 +192,7 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
         if not edge_tuples:
             new_graph.add_vertex(source)
             continue
-        if not new_graph.is_directed_graph():
+        if not new_graph.is_directed():
             edge_tuples = _remove_duplicate_undirected_edges(
                 source, edge_tuples, edge_label_to_source
             )
@@ -341,7 +341,7 @@ def _get_incident_edges_excluding_loops(
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
             False.
     """
-    if graph.is_directed_graph():
+    if graph.is_directed():
         if reverse_graph:
             return vertex.incident_edges_incoming
         return vertex.incident_edges_outgoing

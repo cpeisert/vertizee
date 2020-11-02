@@ -54,7 +54,7 @@ def kosaraju_strongly_connected_components(graph: "GraphBase") -> List["SearchTr
      .. [R2018] Algorithms Illuminated (Part 2): Graph Algorithms and Data Structures.
                 Tim Roughgarden. Soundlikeyourself Publishing LLC, 2018. (pages 57-63)
     """
-    if not graph.is_directed_graph():
+    if not graph.is_directed():
         raise GraphTypeNotSupported("graph must be directed")
     postorder = list(dfs_postorder_traversal(graph, reverse_graph=True))
     # Mark all vertices of graph as unexplored.

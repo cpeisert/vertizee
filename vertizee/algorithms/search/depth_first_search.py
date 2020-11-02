@@ -381,9 +381,9 @@ def _check_for_parallel_edge_cycle(
     """DFS helper function to check for parallel edge cycles."""
     if edge is None:
         return
-    if not graph.is_directed_graph() and edge.parallel_edge_count > 0:
+    if not graph.is_directed() and edge.parallel_edge_count > 0:
         dfs_results._is_acyclic = False
-    elif graph.is_directed_graph() and dfs_results.is_acyclic():
+    elif graph.is_directed() and dfs_results.is_acyclic():
         # Check if parallel edge in opposite direction.
         try:
             _ = graph[edge.vertex2, edge.vertex1]

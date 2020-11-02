@@ -111,7 +111,7 @@ class DepthFirstSearchResults:
             The topological ordering is the reverse of the depth-first search postordering. The
             reverse of the postordering is not the same as the preordering.
         """
-        if self.graph.is_directed_graph() and self.is_acyclic():
+        if self.graph.is_directed() and self.is_acyclic():
             return list(reversed(self.vertices_post_order))
         return None
 

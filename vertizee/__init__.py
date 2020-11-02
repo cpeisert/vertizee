@@ -10,12 +10,34 @@ See https://<TODO> for complete documentation.
 # pylint: disable=wrong-import-position
 from vertizee.exception import *
 
+from vertizee.classes.edge import (
+    Connection,
+    DiEdge,
+    DiEdgeView,
+    Edge,
+    EdgeType,
+    EdgeView,
+    MultiConnection,
+    MultiDiEdge,
+    MultiEdge
+)
+from vertizee.classes.graph import (
+    DiGraph,
+    Graph,
+    GraphBase,
+    MultiDiGraph,
+    MultiGraph
+)
+from vertizee.classes.primitives_parsing import GraphPrimitive
+from vertizee.classes.vertex import (
+    DiVertex,
+    MultiDiVertex,
+    MultiVertex,
+    Vertex,
+    VertexLabel,
+    VertexType
+)
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.data_structures.vertex_dict import VertexDict
-
-from vertizee.classes.digraph import DiGraph, MultiDiGraph
-from vertizee.classes.edge import DiEdge, Edge
-from vertizee.classes.graph import Graph, MultiGraph, SimpleGraph
-from vertizee.classes.vertex import Vertex, VertexType

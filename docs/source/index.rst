@@ -53,14 +53,14 @@ Join us on `GitHub <https://github.com/cpeisert/vertizee>`_.
 History
 =======================
 
-Vertizee was originally developed by Christopher Peisert during the pandemic of 2020 and grew out of
-programming assignments for Professor Tim Roughgarden's Stanford Algorithms courses
+Vertizee was originally developed by Christopher Peisert during the pandemic of 2020 and was
+inspired by assignments for Professor Tim Roughgarden's Stanford Algorithms courses
 (`available on Coursera <https://www.coursera.org/specializations/algorithms>`_). In addition to
-Roughgarden's excellent series *Algorithms Illuminated*, many of the Vertizee implementations
-are based on the modern-classic
-*Introduction to Algorithms: Third Edition* by Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-The `NetworkX <https://networkx.github.io/>`_ library was used as a template for the package
-structure and inspired many ideas for improved documentation and algorithms.
+Roughgarden's excellent series *Algorithms Illuminated*, many of the Vertizee algorithm
+implementations are based on the modern-classic *Introduction to Algorithms: Third Edition* by
+Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein. The Vertizee package
+structure and various aspects of the API were influenced by the excellent `NetworkX
+<https://networkx.github.io/>`_ library.
 
 
 =======================

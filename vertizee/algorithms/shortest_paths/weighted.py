@@ -543,7 +543,7 @@ def shortest_paths_bellman_ford(
             if reverse_graph:
                 u_path, w_path = w_path, u_path
             w_path.relax_edge(u_path, weight_function=weight_function, reverse_graph=reverse_graph)
-            if not graph.is_directed_graph():
+            if not graph.is_directed():
                 u_path.relax_edge(
                     w_path, weight_function=weight_function, reverse_graph=reverse_graph
                 )

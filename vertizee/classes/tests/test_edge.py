@@ -13,17 +13,79 @@
 # limitations under the License.
 
 """Edge tests."""
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
 
 import pytest
 
-from vertizee import DiEdge, DiGraph, Edge, Graph, MultiGraph, MultiDiGraph
-
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
+from vertizee import (
+    Graph,
+    Vertex,
+    Edge,
+    DiGraph,
+    DiVertex,
+    DiEdge,
+    MultiGraph,
+    MultiEdge,
+    MultiDiGraph,
+    MultiDiEdge,
+    VertizeeException
 )
 
+from vertizee.classes import edge as edge_module
 
-@pytest.mark.usefixtures()
+
+class TestEdgeModuleFunctions:
+    """Tests for functions defined in the edge module."""
+
+    def test_create_edge_label(self):
+        g = Graph()
+        v1 = g.add_vertex(1)
+        v2 = g.add_vertex(2)
+        assert (
+            edge_module.create_edge_label(v1, v1, is_directed=g.is_directed()) == "(1, 1)"
+        ), "loop edge label should be (1, 1)"
+        assert (
+            edge_module.create_edge_label(v1, v2, is_directed=g.is_directed()) == "(1, 2)"
+        ), "loop edge label should be (1, 2)"
+        assert (
+            edge_module.create_edge_label(v2, v1, is_directed=g.is_directed()) == "(1, 2)"
+        ), "loop edge label should be (1, 2)"
+        assert (
+            edge_module.create_edge_label(5, 9, is_directed=g.is_directed()) == "(5, 9)"
+        ), "loop edge label should be (5, 9)"
+        assert (
+            edge_module.create_edge_label("s", "t", is_directed=g.is_directed()) == "(s, t)"
+        ), "loop edge label should be (s, t)"
+
+        g2 = DiGraph()
+        v3 = g2.add_vertex(3)
+        v4 = g2.add_vertex(4)
+        assert (
+            edge_module.create_edge_label(v3, v4, is_directed=g2.is_directed()) == "(3, 4)"
+        ), "loop edge label should be (3, 4)"
+        assert (
+            edge_module.create_edge_label(v4, v3, is_directed=g2.is_directed()) == "(4, 3)"
+        ), "loop edge label should be (4, 3)"
+
+
+class TestEdgeView:
+    """Tests for the EdgeView class."""
+
+
+
+class TestDiEdgeView:
+    """Tests for the DiEdgeView class."""
+
+
+class TestEdgeBase:
+    """Tests for EdgeBase features shared by all single-connection edge classes."""
+
+
+class TestMultiEdgeBase:
+    """Tests for MultiEdgeBase features shared by all multiconnection edge classes."""
+
+
 class TestEdge:
     """Test suite for the Edge class."""
 
@@ -88,6 +150,9 @@ class TestDiEdge:
     def test_edge_str_representation_and_weight(self):
         g = MultiDiGraph()
         e01: DiEdge = g.add_edge(0, 1)
+        assert (
+            e01.tail == g[0] and e01.head == g[1]
+        ), "DiEdge should have tail and head vertices in instantiation order"
         assert str(e01) == "(0, 1)", "DiEdge string representation should be (0, 1)."
         e02: DiEdge = g.add_edge(2, 0)
         assert str(e02) == "(2, 0)", "DiEdge string representation should be (2, 0)."

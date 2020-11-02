@@ -34,7 +34,11 @@ import collections.abc
 import copy
 from dataclasses import dataclass, field
 import numbers
-from typing import Iterable, List, TYPE_CHECKING, Union
+from typing import Iterable, List, Optional, TYPE_CHECKING, Union
+
+from vertizee.classes import edge as edge_module
+from vertizee.classes.edge import Connection, MultiConnection
+from vertizee.classes.vertex import VertexBase
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
@@ -45,104 +49,148 @@ if TYPE_CHECKING:
 GraphPrimitive = Union["EdgeType", "VertexType"]
 
 
-@dataclass
-class _VertexData:
-    """Lightweight data class to store parsed primitives representing a vertex. If the parsed
-    primitive is an instance of a Vertex class, then ``vertex_object`` is set to the object
-    reference and ``label`` and ``attr`` are left uninitialized."""
-    label: str
-    attr: dict = field(default_factory=dict)
-    vertex_object: VertexClass
+class VertexData:
+    """Lightweight class to store parsed primitives representing a vertex. If the parsed
+    primitive is an instance of a vertex class, then ``vertex_object`` is set to the object
+    reference. The property getters retrieve data from ``vertex_object`` if it exists."""
 
-    def get_label(self) -> str:
-        """Returns the vertex label."""
-        if self.vertex_object:
-            return self.vertex_object.label
-        return self.label
+    def __init__(self, label: str):
+        self.label = label
+        self._attr = dict()
+        self._vertex_object: Optional[VertexClass] = None
+
+    @classmethod
+    def from_vertex_obj(cls, vertex: VertexClass) -> VertexData:
+        """Factory class method to create VertexData from a vertex object."""
+        vertex_data = VertexData(vertex.label)
+        vertex_data._vertex_object = vertex
+        if vertex._attr:
+            vertex_data._attr = vertex.attr
+        return vertex_data
+
+    @property
+    def attr(self) -> Optional[dict]:
+        """The attributes dictionary."""
+        if self._vertex_object and self._vertex_object._attr:
+            return self._vertex_object.attr
+        return self._attr
+
+    @property
+    def vertex_object(self) -> Optional[VertexClass]:
+        """Optional vertex object, if a vertex object was parsed."""
+        return self._vertex_object
 
 
-@dataclass
-class _EdgeData:
-    """Lightweight data class to store parsed primitives representing an edge. If the parsed
-    primitive is an instance of an Edge class, then ``edge_object`` is set to the object
-    reference and other attributes are left uninitialized."""
-    vertex1: _VertexData
-    vertex2: _VertexData
-    weight: float = 1.0
-    parallel_edge_count: int = 0
-    parallel_edge_weights: List[float] = field(default_factory=list)
-    attr: dict = field(default_factory=dict)
-    edge_object: EdgeClass
+class EdgeData:
+    """Lightweight class to store parsed primitives representing an edge. If the parsed
+    primitive is an instance of an edge class, then ``edge_object`` is set to the object
+    reference. The property getters retrieve data from ``edge_object`` if it exists."""
 
-    def get_label(self, is_directed: bool = False) -> str:
+    def __init__(self):
+        self._vertex1: Optional[VertexData] = None
+        self._vertex2: Optional[VertexData] = None
+        self._weight: float = edge_module.DEFAULT_WEIGHT
+        self._attr = dict()
+        self._edge_object: Optional[EdgeClass] = None
+
+    @property
+    def attr(self) -> dict:
+        """The attributes dictionary."""
+        if self._edge_object and self._edge_object._attr:
+            return self._edge_object.attr
+        return self._attr
+
+    @property
+    def edge_object(self) -> Optional[EdgeClass]:
+        """Optional edge object, if an edge object was parsed."""
+        return self._edge_object
+
+    def get_label(self, is_directed: bool) -> str:
         """Returns the edge label."""
         if self.edge_object:
             return self.edge_object.label
         if not is_directed:
-            if self.vertex1 > self.vertex2:
-                return f"({self.vertex2}, {self.vertex1})"
-        return f"({self.vertex1}, {self.vertex2})"
+            if self.vertex1.label > self.vertex2.label:
+                return f"({self.vertex2.label}, {self.vertex1.label})"
+        return f"({self.vertex1.label}, {self.vertex2.label})"
+
+    @property
+    def vertex1(self) -> Optional[VertexData]:
+        """The first vertex."""
+        if self._edge_object:
+            return VertexData.from_vertex_obj(self._edge_object.vertex1)
+        return self._vertex1
+
+    @property
+    def vertex2(self) -> Optional[VertexData]:
+        """The second vertex."""
+        if self._edge_object:
+            return VertexData.from_vertex_obj(self._edge_object.vertex2)
+        return self._vertex2
+
+    @property
+    def weight(self) -> float:
+        """The edge weight."""
+        if self._edge_object:
+            return self._edge_object.weight
+        return self._weight
 
 
 @dataclass
 class ParsedEdgeAndVertexData:
     """Container class to hold lists of parsed edge and vertex data."""
-    edges: List[_EdgeData] = field(default_factory=list)
-    vertices: List[_VertexData] = field(default_factory=list)
+    edges: List[EdgeData] = field(default_factory=list)
+    vertices: List[VertexData] = field(default_factory=list)
 
 
 
-def parse_edge_type(edge_type: "EdgeType") -> _EdgeData:
+def parse_edge_type(edge: "EdgeType") -> EdgeData:
     """Parses an ``EdgeType``, which is defined as ``Union[DiEdge, Edge, EdgeLiteral]``, where
     edge literals are tuples specifying vertex endpoints and optional weights and attributes.
 
     Args:
-        edge_type: The edge to parse.
+        edge: The edge to parse.
 
     Returns:
-        _EdgeData: Returns the parsed edge.
+        EdgeData: Returns the parsed edge.
     """
-    # Local import to avoid circular reference.
-    # pylint: disable=import-outside-toplevel
-    from vertizee.classes.edge import Edge
-
-    edge_data = _EdgeData()
-    if isinstance(edge_type, Edge):
-        edge_data.edge_object = edge_type
-    elif isinstance(edge_type, tuple):
-        if len(edge_type) < 2 or len(edge_type) > 4:
+    edge_data = EdgeData()
+    if isinstance(edge, (Connection, MultiConnection)):
+        edge_data._edge_object = edge
+    elif isinstance(edge, tuple):
+        if len(edge) < 2 or len(edge) > 4:
             raise ValueError("an edge tuple must contain 2, 3, or 4 items, found tuple of "
-                f"length {len(edge_type)}; see 'EdgeType' type alias for more information")
-        edge_data.vertex1 = parse_vertex_type(edge_type[0])
-        edge_data.vertex2 = parse_vertex_type(edge_type[1])
+                f"length {len(edge)}; see 'EdgeType' type alias for more information")
+        edge_data._vertex1 = parse_vertex_type(edge[0])
+        edge_data._vertex2 = parse_vertex_type(edge[1])
 
-        if len(edge_type) == 3:
+        if len(edge) == 3:
             # Tuple["VertexType", "VertexType", Weight]
             # Tuple["VertexType", "VertexType", AttributesDict]
-            if isinstance(edge_type[2], collections.abc.Mapping):
-                edge_data.attr = copy.deepcopy(edge_type[2])
-            elif isinstance(edge_type[2], numbers.Number):
-                edge_data.weight = float(edge_type[2])
+            if isinstance(edge[2], collections.abc.Mapping):
+                edge_data._attr = copy.deepcopy(edge[2])
+            elif isinstance(edge[2], numbers.Number):
+                edge_data._weight = float(edge[2])
             else:
                 raise ValueError("the third item in an edge 3-tuple must be an attribute "
-                    "mapping (usually a dict) or an edge weight (number); found "
-                    f"{type(edge_type[2])}")
-        elif len(edge_type) == 4:
+                    "dictionary or an edge weight (number); found "
+                    f"{type(edge[2]).__name__}")
+        elif len(edge) == 4:
             # Tuple["VertexType", "VertexType", Weight, AttributesDict]
-            if isinstance(edge_type[2], numbers.Number):
-                edge_data.weight = float(edge_type[2])
+            if isinstance(edge[2], numbers.Number):
+                edge_data._weight = float(edge[2])
             else:
                 raise ValueError("the third item in an edge 4-tuple must be an edge weight "
-                    f"(number); found {type(edge_type[2])}")
+                    f"(number); found {type(edge[2]).__name__}")
 
-            if isinstance(edge_type[3], collections.abc.Mapping):
-                edge_data.attr = copy.deepcopy(edge_type[3])
+            if isinstance(edge[3], collections.abc.Mapping):
+                edge_data._attr = copy.deepcopy(edge[3])
             else:
                 raise ValueError("the fourth item in an edge 4-tuple must be an attribute "
-                    f"mapping (usually a dict); found {type(edge_type[3])}")
+                    f"dictionary; found {type(edge[3]).__name__}")
     else:
         raise ValueError("an edge must be specified as a tuple or an object;"
-            f" found {type(edge_type)}")
+            f" found {type(edge).__name__}")
 
     return edge_data
 
@@ -158,10 +206,10 @@ def parse_graph_primitive(graph_primitive: "GraphPrimitive") -> ParsedEdgeAndVer
     """
     # Local import to avoid circular reference.
     # pylint: disable=import-outside-toplevel
-    from vertizee.classes import vertex
+    from vertizee.classes import vertex as vertex_module
 
     parsed_primitive = ParsedEdgeAndVertexData()
-    if vertex.is_vertex_type(graph_primitive):
+    if vertex_module.is_vertex_type(graph_primitive):
         vertex_data = parse_vertex_type(graph_primitive)
         parsed_primitive.vertices.append(vertex_data)
     else:
@@ -194,7 +242,7 @@ def parse_graph_primitives_from(
     return parsed_primitives
 
 
-def parse_vertex_type(vertex_type: "VertexType") -> _VertexData:
+def parse_vertex_type(vertex_type: "VertexType") -> VertexData:
     """Parses a ``VertexType``, which is defined as
     ``Union[VertexLabel, VertexTupleAttr, Vertex]`` and where ``VertexTupleAttr`` is defined as
     ``Tuple[VertexLabel, AttributesDict]``. A vertex labels may be a string or integer.
@@ -203,32 +251,29 @@ def parse_vertex_type(vertex_type: "VertexType") -> _VertexData:
         vertex_type: The vertex to parse.
 
     Returns:
-        _VertexData: Returns the parsed vertex and saves the object in ``self.vertices``.
+        VertexData: Returns the parsed vertex and saves the object in ``self.vertices``.
     """
-    # Local import to avoid circular reference.
-    # pylint: disable=import-outside-toplevel
-    from vertizee.classes.vertex import Vertex
-
-    vertex_data = _VertexData()
-    if isinstance(vertex_type, Vertex):
-        vertex_data.label = vertex_type.label
-        vertex_data.attr = copy.deepcopy(vertex_type.attr)
+    if isinstance(vertex_type, VertexBase):
+        vertex_data = VertexData(vertex_type.label)
+        vertex_data._vertex_object = vertex_type
+        if vertex_type._attr:
+            vertex_data._attr = copy.deepcopy(vertex_type.attr)
     elif isinstance(vertex_type, tuple):
         if len(vertex_type) != 2:
             raise ValueError("a vertex specified as a tuple must be a 2-tuple of the form "
                 "Tuple[VertexLabel, AttributesDict]")
         if not isinstance(vertex_type[0], int) and not isinstance(vertex_type[0], str):
             raise ValueError("a vertex label must be a string or integer; "
-                f"found {type(vertex_type[0])}")
+                f"found {type(vertex_type[0]).__name__}")
         if not isinstance(vertex_type[1], collections.abc.Mapping):
             raise ValueError("a vertex attr dictionary must be a mapping (usually a dict); "
-                f"found {type(vertex_type[1])}")
-        vertex_data.label = str(vertex_type[0])
-        vertex_data.attr = copy.deepcopy(vertex_type[1])
+                f"found {type(vertex_type[1]).__name__}")
+        vertex_data = VertexData(str(vertex_type[0]))
+        vertex_data._attr = copy.deepcopy(vertex_type[1])
     else:
         if not isinstance(vertex_type, (str, int)):
             raise ValueError("a vertex label must be a string or integer; found "
-                f"{type(vertex_type)}")
-        vertex_data.label = str(vertex_type)
+                f"{type(vertex_type).__name__}")
+        vertex_data = VertexData(str(vertex_type))
 
     return vertex_data

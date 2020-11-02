@@ -126,7 +126,7 @@ def spanning_tree_kruskal(
      .. [CLRS2009_5] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
                      Introduction to Algorithms: Third Edition, page 631. The MIT Press, 2009.
     """
-    if graph.is_directed_graph():
+    if graph.is_directed():
         raise GraphTypeNotSupported("graph must be undirected; see spanning_arborescence_ggst")
 
     edge_weight_pairs = [(e, _weight_function(e, weight, minimum)) for e in graph.edges]
@@ -195,7 +195,7 @@ def spanning_tree_prim(
     PRIM_PREDECESSOR_KEY = "__prim_parent"
     PRIM_PRIORITY_KEY = "__prim_priority"
 
-    if graph.is_directed_graph():
+    if graph.is_directed():
         raise GraphTypeNotSupported("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
         try:
@@ -291,7 +291,7 @@ def spanning_tree_prim_fibonacci(
     PRIM_PREDECESSOR_KEY = "__prim_parent"
     PRIM_PRIORITY_KEY = "__prim_priority"
 
-    if graph.is_directed_graph():
+    if graph.is_directed():
         raise GraphTypeNotSupported("graph must be undirected; see spanning_arborescence_ggst")
     if root is not None:
         try:

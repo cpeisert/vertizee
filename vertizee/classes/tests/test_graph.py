@@ -13,25 +13,51 @@
 # limitations under the License.
 
 """Tests for undirected graphs: Graph, MultiGraph, SimpleGraph."""
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
+
+import gc
 
 from collections import Counter
 from typing import List
 
 import pytest
 
-from vertizee.classes.edge import DEFAULT_WEIGHT
-from vertizee.classes.graph import Graph, MultiGraph, SimpleGraph
+from vertizee.classes import edge as edge_module
+from vertizee.classes.graph import DiGraph, Graph, MultiDiGraph, MultiGraph
 from vertizee.classes.vertex import Vertex
-
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
-)
 
 # TODO(cpeisert): Write separate test for index accessor notation including raising KeyError.
 
 
 @pytest.mark.usefixtures()
 class TestUndirectedGraphs:
+
+    def test_memory_leak(self):
+        G = self.Graph()
+
+        def count_objects_of_type(_type):
+            return sum(1 for obj in gc.get_objects() if isinstance(obj, _type))
+
+        gc.collect()
+        before = count_objects_of_type(self.Graph)
+        G.copy()
+        gc.collect()
+        after = count_objects_of_type(self.Graph)
+        assert before == after
+
+        # test a subgraph of the base class
+        class MyGraph(self.Graph):
+            pass
+
+        gc.collect()
+        G = MyGraph()
+        before = count_objects_of_type(MyGraph)
+        G.copy()
+        gc.collect()
+        after = count_objects_of_type(MyGraph)
+        assert before == after
+
     def test_graph_initialization_and_parallel_edges(self):
         g = MultiGraph()
         v0 = g.add_vertex(0)

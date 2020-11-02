@@ -33,7 +33,7 @@ AUTHOR_EMAIL = 'cpeisert@gmail.com'
 MAIN_PACKAGE = 'vertizee'
 LICENSE = 'Apache 2.0'
 ORG_OR_USER = 'cpeisert'
-PYTHON_REQUIRES = '>=3.6'
+PYTHON_REQUIRES = '>=3.7'
 REQUIREMENTS = [
     requirement.strip() for requirement in open('requirements/default.txt').readlines()
 ]
