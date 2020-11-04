@@ -98,19 +98,6 @@ class TestVertexBase:
         assert v1 > 1, "v1 should be great than a vertex represented by label 1"
         assert v1 < ("b", {"color": "blue"}), "v1 should be less than vertex tuple 'b'"
 
-    def test_attr_dictionary(self):
-        g = Graph()
-        v1 = g.add_vertex("a")
-        assert v1._attr is None, "attr dictionary should be None by default"
-        v1.attr["weight"] = 1000
-        assert v1.attr["weight"] == 1000, "v1 should have 'weight' attribute set to 1000"
-        assert v1["weight"] == 1000, "'weight' attribute should be accessible with index getter"
-        v1["color"] = "blue"
-        assert v1["color"] == "blue", "v1 should have color attribute set to 'blue'"
-
-        with pytest.raises(KeyError):
-            _ = v1["mass"]
-
     def test_repr_str_and_label(self):
         g = Graph()
         v1 = g.add_vertex("a")
@@ -139,6 +126,19 @@ class TestVertexBase:
 
         g.add_edge(4, 4)
         assert g[4] in g[4].adj_vertices, "vertex 4 should be adjacent to itself"
+
+    def test_attr_dictionary(self):
+        g = Graph()
+        v1 = g.add_vertex("a")
+        assert v1._attr is None, "attr dictionary should be None by default"
+        v1.attr["weight"] = 1000
+        assert v1.attr["weight"] == 1000, "v1 should have 'weight' attribute set to 1000"
+        assert v1["weight"] == 1000, "'weight' attribute should be accessible with index getter"
+        v1["color"] = "blue"
+        assert v1["color"] == "blue", "v1 should have color attribute set to 'blue'"
+
+        with pytest.raises(KeyError):
+            _ = v1["unknown_key"]
 
     def test_degree(self):
         g = Graph()

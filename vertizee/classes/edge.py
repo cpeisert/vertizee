@@ -70,7 +70,7 @@ from typing import (
 )
 
 from vertizee.classes import vertex as vertex_module
-from vertizee.classes.vertex import DiVertex, Vertex, VertexType
+from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, Vertex, VertexType
 from vertizee.utils import abc_utils
 
 # pylint: disable=cyclic-import
@@ -127,6 +127,8 @@ def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed:
 
 def _are_connections_equal(connection: "Connection", other: "Connection") -> bool:
     """Returns ``True`` if ``connection`` is logically equal to ``other``."""
+    if connection is other:
+        return True
     v1 = connection.vertex1
     v2 = connection.vertex2
     o_v1 = other.vertex1
@@ -140,15 +142,22 @@ def _are_connections_equal(connection: "Connection", other: "Connection") -> boo
 
     if v1 != o_v1 or v2 != o_v2 or connection.weight != other.weight:
         return False
-    if connection.attr != other.attr:
+    if connection.has_attributes_dict() != other.has_attributes_dict():
         return False
+    if connection.has_attributes_dict() and other.has_attributes_dict():
+        if connection.attr != other.attr:
+            return False
     return True
 
 
 def _are_multiconnections_equal(
     multiconnection: "MultiConnection", other: "MultiConnection"
 ) -> bool:
-    """Returns ``True`` if ``multiconnection`` is logically equal to ``other``."""
+    """Returns ``True`` if ``multiconnection`` is logically equal to ``other``. Note that
+    multiconnection equality does not rely on the attributes of individual parallel connections
+    within multiconnections."""
+    if multiconnection is other:
+        return True
     v1 = multiconnection.vertex1
     v2 = multiconnection.vertex2
     o_v1 = other.vertex1
@@ -167,8 +176,8 @@ def _are_multiconnections_equal(
     return True
 
 
-def _contract_edge(edge: EdgeClass, remove_loops: bool = False) -> None:
-    """Contracts ``edge`` by removing it from the graph and merging its two incident vertices.
+def _contract_connection(edge: Connection, remove_loops: bool = False) -> None:
+    """Contracts an edge by removing it from the graph and merging its two incident vertices.
 
     Args:
         edge: The edge to contract.
@@ -182,21 +191,74 @@ def _contract_edge(edge: EdgeClass, remove_loops: bool = False) -> None:
     # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
     for incident in v2.incident_edges:
         edges_to_delete.append(incident)
+
         if incident.is_loop():
-            if graph._allow_self_loops and not remove_loops:
-                if not graph._get_edge(v1, v1):
-                    graph.add_edge(v1, v1, weight=incident.weight, **incident.attr)
+            vertex1 = v1
+            vertex2 = v1
         elif incident.vertex1 == v2:
-            if not graph._get_edge(incident.vertex2, v1):
-                graph.add_edge(incident.vertex2, v1, weight=incident.weight, **incident.attr)
+            vertex1 = v1
+            vertex2 = incident.vertex2
         else:  # incident.vertex2 == v2
-            if not graph._get_edge(incident.vertex1, v1):
-                graph.add_edge(incident.vertex1, v1, weight=incident.weight, **incident.attr)
+            vertex1 = incident.vertex1
+            vertex2 = v1
+
+        if not graph.has_edge(vertex1, vertex2):
+            graph.add_edge(vertex1, vertex2, weight=incident.weight, **incident.attr)
 
     # Delete indicated edges after finishing loop iteration.
     for e in edges_to_delete:
         e.remove()
-    # Delete v2 from the graph.
+    if remove_loops or not graph.allows_self_loops():
+        v1.remove_loops()
+    graph.remove_vertex(v2)
+
+
+def _contract_multiconnection(edge: MultiConnection, remove_loops: bool = False) -> None:
+    """Contracts a multiedge by removing it from the graph and merging its two incident vertices.
+
+    Args:
+        edge: The edge to contract.
+        remove_loops: If True, loops on the merged vertex will be removed. Defaults to False.
+    """
+    graph = edge._parent_graph
+    v1 = edge.vertex1
+    v2 = edge.vertex2
+
+    edges_to_delete: List[EdgeClass] = []
+    # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
+    for incident in v2.incident_edges:
+        edges_to_delete.append(incident)
+
+        if incident.is_loop():
+            vertex1 = v1
+            vertex2 = v1
+        elif incident.vertex1 == v2:
+            vertex1 = v1
+            vertex2 = incident.vertex2
+        else:  # incident.vertex2 == v2
+            vertex1 = incident.vertex1
+            vertex2 = v1
+
+        existing_keys = set()
+        if graph.has_edge(vertex1, vertex2):
+            for key, _ in graph[vertex1, vertex2].connection_items():
+                existing_keys.add(key)
+
+        for key, connection in incident.connection_items():
+
+            if vertex1 == vertex2:
+                print(f"DEBUG: Adding loop connection {vertex1, vertex2}")
+
+            if key in existing_keys:
+                graph.add_edge(vertex1, vertex2, weight=connection.weight)
+            else:
+                graph.add_edge(vertex1, vertex2, weight=connection.weight, key=key)
+
+    # Delete indicated edges after finishing loop iteration.
+    for e in edges_to_delete:
+        e.remove()
+    if remove_loops or not graph.allows_self_loops():
+        v1.remove_loops()
     graph.remove_vertex(v2)
 
 
@@ -211,12 +273,12 @@ def _create_connection_key(connection_keys: Iterable[ConnectionKey]):
     return new_key
 
 
-def _str_for_connection(vertex1: V, vertex2: V, weight: float):
+def _str_for_connection(vertex1: V, vertex2: V, weight: float) -> str:
     """A simple string representation of the edge connection that shows the vertex labels, and for
     weighted graphs, includes the edge weight."""
     edge_str = f"({vertex1.label}, {vertex2.label}"
 
-    if vertex1._parent_graph.is_directed():
+    if not vertex1._parent_graph.is_directed():
         if vertex1.label > vertex2.label:
             edge_str = f"({vertex2.label}, {vertex1.label}"
 
@@ -228,29 +290,38 @@ def _str_for_connection(vertex1: V, vertex2: V, weight: float):
     return edge_str
 
 
-def _str_for_multiconnection(vertex1: V, vertex2: V, weight: float, multiplicity: int):
-    """A simple string representation of the edge connection that shows the vertex labels, and for
+def _str_for_multiconnection(
+    vertex1: V, vertex2: V, connections: Dict[ConnectionKey, _EdgeConnectionData]
+) -> str:
+    """A simple string representation of the multiedge that shows the vertex labels, and for
     weighted graphs, includes the edge weight. The string will show separate vertex tuples for each
-    parallel connection, such as "(a, b), (a, b), (a, b)"."""
-    edge_str = f"({vertex1.label}, {vertex2.label}"
+    parallel connection, such as "(a, b, 1.0), (a, b, 3.5), (a, b, 2.1)"."""
+    connection_str = f"({vertex1.label}, {vertex2.label}"
 
-    if vertex1._parent_graph.is_directed():
+    if not vertex1._parent_graph.is_directed():
         if vertex1.label > vertex2.label:
-            edge_str = f"({vertex2.label}, {vertex1.label}"
+            connection_str = f"({vertex2.label}, {vertex1.label}"
 
+    multiconnection_strings = list()
     if vertex1._parent_graph.is_weighted():
-        edge_str = f"{edge_str}, {weight})"
+        for connection in connections.values():
+            multiconnection_strings.append(f"{connection_str}, {connection.weight})")
     else:
-        edge_str = f"{edge_str})"
+        connection_str = f"{connection_str})"
+        multiconnection_strings = [connection_str] * len(connections)
 
-    edges = [edge_str for _ in range(multiplicity)]
-    return ", ".join(edges)
+    return ", ".join(multiconnection_strings)
 
 
 class Connection(ABC, Generic[V]):
     """A single connection between two vertices in a graph."""
 
     __slots__ = ()
+
+    # mypy: See https://github.com/python/mypy/issues/2783#issuecomment-579868936
+    @abstractmethod
+    def __eq__(self, other: Connection) -> bool:  # type: ignore[override]
+        """Returns True if ``self`` is logically equal to ``other``."""
 
     @abstractmethod
     def __getitem__(self, key: Hashable) -> Any:
@@ -263,14 +334,21 @@ class Connection(ABC, Generic[V]):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is Connection:
-            return abc_utils.check_methods(C, "__getitem__", "__setitem__", "attr", "is_loop",
-                "label", "vertex1", "vertex2", "weight")
+            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__setitem__", "attr",
+                "is_loop", "label", "vertex1", "vertex2", "weight")
         return NotImplemented
 
     @property
     @abstractmethod
     def attr(self) -> Dict[Hashable, Any]:
         """Attribute dictionary to store optional data associated with a connection."""
+
+    @abstractmethod
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
+        ``attr`` dictionary is only created as needed, this method can be used to save memory.
+        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
+        dictionary instantiation."""
 
     @abstractmethod
     def is_loop(self) -> bool:
@@ -304,10 +382,15 @@ class MultiConnection(ABC, Generic[V]):
 
     __slots__ = ()
 
+    # mypy: See https://github.com/python/mypy/issues/2783#issuecomment-579868936
+    @abstractmethod
+    def __eq__(self, other: MultiConnection) -> bool:  # type: ignore[override]
+        """Returns True if ``self`` is logically equal to ``other``."""
+
     @classmethod
     def __subclasshook__(cls, C):
         if cls is MultiConnection:
-            return abc_utils.check_methods(C, "add_connection", "connections",
+            return abc_utils.check_methods(C, "__eq__", "add_connection", "connections",
                 "get_connection", "is_loop", "label", "multiplicity", "vertex1", "vertex2",
                 "weight")
         return NotImplemented
@@ -396,14 +479,14 @@ class _EdgeConnectionData:
             self._attr = dict()
         return self._attr
 
-    def has_attributes(self) -> bool:
-        """Returns True if this connection has custom attributes."""
-        return self._attr is not None and len(self._attr) > 0
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary."""
+        return self._attr is not None
 
 
 class EdgeViewBase(Connection[V], Generic[V]):
-    """A dynamic view of an edge. Edge views provide an edge-like API for each of the parallel edge
-    connections in a multiedge.
+    """A dynamic view of an edge connection. Edge views provide an edge-like API for each of the
+    parallel connections in a multiedge.
 
     Args:
         multiconnection: A multiconnection object representing multiple parallel edge connections.
@@ -416,6 +499,12 @@ class EdgeViewBase(Connection[V], Generic[V]):
     def __init__(self, multiconnection: MultiConnection[V], edge_data: _EdgeConnectionData):
         self.multiconnection = multiconnection
         self.edge_data = edge_data
+
+    def __eq__(self, other: EdgeViewBase[V]) -> bool:  # type: ignore[override]
+        """Returns True if ``self`` is logically equal to ``other``."""
+        if isinstance(other, Connection):
+            return _are_connections_equal(self, other)
+        return NotImplemented  # Delegate equality check to the right-hand side.
 
     def __getitem__(self, key: Hashable) -> Any:
         """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
@@ -434,9 +523,14 @@ class EdgeViewBase(Connection[V], Generic[V]):
     @property
     def attr(self) -> Dict[Hashable, Any]:
         """Attribute dictionary to store optional data associated with an edge."""
-        if self.edge_data.has_attributes():
-            return self.edge_data.attr
-        return dict()
+        return self.edge_data.attr
+
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
+        ``attr`` dictionary is only created as needed, this method can be used to save memory.
+        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
+        dictionary instantiation."""
+        return self.edge_data.has_attributes_dict()
 
     def is_loop(self) -> bool:
         """Returns True if this edge connects a vertex to itself."""
@@ -463,7 +557,7 @@ class EdgeViewBase(Connection[V], Generic[V]):
         return self.edge_data.weight
 
 
-class EdgeView(EdgeViewBase[Vertex]):
+class EdgeView(EdgeViewBase[MultiVertex]):
     """A dynamic view of an undirected edge. Edge views provide an edge-like API for each of the
     parallel edge connections in a multiedge.
 
@@ -476,17 +570,17 @@ class EdgeView(EdgeViewBase[Vertex]):
     __slots__ = ()
 
     @property
-    def vertex1(self) -> Vertex:
+    def vertex1(self) -> MultiVertex:
         """The first vertex."""
         return self.multiconnection.vertex1
 
     @property
-    def vertex2(self) -> Vertex:
+    def vertex2(self) -> MultiVertex:
         """The second vertex."""
         return self.multiconnection.vertex2
 
 
-class DiEdgeView(EdgeViewBase[DiVertex]):
+class DiEdgeView(EdgeViewBase[MultiDiVertex]):
     """A dynamic view of a directed edge. Edge views provide an edge-like API for each of the
     parallel edge connections in a multiedge.
 
@@ -499,22 +593,22 @@ class DiEdgeView(EdgeViewBase[DiVertex]):
     __slots__ = ()
 
     @property
-    def head(self) -> DiVertex:
+    def head(self) -> MultiDiVertex:
         """The head vertex, which is the destination of the directed edge."""
-        return self._vertex2
+        return self.vertex2
 
     @property
-    def tail(self) -> DiVertex:
+    def tail(self) -> MultiDiVertex:
         """The tail vertex, which is the origin of the directed edge."""
-        return self._vertex1
+        return self.vertex1
 
     @property
-    def vertex1(self) -> DiVertex:
+    def vertex1(self) -> MultiDiVertex:
         """The first vertex. This is a synonym for the ``tail`` property."""
         return self.multiconnection.vertex1
 
     @property
-    def vertex2(self) -> DiVertex:
+    def vertex2(self) -> MultiDiVertex:
         """The second vertex. This is a synonym for the ``head`` property."""
         return self.multiconnection.vertex2
 
@@ -548,7 +642,7 @@ class EdgeBase(Connection[V], Generic[V]):
             self.attr[k] = v
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, EdgeBase):
+        if isinstance(other, Connection):
             return _are_connections_equal(self, other)
         return NotImplemented  # Delegate equality check to the right-hand side.
 
@@ -600,8 +694,6 @@ class EdgeBase(Connection[V], Generic[V]):
              ``vertex1``
            - Incident loops on ``vertex2`` become loops on ``vertex1``
            - ``vertex2`` is deleted from the graph
-           - If loops are not deleted, then :math:`degree(vertex1)` [post-merge]
-             :math:`\\Longleftrightarrow degree(vertex1) + degree(vertex2)` [pre-merge]
 
         When ``vertex2`` is deleted, its incident edges are also deleted.
 
@@ -623,11 +715,14 @@ class EdgeBase(Connection[V], Generic[V]):
                       Encyclopedia. Available from: https://en.wikipedia.org/wiki/Edge_contraction.
                       Accessed 19 October 2020.
         """
-        _contract_edge(self, remove_loops)
+        _contract_connection(self, remove_loops)
 
-    def has_attributes(self) -> bool:
-        """Returns True if this edge has custom attributes."""
-        return self._attr is not None and len(self._attr) > 0
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
+        ``attr`` dictionary is only created as needed, this method can be used to save memory.
+        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
+        dictionary instantiation."""
+        return self._attr is not None
 
     def is_loop(self) -> bool:
         """Returns True if this edge connects a vertex to itself."""
@@ -703,7 +798,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         self._parent_graph: GraphBase = vertex1._parent_graph
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, MultiEdgeBase):
+        if isinstance(other, MultiConnection):
             return _are_multiconnections_equal(self, other)
         return NotImplemented  # Delegate equality check to the RHS.
 
@@ -741,7 +836,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         new_key = key
         if key is not None and key in self._connections:
             edge_data: _EdgeConnectionData = self._connections[key]
-            if edge_data.has_attributes():
+            if edge_data.has_attributes_dict():
                 edge_data._attr.clear()
             for k, v in attr.items():
                 edge_data.attr[k] = v
@@ -753,6 +848,20 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
 
         self._connections[new_key] = edge_data
         return EdgeView(self, self._connections[new_key])
+
+    @abstractmethod
+    def connections(self) -> Iterator[EdgeViewBase[V]]:
+        """An iterator over the edge connections in the multiconnection."""
+
+    @abstractmethod
+    def connection_items(self) -> Iterator[Tuple[ConnectionKey, EdgeViewBase[V]]]:
+        """An iterator over the connection keys and their associated connections in the
+        multiedge.
+
+        Yields:
+            Tuple[ConnectionKey, EdgeViewBase[V]]: Yields a tuple containing the connection key
+            and the edge view.
+        """
 
     def contract(self, remove_loops: bool = False) -> None:
         """Contracts this multiedge by removing it from the graph and merging its two incident
@@ -789,26 +898,12 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         Args:
             remove_loops: If True, loops on the merged vertices will be removed. Defaults to False.
         """
-        _contract_edge(self, remove_loops)
-
-    @abstractmethod
-    def connections(self) -> Iterator[EdgeViewBase[V]]:
-        """An iterator over the edge connections in the multiconnection."""
-
-    @abstractmethod
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, EdgeViewBase[V]]]:
-        """An iterator over the connection keys and their associated connections in the
-        multiedge.
-
-        Yields:
-            Tuple[ConnectionKey, EdgeViewBase[V]]: Yields a tuple containing the connection key
-            and the edge view.
-        """
+        _contract_multiconnection(self, remove_loops)
 
     def get_connection(self, key: ConnectionKey) -> EdgeViewBase[V]:
         """Supports index accessor notation to retrieve a multiedge connection by its key."""
         if key in self._connections:
-            return EdgeViewBase(self, self._connections[key])
+            return DiEdgeView(self, self._connections[key])
         raise KeyError(key)
 
     def is_loop(self) -> bool:
@@ -851,7 +946,8 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
                 self._connections.pop(key)
             else:
                 self.remove()
-        raise KeyError(key)
+        else:
+            raise KeyError(key)
 
     @property
     def vertex1(self) -> V:
@@ -1077,8 +1173,7 @@ class _MultiEdge(MultiEdge):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return _str_for_multiconnection(self._vertex1, self._vertex2, weight=self._weight,
-            multiplicity=self.multiplicity)
+        return _str_for_multiconnection(self._vertex1, self._vertex2, self._connections)
 
     def connections(self) -> Iterator[EdgeView]:
         """An iterator over the connections in the multiedge."""
@@ -1099,8 +1194,7 @@ class _MultiDiEdge(MultiDiEdge):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return _str_for_multiconnection(self._vertex1, self._vertex2, weight=self._weight,
-            multiplicity=self.multiplicity)
+        return _str_for_multiconnection(self._vertex1, self._vertex2, self._connections)
 
     def connections(self) -> Iterator[DiEdgeView]:
         """An iterator over the connections in the directed multiedge."""

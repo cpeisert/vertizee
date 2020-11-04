@@ -30,6 +30,17 @@ from vertizee.classes.vertex import Vertex
 # TODO(cpeisert): Write separate test for index accessor notation including raising KeyError.
 
 
+    # def test_is_weight(self):
+    #     g = Graph([(1, 2)])
+    #     assert (
+    #         not g.is_weighted()
+    #     ), "graph without custom edge weights should not identify as weighted"
+    #     g.add_edge(3, 4, weight=9.5)
+    #     assert (
+    #         not g.is_weighted()
+    #     ), "graph without custom edge weights should not identify as weighted"
+
+
 @pytest.mark.usefixtures()
 class TestUndirectedGraphs:
 

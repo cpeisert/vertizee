@@ -101,7 +101,7 @@ def is_vertex_type(var: Any) -> bool:
 
 
 class VertexBase(ABC, Generic[E]):
-    """Abstract base class from which all concrete vertex classes inherit.
+    """Abstract base class from which all vertex classes inherit.
 
     Args:
         label: The label for this vertex. Must be unique to the graph.

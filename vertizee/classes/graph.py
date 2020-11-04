@@ -373,8 +373,7 @@ class GraphBase(ABC, Generic[V, E]):
     @abstractmethod
     def add_edge(
         self, vertex1: "VertexType", vertex2: "VertexType",
-        weight: float = edge_module.DEFAULT_WEIGHT,
-        **attr
+        weight: float = edge_module.DEFAULT_WEIGHT, **attr
     ) -> E:
         """Adds a new edge to the graph.
 
@@ -478,19 +477,22 @@ class GraphBase(ABC, Generic[V, E]):
         return self._edges.values()
 
     @abstractmethod
-    def get_random_edge(self) -> Optional[E]:
+    def get_random_edge(self, *args, **kwargs) -> Optional[E]:
         """Returns a randomly selected edge from the graph, or None if there are no edges.
+
+        Note that ``*args`` and ``**kwargs`` are part of the method signature in order to provide
+        flexibility for subclasses such as :class:`MultiGraph` and :class:`MultiDiGraph`.
 
         Returns:
             EdgeClass: The random edge, or None if there are no edges.
         """
 
-    def has_edge(self, edge: "EdgeType") -> bool:
+    def has_edge(self, vertex1: "VertexType", vertex2: "VertexType") -> bool:
         """Returns True if the graph contains the edge.
 
         Instead of using this method, it is also possible to use the ``in`` operator:
 
-            >>> if ["s", "t"] in graph:
+            >>> if ("s", "t") in graph:
 
         or with objects:
 
@@ -498,7 +500,8 @@ class GraphBase(ABC, Generic[V, E]):
             >>> if edge_st in graph:
 
         Args:
-            edge: The edge to verify.
+            vertex1: The first vertex of the edge.
+            vertex2: The second vertex of the edge.
 
         Returns:
             bool: True if there is a matching edge in the graph, otherwise False.
@@ -506,8 +509,8 @@ class GraphBase(ABC, Generic[V, E]):
         See Also:
             :mod:`EdgeType <vertizee.classes.edge>`
         """
-        edge_data: EdgeData = primitives_parsing.parse_edge_type(edge)
-        return edge_data.get_label(self.__is_directed) in self._edges
+        label = edge_module.create_edge_label(vertex1, vertex2, self.__is_directed)
+        return label in self._edges
 
     def has_vertex(self, vertex: "VertexType") -> bool:
         """Returns True if the graph contains the specified vertex."""
@@ -1077,19 +1080,30 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
         """A view of the graph edges."""
         return self._edges.values()
 
-    def get_random_edge(self) -> Optional[EdgeView]:
-        """Returns a randomly selected multiedge from the graph, or None if there are no edges."""
+    def get_random_edge(self, ignore_multiplicity: bool = False) -> Optional[MultiEdge]:
+        """Returns a randomly chosen multiedge from the graph, or None if there are no edges.
+
+        Args:
+            ignore_multiplicity: If True, the multiplicity of the multiedges is ignored when
+                choosing a random sample. If False, the multiplicity is used as a sample weighting.
+                For example, a multiedge with ten parallel connections would be ten times more
+                likely to be chosen than a multiedge with only one edge connection. Defaults to
+                False.
+
+        Returns:
+            MultiEdge: A randomly chosen multiedge from the graph.
+
+        """
         if self._edges:
+            if ignore_multiplicity:
+                return random.choice(self._edges.values())
+
             sample = random.choices(
                 population=list(self._edges.values()),
                 weights=[e.multiplicity for e in self._edges.values()],
                 k=1,
             )
-            multiedge = sample[0]
-            connection_index = random.randint(0, multiedge.multiplicity - 1)
-            for i, connection in enumerate(multiedge.connections()):
-                if i == connection_index:
-                    return EdgeView(multiedge, connection)
+            return sample[0]
 
         return None
 
@@ -1233,19 +1247,30 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
         """A view of the graph multiedges."""
         return self._edges.values()
 
-    def get_random_edge(self) -> Optional[DiEdgeView]:
-        """Returns a randomly selected multiedge from the graph, or None if there are no edges."""
+    def get_random_edge(self, ignore_multiplicity: bool = False) -> Optional[MultiDiEdge]:
+        """Returns a randomly chosen multiedge from the graph, or None if there are no edges.
+
+        Args:
+            ignore_multiplicity: If True, the multiplicity of the multiedges is ignored when
+                choosing a random sample. If False, the multiplicity is used as a sample weighting.
+                For example, a multiedge with ten parallel connections would be ten times more
+                likely to be chosen than a multiedge with only one edge connection. Defaults to
+                False.
+
+        Returns:
+            MultiDiEdge: A randomly chosen multiedge from the graph.
+
+        """
         if self._edges:
+            if ignore_multiplicity:
+                return random.choice(self._edges.values())
+
             sample = random.choices(
                 population=list(self._edges.values()),
                 weights=[e.multiplicity for e in self._edges.values()],
                 k=1,
             )
-            multiedge = sample[0]
-            connection_index = random.randint(0, multiedge.multiplicity - 1)
-            for i, connection in enumerate(multiedge.connections()):
-                if i == connection_index:
-                    return DiEdgeView(multiedge, connection)
+            return sample[0]
 
         return None
 
