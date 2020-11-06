@@ -334,8 +334,8 @@ class Connection(ABC, Generic[V]):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is Connection:
-            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__setitem__", "attr",
-                "is_loop", "label", "vertex1", "vertex2", "weight")
+            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__setitem__",
+                "attr", "is_loop", "label", "vertex1", "vertex2", "weight")
         return NotImplemented
 
     @property
@@ -451,7 +451,7 @@ class MultiConnection(ABC, Generic[V]):
 
     @property
     def weight(self) -> float:
-        """The weight of the multiconnection, including parallel connections."""
+        """The weight of the multiconnection, including all parallel connections."""
 
 
 class _EdgeConnectionData:
@@ -651,7 +651,7 @@ class EdgeBase(Connection[V], Generic[V]):
         return self.attr[key]
 
     def __hash__(self) -> int:
-        """Creates a hash key using the edge label."""
+        """Supports adding edges to set-like collections."""
         return hash(self.label)
 
     def __repr__(self) -> str:
@@ -745,7 +745,7 @@ class EdgeBase(Connection[V], Generic[V]):
             remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
                 isolated after the edge removal are also removed. Defaults to False.
         """
-        self._parent_graph.remove_edge(self, remove_isolated_vertices)
+        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_isolated_vertices)
 
     @property
     def vertex1(self) -> V:
@@ -936,7 +936,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
             remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
                 isolated after the edge removal are also removed. Defaults to False.
         """
-        self._parent_graph.remove_edge(self, remove_isolated_vertices)
+        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_isolated_vertices)
 
     def remove_connection(self, key: ConnectionKey) -> None:
         """Removes an edge connection from this multiedge based on its key. If the multiedge only

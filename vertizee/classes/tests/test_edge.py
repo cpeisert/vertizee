@@ -142,6 +142,13 @@ class TestEdgeView:
 class TestEdgeBase:
     """Tests for EdgeBase features shared by all single-connection edge classes."""
 
+    def test__eq__(self):
+        g1 = Graph([(1, 2), (3, 4, 2.5)])
+        g2 = Graph([(1, 2), (3, 4, 5.0)])
+
+        assert g1[1, 2] == g2[1, 2], "edges (1, 2) should be equal"
+        assert g1[3, 4] != g2[3, 4], "edges (3, 4, 2.5) and (3, 4, 5.0) should not be equal"
+
     def test_attr__getitem__setitem__(self):
         g = Graph([(1, 2)])
         edge = g[1, 2]

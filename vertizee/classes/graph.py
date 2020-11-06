@@ -68,8 +68,7 @@ from vertizee.classes import primitives_parsing
 from vertizee.classes import vertex as vertex_module
 
 from vertizee.classes.edge import (
-    ConnectionKey, DiEdge, DiEdgeView, Edge, EdgeClass, EdgeType, EdgeView,
-    MultiConnection, MultiDiEdge, MultiEdge
+    ConnectionKey, DiEdge, Edge, EdgeClass, EdgeType, MultiConnection, MultiDiEdge, MultiEdge
 )
 from vertizee.classes.primitives_parsing import (
     EdgeData, VertexData, GraphPrimitive, ParsedEdgeAndVertexData
@@ -112,25 +111,22 @@ def _add_edge_obj_to_graph(graph: GraphBase[V, E], edge: EdgeClass) -> E:
     new_edge = None
     if isinstance(edge, MultiConnection):
         for key, connection in edge.connection_items():
+            attr = connection.attr if connection.has_attributes_dict() else {}
             if new_edge:
-                new_edge.add_connection(
-                    weight=connection.weight, key=key, **copy.deepcopy(connection.attr)
-                )
+                new_edge.add_connection(weight=connection.weight, key=key, **copy.deepcopy(attr))
             else:
                 new_edge = graph.add_edge(
                     edge.vertex1, edge.vertex2, weight=connection.weight, key=key,
-                    **copy.deepcopy(connection.attr)
+                    **copy.deepcopy(attr)
                 )
                 if not graph.is_multigraph():
                     # Multiedges are not supported, so ignore additional parallel connections.
                     break
     else:
+        attr = edge.attr if edge.has_attributes_dict() else {}
         new_edge = graph.add_edge(
-            edge.vertex1, edge.vertex2, weight=edge.weight, **copy.deepcopy(edge.attr)
+            edge.vertex1, edge.vertex2, weight=edge.weight, **copy.deepcopy(attr)
         )
-        if edge.has_attributes():
-            for k, v in edge.attr.items():
-                new_edge[k] = copy.deepcopy(v)
     return new_edge
 
 
@@ -219,41 +215,18 @@ def _add_vertex_to_graph(
     return new_vertex
 
 
-def _remove_edge_from_graph(
-    graph: GraphBase[V, E], edge: EdgeType, remove_isolated_vertices: bool
-) -> E:
-    """Removes an edge from the graph.
+def _init_graph_from_graph(new_graph: GraphBase, other: GraphBase) -> None:
+    """Initialize a graph using the data from another graph.
 
     Args:
-        graph: The graph from which the edge is to be removed.
-        edge: The edge to remove.
-        remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-            isolated after the edge removal are also removed.
-
-    Returns:
-        E: The edge that was removed.
-
-    Raises:
-        EdgeNotFound: If the edge is not in the graph.
+        new_graph: The new graph to be initialized.
+        other: The graph whose data is to be copied.
     """
-    edge_data: EdgeData = primitives_parsing.parse_edge_type(edge)
-    label = edge_data.get_label(graph.is_directed())
-    if label not in graph._edges:
-        raise exception.EdgeNotFound(f"graph does not have edge {label}")
-
-    edge_obj = graph._edges[label]
-    graph._edges.pop(label)
-
-    v1: vertex_module._Vertex = graph._vertices[edge_data.vertex1.label]
-    v2: vertex_module._Vertex = graph._vertices[edge_data.vertex2.label]
-    v1._remove_edge(edge_obj)
-    v2._remove_edge(edge_obj)
-    if remove_isolated_vertices:
-        if v1.is_isolated():
-            v1.remove()
-        if v2.is_isolated():
-            v2.remove()
-    return edge_obj
+    for vertex in other._vertices.values():
+        attr = vertex._attr if vertex.has_attributes_dict() else {}
+        new_graph.add_vertex(vertex.label, **copy.deepcopy(attr))
+    for edge in other._edges.values():
+        _add_edge_obj_to_graph(new_graph, edge)
 
 
 class GraphBase(ABC, Generic[V, E]):
@@ -297,7 +270,7 @@ class GraphBase(ABC, Generic[V, E]):
     def __contains__(self, edge_or_vertex: GraphPrimitive) -> bool:
         data: ParsedEdgeAndVertexData = primitives_parsing.parse_graph_primitive(edge_or_vertex)
         if data.edges:
-            return self._get_edge(data.edges[0].vertex1, data.edges[0].vertex2) is not None
+            return self.has_edge(data.edges[0].vertex1.label, data.edges[0].vertex2.label)
         if data.vertices:
             return data.vertices[0].label in self._vertices
 
@@ -312,7 +285,10 @@ class GraphBase(ABC, Generic[V, E]):
         new._is_weighted_graph = self._is_weighted_graph
         new._attr = copy.deepcopy(self.attr)
         for vertex in self._vertices.values():
-            new.add_vertex(vertex)
+            if vertex.has_attributes_dict():
+                new.add_vertex(vertex.label, **vertex.attr)
+            else:
+                new.add_vertex(vertex.label)
         for edge in self._edges.values():
             _add_edge_obj_to_graph(new, edge)
         return new
@@ -470,7 +446,6 @@ class GraphBase(ABC, Generic[V, E]):
     def edge_count(self) -> int:
         """The number of edges."""
 
-    @property
     @abstractmethod
     def edges(self) -> ValuesView[E]:
         """A view of graph edges."""
@@ -530,12 +505,14 @@ class GraphBase(ABC, Generic[V, E]):
         """Returns True if this is a weighted graph, i.e., contains edges with weights != 1."""
         return self._is_weighted_graph
 
-    @abstractmethod
-    def remove_edge(self, edge: "EdgeType", remove_isolated_vertices: bool = False) -> E:
+    def remove_edge(
+        self, vertex1: "VertexType", vertex2: "VertexType", remove_isolated_vertices: bool = False
+    ) -> E:
         """Removes an edge from the graph.
 
         Args:
-            edge: The edge to remove.
+            vertex1: The first vertex of the edge.
+            vertex2: The second vertex of the edge.
             remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
                 isolated after the edge removal are also removed. Defaults to False.
 
@@ -545,6 +522,20 @@ class GraphBase(ABC, Generic[V, E]):
         Raises:
             EdgeNotFound: If the edge is not in the graph.
         """
+        label = edge_module.create_edge_label(vertex1, vertex2, self.__is_directed)
+        if not label in self._edges:
+            raise exception.EdgeNotFound(f"graph does not have edge {label}")
+
+        edge = self._edges[label]
+        self._edges.pop(edge.label)
+        edge.vertex1._remove_edge(edge)
+        edge.vertex2._remove_edge(edge)
+        if remove_isolated_vertices:
+            if edge.vertex1.is_isolated():
+                edge.vertex1.remove()
+            if edge.vertex2.is_isolated():
+                edge.vertex2.remove()
+        return edge
 
     def remove_edges_from(self, edges: Iterable["EdgeType"]) -> int:
         """Removes all specified edges.
@@ -564,10 +555,10 @@ class GraphBase(ABC, Generic[V, E]):
 
         for edge_type in edges:
             try:
-                self.remove_edge(edge_type)
+                edge = self.__getitem__(edge_type)
+                self.remove_edge(edge.vertex1, edge.vertex2)
                 if self.__is_multigraph:
-                    edge_obj = self.__getitem__(edge_type)
-                    deletion_count += edge_obj.multiplicity
+                    deletion_count += edge.multiplicity
                 else:
                     deletion_count += 1
             except exception.EdgeNotFound:
@@ -587,7 +578,7 @@ class GraphBase(ABC, Generic[V, E]):
 
         for label in vertex_labels_to_remove:
             if self._vertices[label].loop_edge:
-                self.remove_edge(self._vertices[label].loop_edge)
+                self.remove_edge(self._vertices[label], self._vertices[label])
             self._vertices.pop(label)
         return len(vertex_labels_to_remove)
 
@@ -615,7 +606,7 @@ class GraphBase(ABC, Generic[V, E]):
                 "adjacent non-loop edges; adjacent edges must be deleted first")
 
         if vertex_obj.loop_edge:
-            self.remove_edge(vertex_obj.loop_edge, remove_isolated_vertices=False)
+            vertex_obj.loop_edge.remove()
         self._vertices.pop(label, None)
 
     @property
@@ -623,7 +614,6 @@ class GraphBase(ABC, Generic[V, E]):
         """The count of vertices in the graph."""
         return len(self._vertices)
 
-    @property
     @abstractmethod
     def vertices(self) -> ValuesView[V]:
         """A view of the graph vertices."""
@@ -726,16 +716,7 @@ class Graph(GraphBase[Vertex, Edge]):
             is_multigraph=False, is_weighted_graph=False, **attr)
 
         if edges_or_graph and isinstance(edges_or_graph, GraphBase):
-            g: GraphBase = edges_or_graph
-
-            for vertex in g._vertices:
-                if vertex._attr:
-                    self.add_vertex(vertex.label, **copy.deepcopy(vertex._attr))
-                else:
-                    self.add_vertex(vertex.label)
-            for edge in g._edges:
-                _add_edge_obj_to_graph(self, edge)
-            self._attr.update(copy.deepcopy(g.attr))
+            _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
@@ -792,7 +773,6 @@ class Graph(GraphBase[Vertex, Edge]):
         """The number of edges."""
         return len(self._edges)
 
-    @property
     def edges(self) -> ValuesView[Edge]:
         """A view of graph edges."""
         return self._edges.values()
@@ -800,29 +780,9 @@ class Graph(GraphBase[Vertex, Edge]):
     def get_random_edge(self) -> Optional[Edge]:
         """Returns a randomly selected edge from the graph, or None if there are no edges."""
         if self._edges:
-            return random.choice(self._edges.values())
+            return random.choice(list(self._edges.values()))
         return None
 
-    def remove_edge(self, edge: "EdgeType", remove_isolated_vertices: bool = False) -> Edge:
-        """Removes an edge from the graph.
-
-        Args:
-            edge: The edge to remove.
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
-
-        Returns:
-            Edge: The edge that was removed.
-
-        Raises:
-            EdgeNotFound: If the edge is not in the graph.
-
-        See Also:
-            :mod:`EdgeType <vertizee.classes.edge>`
-        """
-        return _remove_edge_from_graph(self, edge, remove_isolated_vertices)
-
-    @property
     def vertices(self) -> ValuesView[Vertex]:
         """A view of the graph vertices."""
         return self._vertices.values()
@@ -864,16 +824,7 @@ class DiGraph(GraphBase[DiVertex, DiEdge]):
             is_multigraph=False, is_weighted_graph=False, **attr)
 
         if edges_or_graph and isinstance(edges_or_graph, GraphBase):
-            g: GraphBase = edges_or_graph
-
-            for vertex in g._vertices:
-                if vertex._attr:
-                    self.add_vertex(vertex.label, **copy.deepcopy(vertex._attr))
-                else:
-                    self.add_vertex(vertex.label)
-            for edge in g._edges:
-                _add_edge_obj_to_graph(self, edge)
-            self._attr.update(copy.deepcopy(g.attr))
+            _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
@@ -930,7 +881,6 @@ class DiGraph(GraphBase[DiVertex, DiEdge]):
         """The number of edges."""
         return len(self._edges)
 
-    @property
     def edges(self) -> ValuesView[DiEdge]:
         """A view of graph edges."""
         return self._edges.values()
@@ -938,29 +888,9 @@ class DiGraph(GraphBase[DiVertex, DiEdge]):
     def get_random_edge(self) -> Optional[DiEdge]:
         """Returns a randomly selected edge from the graph, or None if there are no edges."""
         if self._edges:
-            return random.choice(self._edges.values())
+            return random.choice(list(self._edges.values()))
         return None
 
-    def remove_edge(self, edge: "EdgeType", remove_isolated_vertices: bool = False) -> DiEdge:
-        """Removes an edge from the graph.
-
-        Args:
-            edge: The edge to remove.
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
-
-        Returns:
-            DiEdge: The edge that was removed.
-
-        Raises:
-            EdgeNotFound: If the edge is not in the graph.
-
-        See Also:
-            :mod:`EdgeType <vertizee.classes.edge>`
-        """
-        return _remove_edge_from_graph(self, edge, remove_isolated_vertices)
-
-    @property
     def vertices(self) -> ValuesView[DiVertex]:
         """A view of the graph vertices."""
         return self._vertices.values()
@@ -1002,16 +932,7 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
             is_multigraph=True, is_weighted_graph=False, **attr)
 
         if edges_or_graph and isinstance(edges_or_graph, GraphBase):
-            g: GraphBase = edges_or_graph
-
-            for vertex in g._vertices:
-                if vertex._attr:
-                    self.add_vertex(vertex.label, **copy.deepcopy(vertex._attr))
-                else:
-                    self.add_vertex(vertex.label)
-            for edge in g._edges:
-                _add_edge_obj_to_graph(self, edge)
-            self._attr.update(copy.deepcopy(g.attr))
+            _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
@@ -1075,7 +996,6 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
         """The number of edges."""
         return sum(e.multiplicity for e in self._edges.values())
 
-    @property
     def edges(self) -> ValuesView[MultiEdge]:
         """A view of the graph edges."""
         return self._edges.values()
@@ -1096,7 +1016,7 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
         """
         if self._edges:
             if ignore_multiplicity:
-                return random.choice(self._edges.values())
+                return random.choice(list(self._edges.values()))
 
             sample = random.choices(
                 population=list(self._edges.values()),
@@ -1107,26 +1027,6 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
 
         return None
 
-    def remove_edge(self, edge: "EdgeType", remove_isolated_vertices: bool = False) -> MultiEdge:
-        """Removes a multiedge from the graph.
-
-        Args:
-            edge: The edge to remove.
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
-
-        Returns:
-            MultiEdge: The edge that was removed.
-
-        Raises:
-            EdgeNotFound: If the edge is not in the graph.
-
-        See Also:
-            :mod:`EdgeType <vertizee.classes.edge>`
-        """
-        return _remove_edge_from_graph(self, edge, remove_isolated_vertices)
-
-    @property
     def vertices(self) -> ValuesView[MultiVertex]:
         """A view of the graph vertices."""
         return self._vertices.values()
@@ -1168,16 +1068,7 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
             is_multigraph=True, is_weighted_graph=False, **attr)
 
         if edges_or_graph and isinstance(edges_or_graph, GraphBase):
-            g: GraphBase = edges_or_graph
-
-            for vertex in g._vertices:
-                if vertex._attr:
-                    self.add_vertex(vertex.label, **copy.deepcopy(vertex._attr))
-                else:
-                    self.add_vertex(vertex.label)
-            for edge in g._edges:
-                _add_edge_obj_to_graph(self, edge)
-            self._attr.update(copy.deepcopy(g.attr))
+            _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
@@ -1242,7 +1133,6 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
         """The number of edges."""
         return sum(e.multiplicity for e in self._edges.values())
 
-    @property
     def edges(self) -> ValuesView[MultiDiEdge]:
         """A view of the graph multiedges."""
         return self._edges.values()
@@ -1263,7 +1153,7 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
         """
         if self._edges:
             if ignore_multiplicity:
-                return random.choice(self._edges.values())
+                return random.choice(list(self._edges.values()))
 
             sample = random.choices(
                 population=list(self._edges.values()),
@@ -1274,27 +1164,6 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
 
         return None
 
-
-    def remove_edge(self, edge: "EdgeType", remove_isolated_vertices: bool = False) -> MultiDiEdge:
-        """Removes an edge from the graph.
-
-        Args:
-            edge: The edge to remove.
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
-
-        Returns:
-            MultiDiEdge: The edge that was removed.
-
-        Raises:
-            EdgeNotFound: If the edge is not in the graph.
-
-        See Also:
-            :mod:`EdgeType <vertizee.classes.edge>`
-        """
-        return _remove_edge_from_graph(self, edge, remove_isolated_vertices)
-
-    @property
     def vertices(self) -> ValuesView[MultiDiVertex]:
         """A view of the graph vertices."""
         return self._vertices.values()

@@ -204,6 +204,13 @@ class VertexBase(ABC, Generic[E]):
         """The degree (or valance) of this vertex. The degree is the number of incident edges.
         Self-loops are counted twice."""
 
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this vertex has an instantiated ``attr`` dictionary. Since the
+        ``attr`` dictionary is only created as needed, this method can be used to save memory.
+        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
+        dictionary instantiation."""
+        return self._attr is not None
+
     @property
     @abstractmethod
     def incident_edges(self) -> Set[E]:
@@ -276,7 +283,7 @@ class VertexBase(ABC, Generic[E]):
             else:
                 deletion_count = 1
             self._incident_edges.remove_edge(loops)
-            self._parent_graph.remove_edge(loops)
+            self._parent_graph.remove_edge(loops.vertex1, loops.vertex2)
         return deletion_count
 
     def _add_edge(self, edge: E) -> None:
