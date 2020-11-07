@@ -13,18 +13,16 @@
 # limitations under the License.
 
 """Tests for Fibonacci heap data structure."""
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
 
 from typing import Optional
-import pytest
 
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
-)
-
 
 class Item:
+    """Wrapper for items in a Fibonacci heap."""
     def __init__(self, name: str, priority: int):
         self.name = name
         self.priority = priority
@@ -36,8 +34,9 @@ class Item:
         return hash((self.name))
 
 
-@pytest.mark.usefixtures()
 class TestFibonacciHeap:
+    """Tests for FibonacciHeap data structure."""
+
     def test_insert_and_length_and_minimum(self):
         fh: FibonacciHeap[Item] = FibonacciHeap(lambda i: i.priority)
         first = Item("first", 1)

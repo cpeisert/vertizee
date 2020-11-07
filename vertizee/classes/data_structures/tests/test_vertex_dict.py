@@ -13,20 +13,17 @@
 # limitations under the License.
 
 """Tests for VertexDict container."""
-
-import pytest
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
 
 from vertizee.classes.graph import Graph
 from vertizee.classes.vertex import Vertex
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
-)
 
-
-@pytest.mark.usefixtures()
 class TestVertexDict:
+    """Tests for VertexDict container."""
+
     def test_init(self):
         d1 = VertexDict()
         d1[1] = "one"

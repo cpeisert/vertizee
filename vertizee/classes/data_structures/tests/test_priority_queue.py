@@ -13,33 +13,38 @@
 # limitations under the License.
 
 """Tests for PriorityQueue container."""
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
 
 import pytest
 
-from vertizee.classes.graph import Graph
-from vertizee.classes.vertex import Vertex
+import vertizee as vz
+from vertizee import Vertex
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
-)
 
-PRIORITY = "priority_key"
+def get_priority_function(vertex_to_priority: vz.VertexDict):
+    """Returns a function that retrieves the priority of a vertex."""
+
+    def priority_function(vertex: Vertex) -> float:
+        """Returns the priority of the vertex."""
+        return vertex_to_priority[vertex]
+    return priority_function
 
 
-def priority_function(vertex: Vertex) -> float:
-    return vertex.attr[PRIORITY]
-
-
-@pytest.mark.usefixtures()
 class TestPriorityQueue:
+    """Tests for PriorityQueue data structure."""
+
     def test_basic_operations(self):
-        g = Graph([(1, 2), (2, 3), (3, 4), (4, 5)])
-        g[1].attr[PRIORITY] = 100
-        g[2].attr[PRIORITY] = 90
-        g[3].attr[PRIORITY] = 80
-        g[4].attr[PRIORITY] = 70
-        g[5].attr[PRIORITY] = 70
+        g = vz.Graph([(1, 2), (2, 3), (3, 4), (4, 5)])
+        vertex_priority = vz.VertexDict()
+        vertex_priority[1] = 100
+        vertex_priority[2] = 90
+        vertex_priority[3] = 80
+        vertex_priority[4] = 70
+        vertex_priority[5] = 70
+
+        priority_function = get_priority_function(vertex_priority)
 
         vpq: PriorityQueue[Vertex] = PriorityQueue(priority_function)
         vpq.add_or_update(g[5])
@@ -56,7 +61,7 @@ class TestPriorityQueue:
         assert next_v == g[4], (
             "Second lowest priority vertex should be vertex 4, since 4 " " was inserted after 5."
         )
-        g[1].attr[PRIORITY] = 0
+        vertex_priority[1] = 0
         vpq.add_or_update(g[1])
         assert len(vpq) == 3, (
             "Priority queue should contain 3 vertices after popping and " " updating."
@@ -68,7 +73,7 @@ class TestPriorityQueue:
         assert next_v == g[3], "Lowest priority vertex should be 3."
 
         g.add_vertex(10)
-        g[10].attr[PRIORITY] = 200
+        vertex_priority[10] = 200
         vpq.add_or_update(g[10])
 
         next_v = vpq.pop()

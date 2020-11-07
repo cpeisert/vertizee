@@ -13,18 +13,15 @@
 # limitations under the License.
 
 """Tests for UnionFind data structure."""
-
-import pytest
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
 
 from vertizee.classes.data_structures.union_find import UnionFind
 
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
-)
 
-
-@pytest.mark.usefixtures()
 class TestUnionFind:
+    """Tests for UnionFind data structure."""
+
     def test_init_make_set(self):
         uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5)
 

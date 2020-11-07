@@ -46,29 +46,29 @@ class TestEdgeModuleFunctions:
         ), "loop edge label should be (1, 1)"
         assert (
             edge_module.create_edge_label(v1, v2, is_directed=g.is_directed()) == "(1, 2)"
-        ), "loop edge label should be (1, 2)"
+        ), "edge label should be (1, 2)"
         assert (
             edge_module.create_edge_label(v2, v1, is_directed=g.is_directed()) == "(1, 2)"
-        ), "loop edge label should be (1, 2)"
+        ), "edge label should be (1, 2)"
         assert (
             edge_module.create_edge_label(5, 9, is_directed=g.is_directed()) == "(5, 9)"
-        ), "loop edge label should be (5, 9)"
+        ), "edge label should be (5, 9)"
         assert (
             edge_module.create_edge_label("t", "s", is_directed=g.is_directed()) == "(s, t)"
-        ), "loop edge label should be (s, t)"
+        ), "edge label should be (s, t)"
 
         g2 = DiGraph()
         v3 = g2.add_vertex(3)
         v4 = g2.add_vertex(4)
         assert (
             edge_module.create_edge_label(v3, v4, is_directed=g2.is_directed()) == "(3, 4)"
-        ), "loop edge label should be (3, 4)"
+        ), "edge label should be (3, 4)"
         assert (
             edge_module.create_edge_label(v4, v3, is_directed=g2.is_directed()) == "(4, 3)"
-        ), "loop edge label should be (4, 3)"
+        ), "edge label should be (4, 3)"
         assert (
             edge_module.create_edge_label("t", "s", is_directed=g2.is_directed()) == "(t, s)"
-        ), "loop edge label should be (t, s)"
+        ), "edge label should be (t, s)"
 
 
 class Test_EdgeConnectionData:
@@ -343,7 +343,7 @@ class TestEdge:
         g = Graph([(1, 2), (3, 4, 3.5), (4, 5, 7.5, {"color": "blue"}), (6, 7, 9.5, {"k": "v"})])
         g2 = Graph([(2, 1), (3, 4), (4, 5, 7.5, {"color": "red"}), (6, 7, 9.5, {"k": "v"})])
         assert g[1, 2] == g[1, 2], "edge (1, 2) should equal itself within the same graph"
-        assert g[1, 2] == g2[2, 1], "edges (1, 2) should be equal"
+        assert g[1, 2] == g2[2, 1], "edges (1, 2) and (2, 1) should be the same edge"
         assert g[3, 4] != g2[3, 4], "edges (3, 4) should not be equal due to different weights"
         assert g[4, 5] != g2[4, 5], "edges (4, 5) should not be equal due to different attributes"
         assert g[6, 7] == g2[6, 7], "edges (6, 7) should be equal"

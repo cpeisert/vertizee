@@ -18,16 +18,16 @@ priority function, and whether or not it was initialized as a minimum or maximum
 
 import heapq
 import itertools
-from typing import Callable, Dict, Generic, List, TypeVar, Union
+from typing import Callable, Dict, Final, Generic, List, TypeVar, Union
 
-ITEM_REMOVED = "<item-removed>"
+ITEM_REMOVED: Final = "__priority_queue_item_removed__"
 
 #: TypeVar(T): variable for values in a generic PriorityQueue data structure.
 T = TypeVar("T")
 
 
 class _PriorityQueueItem(Generic[T]):
-    """Generic item wrapper for objects stored in a priority queue."""
+    """Generic wrapper for items stored in a priority queue."""
 
     def __init__(self, priority: Union[float, int], insertion_count: int, item: T) -> None:
         self.priority = priority
@@ -37,30 +37,31 @@ class _PriorityQueueItem(Generic[T]):
     def __compare(self, other, operator: str) -> bool:
         if not isinstance(other, _PriorityQueueItem):
             return False
+        compare = False
         if operator == "==":
             if self.priority == other.priority and self.insertion_count == other.insertion_count:
-                return True
+                compare = True
         elif operator == "<":
             if self.priority < other.priority:
-                return True
+                compare = True
             elif self.priority == other.priority and self.insertion_count < other.insertion_count:
-                return True
+                compare = True
         elif operator == "<=":
             if self.priority <= other.priority:
-                return True
+                compare = True
             elif self.priority == other.priority and self.insertion_count <= other.insertion_count:
-                return True
+                compare = True
         elif operator == ">":
             if self.priority > other.priority:
-                return True
+                compare = True
             elif self.priority == other.priority and self.insertion_count > other.insertion_count:
-                return True
+                compare = True
         elif operator == ">=":
             if self.priority >= other.priority:
-                return True
+                compare = True
             elif self.priority == other.priority and self.insertion_count >= other.insertion_count:
-                return True
-        return False
+                compare = True
+        return compare
 
     def __eq__(self, other) -> bool:
         return self.__compare(other, "==")

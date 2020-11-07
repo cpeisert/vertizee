@@ -304,16 +304,6 @@ class GraphBase(ABC, Generic[V, E]):
     def __getitem__(self, keys):
         """Supports index accessor notation to retrieve vertices and edges.
 
-        Example:
-            >>> import vertizee as vz
-            >>> g = vz.Graph()
-            >>> g.add_edge(1, 2)
-            (1, 2)
-            >>> g[1]  # __getitem__(1)
-            1
-            >>> g[1, 2]  # __getitem__((1, 2))
-            (1, 2)
-
         Args:
             keys: Usually one vertex (to retrieve a vertex) or two vertices (to retrieve an edge).
                 However, any valid ``VertexType`` or ``EdgeType`` may be used.
@@ -326,6 +316,16 @@ class GraphBase(ABC, Generic[V, E]):
             IndexError: If ``keys`` is not a valid ``GraphPrimitive`` (that is a ``VertexType`` or
                 an ``EdgeType``).
             KeyError: If the graph does not contain a vertex or an edge matching ``keys``.
+
+        Example:
+            >>> import vertizee as vz
+            >>> g = vz.Graph()
+            >>> g.add_edge(1, 2)
+            (1, 2)
+            >>> g[1]  # __getitem__(1)
+            1
+            >>> g[1, 2]  # __getitem__((1, 2))
+            (1, 2)
         """
         data: ParsedEdgeAndVertexData = primitives_parsing.parse_graph_primitive(keys)
         if data.edges:

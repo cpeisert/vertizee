@@ -37,6 +37,7 @@ import numbers
 from typing import Iterable, List, Optional, TYPE_CHECKING, Union
 
 from vertizee.classes import edge as edge_module
+from vertizee.classes import vertex as vertex_module
 from vertizee.classes.edge import Connection, MultiConnection
 from vertizee.classes.vertex import VertexBase
 
@@ -64,14 +65,12 @@ class VertexData:
         """Factory class method to create VertexData from a vertex object."""
         vertex_data = VertexData(vertex.label)
         vertex_data._vertex_object = vertex
-        if vertex._attr:
-            vertex_data._attr = vertex.attr
         return vertex_data
 
     @property
     def attr(self) -> Optional[dict]:
         """The attributes dictionary."""
-        if self._vertex_object and self._vertex_object._attr:
+        if self._vertex_object and self._vertex_object.has_attributes_dict():
             return self._vertex_object.attr
         return self._attr
 
@@ -86,9 +85,9 @@ class EdgeData:
     primitive is an instance of an edge class, then ``edge_object`` is set to the object
     reference. The property getters retrieve data from ``edge_object`` if it exists."""
 
-    def __init__(self):
-        self._vertex1: Optional[VertexData] = None
-        self._vertex2: Optional[VertexData] = None
+    def __init__(self, vertex1: VertexData, vertex2: VertexData):
+        self._vertex1 = vertex1
+        self._vertex2 = vertex2
         self._weight: float = edge_module.DEFAULT_WEIGHT
         self._attr = dict()
         self._edge_object: Optional[EdgeClass] = None
@@ -96,7 +95,7 @@ class EdgeData:
     @property
     def attr(self) -> dict:
         """The attributes dictionary."""
-        if self._edge_object and self._edge_object._attr:
+        if self._edge_object and self._edge_object.has_attributes_dict():
             return self._edge_object.attr
         return self._attr
 
@@ -105,27 +104,30 @@ class EdgeData:
         """Optional edge object, if an edge object was parsed."""
         return self._edge_object
 
+    @classmethod
+    def from_edge_obj(cls, edge: EdgeClass) -> EdgeData:
+        """Factory class method to create EdgeData from an edge object."""
+        vertex1 = VertexData.from_vertex_obj(edge.vertex1)
+        vertex2 = VertexData.from_vertex_obj(edge.vertex2)
+        edge_data = EdgeData(vertex1, vertex2)
+        edge_data._edge_object = edge
+        return edge_data
+
     def get_label(self, is_directed: bool) -> str:
         """Returns the edge label."""
-        if self.edge_object:
-            return self.edge_object.label
         if not is_directed:
             if self.vertex1.label > self.vertex2.label:
                 return f"({self.vertex2.label}, {self.vertex1.label})"
         return f"({self.vertex1.label}, {self.vertex2.label})"
 
     @property
-    def vertex1(self) -> Optional[VertexData]:
+    def vertex1(self) -> VertexData:
         """The first vertex."""
-        if self._edge_object:
-            return VertexData.from_vertex_obj(self._edge_object.vertex1)
         return self._vertex1
 
     @property
-    def vertex2(self) -> Optional[VertexData]:
+    def vertex2(self) -> VertexData:
         """The second vertex."""
-        if self._edge_object:
-            return VertexData.from_vertex_obj(self._edge_object.vertex2)
         return self._vertex2
 
     @property
@@ -143,9 +145,8 @@ class ParsedEdgeAndVertexData:
     vertices: List[VertexData] = field(default_factory=list)
 
 
-
 def parse_edge_type(edge: "EdgeType") -> EdgeData:
-    """Parses an ``EdgeType``, which is defined as ``Union[DiEdge, Edge, EdgeLiteral]``, where
+    """Parses an ``EdgeType``, which is defined as ``Union[EdgeClass, EdgeLiteral]``, where
     edge literals are tuples specifying vertex endpoints and optional weights and attributes.
 
     Args:
@@ -154,15 +155,15 @@ def parse_edge_type(edge: "EdgeType") -> EdgeData:
     Returns:
         EdgeData: Returns the parsed edge.
     """
-    edge_data = EdgeData()
     if isinstance(edge, (Connection, MultiConnection)):
-        edge_data._edge_object = edge
+        edge_data = EdgeData.from_edge_obj(edge)
     elif isinstance(edge, tuple):
         if len(edge) < 2 or len(edge) > 4:
             raise ValueError("an edge tuple must contain 2, 3, or 4 items, found tuple of "
                 f"length {len(edge)}; see 'EdgeType' type alias for more information")
-        edge_data._vertex1 = parse_vertex_type(edge[0])
-        edge_data._vertex2 = parse_vertex_type(edge[1])
+        vertex1 = parse_vertex_type(edge[0])
+        vertex2 = parse_vertex_type(edge[1])
+        edge_data = EdgeData(vertex1, vertex2)
 
         if len(edge) == 3:
             # Tuple["VertexType", "VertexType", Weight]
@@ -204,10 +205,6 @@ def parse_graph_primitive(graph_primitive: "GraphPrimitive") -> ParsedEdgeAndVer
     Returns:
         ParsedEdgeAndVertexData: Returns the parsed graph primitive.
     """
-    # Local import to avoid circular reference.
-    # pylint: disable=import-outside-toplevel
-    from vertizee.classes import vertex as vertex_module
-
     parsed_primitive = ParsedEdgeAndVertexData()
     if vertex_module.is_vertex_type(graph_primitive):
         vertex_data = parse_vertex_type(graph_primitive)
