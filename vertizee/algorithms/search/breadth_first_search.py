@@ -19,7 +19,7 @@ from typing import Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from vertizee import VertexNotFound
 from vertizee.algorithms.algo_utils.search_utils import SearchTree
-from vertizee.classes.graph_base import GraphBase
+from vertizee.classes.graph import GraphBase
 from vertizee.classes.vertex import Vertex
 
 if TYPE_CHECKING:
@@ -89,7 +89,7 @@ def bfs_edge_traversal(
      .. [E2004_3] David Eppstein's breadth-first levels function.
                   http://www.ics.uci.edu/~eppstein/PADS/BFS.py
 
-     .. [N2020_3] NetworkX Python package: networkx.algorithms.traversal.breadth_first_search.py
+     .. [N2020_3] NetworkX module: networkx.algorithms.traversal.breadth_first_search.py
                   https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/breadth_first_search.py
     """
     try:

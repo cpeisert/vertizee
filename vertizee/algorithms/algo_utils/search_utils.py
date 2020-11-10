@@ -20,14 +20,13 @@
 """
 
 from __future__ import annotations
-from typing import List, Optional, Set
+from typing import Generic, List, Optional, Set
 
-from vertizee.classes.edge import Edge
-from vertizee.classes.graph_base import GraphBase
-from vertizee.classes.vertex import Vertex
+from vertizee.classes.graph import E, GraphBase, V
+from vertizee.exception import AlgorithmError
 
 
-class DepthFirstSearchResults:
+class DepthFirstSearchResults(Generic[V, E]):
     """Stores the results of a depth-first search.
 
     A depth-first search produces the following output:
@@ -35,7 +34,7 @@ class DepthFirstSearchResults:
         * A forest of depth-first search trees.
         * An ordering of vertices sorted from last to first finishing time. The finishing time of a
           vertex is the time at which the search of the vertex's subtree finished.
-        * Topological sort: If the graph is a DAG (directed, acyclic), then reverse postordering
+        * Topological sort: If the graph is a DAG (directed, acyclic), then the reverse postordering
           of the vertices is a topological sort.
         * Cycle detection: For both directed and undirected graphs, if there is a back edge, then
           the graph has a cycle and the state ``is_acyclic`` is set to False. A cycle
@@ -87,23 +86,47 @@ class DepthFirstSearchResults:
           <vertizee.algorithms.search.depth_first_search.dfs_labeled_edge_traversal>`
     """
 
-    def __init__(self, graph: "GraphBase") -> None:
-        self.graph: GraphBase = graph
-        self.edges_in_discovery_order: List[Edge] = []
-        self.dfs_forest: Set["SearchTree"] = set()
+    def __init__(self, graph: GraphBase[V, E]) -> None:
+        self._graph = graph
+        self._edges_in_discovery_order: List[E] = []
+        self._dfs_forest: Set[SearchTree[V, E]] = set()
 
         # Edge classification.
-        self.back_edges: Set[Edge] = set()
-        self.cross_edges: Set[Edge] = set()
-        self.forward_edges: Set[Edge] = set()
-        self.tree_edges: Set[Edge] = set()
+        self._back_edges: Set[E] = set()
+        self._cross_edges: Set[E] = set()
+        self._forward_edges: Set[E] = set()
+        self._tree_edges: Set[E] = set()
+        self._vertices_post_order: List[V] = []
+        self._vertices_pre_order: List[V] = []
 
         self._is_acyclic = True
 
-        self.vertices_pre_order: List[Vertex] = []
-        self.vertices_post_order: List[Vertex] = []
+    def back_edges(self) -> Set[E]:
+        """Returns the set of back edges found during the depth-first search."""
+        return self._back_edges
 
-    def get_topological_sort(self) -> Optional[List["Vertex"]]:
+    def cross_edges(self) -> Set[E]:
+        """Returns the set of cross edges found during the depth-first search."""
+        return self._cross_edges
+
+    def depth_first_search_trees(self) -> Set[SearchTree[V, E]]:
+        """Returns the set of depth-first search trees found during the depth-first search."""
+        return self._dfs_forest
+
+    def edges_in_discovery_order(self) -> List[E]:
+        """Returns all of the edges found during the the depth-first search in order of discovery.
+        """
+        return self._edges_in_discovery_order
+
+    def forward_edges(self) -> Set[E]:
+        """Returns the set of forward edges found during the depth-first search."""
+        return self._forward_edges
+
+    def is_acyclic(self) -> bool:
+        """Returns True if the graph cycle free (i.e. does not contain cycles)."""
+        return self._is_acyclic
+
+    def topological_sort(self) -> Optional[List[V]]:
         """Returns a list of topologically sorted vertices, or None if the graph is not a directed
         acyclic graph (DAG).
 
@@ -111,16 +134,24 @@ class DepthFirstSearchResults:
             The topological ordering is the reverse of the depth-first search postordering. The
             reverse of the postordering is not the same as the preordering.
         """
-        if self.graph.is_directed() and self.is_acyclic():
-            return list(reversed(self.vertices_post_order))
+        if self._graph.is_directed() and self.is_acyclic():
+            return list(reversed(self._vertices_post_order))
         return None
 
-    def is_acyclic(self) -> bool:
-        """Returns True if the graph cycle free (i.e. does not contain cycles)."""
-        return self._is_acyclic
+    def tree_edges(self) -> Set[E]:
+        """Returns the set of tree edges found during the depth-first search."""
+        return self._tree_edges
+
+    def vertices_post_order(self) -> List[V]:
+        """Returns the vertices in the depth-first tree in post order."""
+        return self._vertices_post_order
+
+    def vertices_pre_order(self) -> List[V]:
+        """Returns the vertices in the depth-first tree in post order."""
+        return self._vertices_pre_order
 
 
-class SearchTree:
+class SearchTree(Generic[V, E]):
     """A search tree is a tree comprised of vertices and edges discovered during a
     breadth-first or depth-first search.
 
@@ -128,11 +159,58 @@ class SearchTree:
         root: The root vertex of the search tree.
         edges_in_discovery_order: The edges in the order traversed by the breadth-first or
             depth-first search of the tree.
-        vertices: The set of vertices visited during the search.
+        vertices_in_discovery_order: The vertices visited during the search in discovery order.
+
+    Args:
+        root: The root vertex of the search tree.
     """
 
-    def __init__(self, root: "Vertex") -> None:
-        self.root = root
-        self.edges_in_discovery_order: List[Edge] = []
-        self.vertices: Set[Vertex] = set()
-        self.vertices.add(root)
+    def __init__(self, root: V) -> None:
+        self._edges_in_discovery_order: List[E] = list()
+        self._vertices_in_discovery_order: List[V] = list()
+
+        self._edge_set: Set[E] = set()
+        self._vertex_set: Set[V] = set()
+
+        self._vertex_set.add(root)
+        self._vertices_in_discovery_order.append(root)
+
+    def edges_in_discovery_order(self) -> List[E]:
+        """Returns the edges in the depth-first tree in order of discovery."""
+        return self._edges_in_discovery_order
+
+    @property
+    def root(self) -> V:
+        """The root vertex of the search tree."""
+        return self._vertices_in_discovery_order[0]
+
+    def vertices_in_discovery_order(self) -> List[V]:
+        """Returns the vertices in the depth-first tree in order of discovery."""
+        return self._vertices_in_discovery_order
+
+    def _add_edge(self, edge: E) -> None:
+        """Adds a new edge to the search tree. Exactly one of the edge's vertices should already
+        be in the search tree, since otherwise, the edge would be unreachable from the existing
+        tree.
+
+        Args:
+            edge: The edge to add.
+
+        Raises:
+            AlgorithmError: If exactly one of the edge's vertices is not already in the search tree.
+        """
+        if edge in self._edge_set:
+            return
+        if edge.vertex1 not in self._vertex_set and edge.vertex2 not in self._vertex_set:
+            raise AlgorithmError(f"neither of the edge vertices {edge} were found in the search "
+                "tree; exactly one of the vertices must already be in the tree")
+
+        self._edge_set.add(edge)
+        self._edges_in_discovery_order.append(edge)
+
+        if edge.vertex1 not in self._vertex_set:
+            self._vertex_set.add(edge.vertex1)
+            self._vertices_in_discovery_order.append(edge.vertex1)
+        else:
+            self._vertex_set.add(edge.vertex2)
+            self._vertices_in_discovery_order.append(edge.vertex2)

@@ -45,7 +45,7 @@ from vertizee.exception import AlgorithmError
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.graph import GraphBase
     from vertizee.classes.vertex import Vertex, VertexType
 
 INFINITY = float("inf")
