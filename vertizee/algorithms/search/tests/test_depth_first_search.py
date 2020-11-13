@@ -38,41 +38,48 @@ class TestDepthFirstSearch:
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         dfs: DepthFirstSearchResults = depth_first_search(g, 0)
-        t, *_ = dfs.depth_first_search_trees()
-        tree: SearchTree = t
+        tree: SearchTree = next(dfs.depth_first_search_trees())
 
         assert tree.root == 0, "DFS tree should be rooted at vertex 0"
         assert (
-            len(dfs.depth_first_search_trees()) == 1
+            len(list(dfs.depth_first_search_trees())) == 1
         ), "DFS search with source vertex should yield one DFS tree"
         assert (
-            len(tree.vertices_in_discovery_order()) == 6
+            len(list(tree.vertices_in_discovery_order())) == 6
         ), "DFS tree should have 6 vertices (excluding vertices 6 & 7)"
-        assert len(tree.edges_in_discovery_order()) == 5, (
+        assert len(list(tree.edges_in_discovery_order())) == 5, (
             "DFS tree should have 5 edges, since for all trees |E| = |V| - 1"
         )
-        assert (
-            g[6] not in tree.vertices_in_discovery_order()
-        ), "DFS tree should not contain vertex 6"
+        assert g[6] not in tree, "DFS tree should not contain vertex 6"
         assert not dfs.is_acyclic(), "graph should not be acyclic, since it contains 2 cycles"
 
-        assert len(tree.vertices_in_discovery_order()) == len(dfs.vertices_pre_order()), (
+        tree_vertices = list(tree.vertices_in_discovery_order())
+        dfs_vertices = list(dfs.vertices_pre_order())
+        assert len(tree_vertices) == len(dfs_vertices), (
             "DFS vertices should match the DFS tree, since only one tree was searched"
         )
-        assert len(tree.edges_in_discovery_order()) == len(
-            dfs.edges_in_discovery_order()
+
+        tree_edges = list(tree.edges_in_discovery_order())
+        dfs_edges = list(dfs.edges_in_discovery_order())
+        assert (
+            len(tree_edges) == len(dfs_edges)
         ), "DFS edges should match the DFS tree, since only one tree was searched"
-        assert len(dfs.back_edges()) > 0, "graph should have back edges, since there are cycles"
-        topological_sort = dfs.topological_sort()
-        assert topological_sort is None, (
-            "Topological sort should be None, since the graph contains cycles"
-        )
-        first_edge: Edge = dfs.edges_in_discovery_order()[0]
+        assert (
+            len(list(dfs.back_edges())) > 0
+        ), "graph should have back edges, since there are cycles"
+
+        # Since graph contains cycles, topological sort should be an empty iterator.
+        topological_sort = next(dfs.topological_sort(), None)
+        assert (
+            not topological_sort
+        ), "since graph contains cycles, topological sort should be an empty iterator"
+
+        first_edge: Edge = next(dfs.edges_in_discovery_order())
         assert first_edge.vertex1 == 0, "first edge should have vertex1 of 0"
         assert first_edge.vertex2 == 1, "first edge should have vertex2 of 1"
 
         assert (
-            not dfs.cross_edges() and not dfs.forward_edges()
+            not next(dfs.cross_edges(), None) and not next(dfs.forward_edges(), None)
         ), "in an undirected graph, every edge is either a tree edge or a back edge"
 
 
@@ -80,16 +87,18 @@ class TestDepthFirstSearch:
         g = Graph([(0, 0), (0, 1), (1, 2), (3, 4)])
         dfs: DepthFirstSearchResults = depth_first_search(g)
 
-        assert len(dfs.depth_first_search_trees()) == 2, "DFS should have discovered two DFS trees"
-        assert len(dfs.vertices_pre_order()) == 5, "DFS tree should have 5 vertices"
-        assert len(dfs.vertices_pre_order()) == len(
-            dfs.vertices_post_order()
+        assert (
+            len(list(dfs.depth_first_search_trees())) == 2
+        ), "DFS should have discovered two DFS trees"
+        assert len(list(dfs.vertices_pre_order())) == 5, "DFS tree should have 5 vertices"
+        assert len(list(dfs.vertices_pre_order())) == len(
+            list(dfs.vertices_post_order())
         ), "number of vertices should be the same in discovery as well post order"
-        assert len(dfs.back_edges()) == 1, "graph should have one self-loop back edge"
-        assert len(dfs.cross_edges()) == 0, (
+        assert len(list(dfs.back_edges())) == 1, "graph should have one self-loop back edge"
+        assert len(list(dfs.cross_edges())) == 0, (
             "graph should have zero cross edges (true for all undirected graphs)"
         )
-        assert len(dfs.forward_edges()) == 0, (
+        assert len(list(dfs.forward_edges())) == 0, (
             "graph should have zero forward edges (true for all undirected graphs)"
         )
         assert not dfs.is_acyclic(), "graph should not be acyclic, since it contains a self loop"
@@ -118,43 +127,46 @@ class TestDepthFirstSearch:
         # Test DiGraph DFS by specifying source vertex s.
         dfs: DepthFirstSearchResults = depth_first_search(g, "s")
 
-        assert len(dfs.depth_first_search_trees()) == 1, (
+        assert len(list(dfs.depth_first_search_trees())) == 1, (
             "DFS search should find 1 DFS tree, since source vertex 's' was specified"
         )
-        t, *_ = dfs.depth_first_search_trees()
-        tree: SearchTree = t
+        tree: SearchTree = next(dfs.depth_first_search_trees())
 
-        assert len(tree.edges_in_discovery_order()) == 4, (
+        assert len(list(tree.edges_in_discovery_order())) == 4, (
             "DFS tree rooted at vertex 's' should have 4 edges"
         )
         assert (
-            len(tree.vertices_in_discovery_order()) == 5
+            len(list(tree.vertices_in_discovery_order())) == 5
         ), "DFS tree rooted at vertex 's' should have 5 vertices"
 
-        assert dfs.vertices_pre_order()[0] == "s", "first vertex should be s"
+        assert next(dfs.vertices_pre_order()) == "s", "first vertex should be s"
         assert not dfs.is_acyclic(), "graph should not be acyclic, since it contains cycles"
 
         # Test DiGraph DFS without specifying a source vertex.
         dfs: DepthFirstSearchResults = depth_first_search(g)
 
-        assert len(dfs.vertices_pre_order()) == len(
-            dfs.vertices_post_order()
+        assert len(list(dfs.vertices_pre_order())) == len(
+            list(dfs.vertices_post_order())
         ), "graph should equal number of vertices in pre and post order"
-        assert len(dfs.vertices_post_order()) == 8, (
+        assert len(list(dfs.vertices_post_order())) == 8, (
             "all vertices should be accounted for when a source vertex is not specified"
         )
 
         dfs_no_source: DepthFirstSearchResults = depth_first_search(g)
 
-        classified_edge_count = (len(dfs_no_source.back_edges()) + len(dfs_no_source.cross_edges())
-            + len(dfs_no_source.forward_edges()) + len(dfs_no_source.tree_edges()))
+        back_edges = list(dfs_no_source.back_edges())
+        cross_edges = list(dfs_no_source.cross_edges())
+        forward_edges = list(dfs_no_source.forward_edges())
+        tree_edges = list(dfs_no_source.tree_edges())
+        classified_edge_count = (len(back_edges) + len(cross_edges) + len(forward_edges)
+            + len(tree_edges))
         assert classified_edge_count == g.edge_count, "classified edges should equal total edges"
 
     def test_topological_sort(self):
         g = DiGraph([("s", "t"), ("t", "u"), ("u", "v")])
 
         dfs: DepthFirstSearchResults = depth_first_search(g)
-        topo_sorted = dfs.topological_sort()
+        topo_sorted = list(dfs.topological_sort())
         assert topo_sorted[0] == "s", "first element of path graph topo sort should be s"
         assert topo_sorted[1] == "t", "second element of path graph topo sort should be t"
         assert topo_sorted[2] == "u", "third element of path graph topo sort should be u"
@@ -164,7 +176,7 @@ class TestDepthFirstSearch:
         g.add_edges_from([("s", "v"), ("s", "w"), ("v", "t"), ("w", "t")])
 
         dfs: DepthFirstSearchResults = depth_first_search(g)
-        topo_sorted = dfs.topological_sort()
+        topo_sorted = list(dfs.topological_sort())
         assert topo_sorted[0] == "s", "first element of topo sort should be s"
         assert topo_sorted[1] == "v" or topo_sorted[1] == "w", (
             "second element of topo sort " "should be v or w"

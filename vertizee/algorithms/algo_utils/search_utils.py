@@ -20,9 +20,11 @@
 """
 
 from __future__ import annotations
-from typing import Generic, List, Optional, Set
+from typing import Generic, List, Iterator, Set
 
 from vertizee.classes.graph import E, GraphBase, V
+from vertizee.classes import primitives_parsing
+from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 from vertizee.exception import AlgorithmError
 
 
@@ -101,54 +103,55 @@ class DepthFirstSearchResults(Generic[V, E]):
 
         self._is_acyclic = True
 
-    def back_edges(self) -> Set[E]:
-        """Returns the set of back edges found during the depth-first search."""
-        return self._back_edges
+    def back_edges(self) -> Iterator[E]:
+        """Returns an iterator over the back edges found during the depth-first search."""
+        return iter(self._back_edges)
 
-    def cross_edges(self) -> Set[E]:
-        """Returns the set of cross edges found during the depth-first search."""
-        return self._cross_edges
+    def cross_edges(self) -> Iterator[E]:
+        """Returns an iterator over the cross edges found during the depth-first search."""
+        return iter(self._cross_edges)
 
-    def depth_first_search_trees(self) -> Set[SearchTree[V, E]]:
-        """Returns the set of depth-first search trees found during the depth-first search."""
-        return self._dfs_forest
+    def depth_first_search_trees(self) -> Iterator[SearchTree[V, E]]:
+        """Returns an iterator over the depth-first search trees found during the depth-first
+        search."""
+        return iter(self._dfs_forest)
 
-    def edges_in_discovery_order(self) -> List[E]:
-        """Returns all of the edges found during the the depth-first search in order of discovery.
-        """
-        return self._edges_in_discovery_order
+    def edges_in_discovery_order(self) -> Iterator[E]:
+        """Returns an iterator over the edges found during the the depth-first search in order of
+        discovery."""
+        return iter(self._edges_in_discovery_order)
 
-    def forward_edges(self) -> Set[E]:
+    def forward_edges(self) -> Iterator[E]:
         """Returns the set of forward edges found during the depth-first search."""
-        return self._forward_edges
+        return iter(self._forward_edges)
 
     def is_acyclic(self) -> bool:
         """Returns True if the graph cycle free (i.e. does not contain cycles)."""
         return self._is_acyclic
 
-    def topological_sort(self) -> Optional[List[V]]:
-        """Returns a list of topologically sorted vertices, or None if the graph is not a directed
-        acyclic graph (DAG).
+    def topological_sort(self) -> Iterator[V]:
+        """Returns an iterator over the topologically sorted vertices. If the graph is not directed
+        and acyclic, the iterator will be empty.
 
         Note:
             The topological ordering is the reverse of the depth-first search postordering. The
             reverse of the postordering is not the same as the preordering.
         """
         if self._graph.is_directed() and self.is_acyclic():
-            return list(reversed(self._vertices_post_order))
-        return None
+            return iter(reversed(self._vertices_post_order))
+        return iter([])
 
-    def tree_edges(self) -> Set[E]:
-        """Returns the set of tree edges found during the depth-first search."""
-        return self._tree_edges
+    def tree_edges(self) -> Iterator[E]:
+        """Returns an iterator over the tree edges found during the depth-first search."""
+        return iter(self._tree_edges)
 
-    def vertices_post_order(self) -> List[V]:
-        """Returns the vertices in the depth-first tree in post order."""
-        return self._vertices_post_order
+    def vertices_post_order(self) -> Iterator[V]:
+        """Returns an iterator over the vertices in the depth-first tree in postorder."""
+        return iter(self._vertices_post_order)
 
-    def vertices_pre_order(self) -> List[V]:
-        """Returns the vertices in the depth-first tree in post order."""
-        return self._vertices_pre_order
+    def vertices_pre_order(self) -> Iterator[V]:
+        """Returns an iterator over the vertices in the depth-first tree in preorder."""
+        return iter(self._vertices_pre_order)
 
 
 class SearchTree(Generic[V, E]):
@@ -175,17 +178,41 @@ class SearchTree(Generic[V, E]):
         self._vertex_set.add(root)
         self._vertices_in_discovery_order.append(root)
 
-    def edges_in_discovery_order(self) -> List[E]:
-        """Returns the edges in the search tree in order of discovery."""
-        return self._edges_in_discovery_order
+    def __contains__(self, edge_or_vertex: GraphPrimitive) -> bool:
+        if not self._vertices_in_discovery_order:
+            return False
+
+        vertex = self._vertices_in_discovery_order[0]
+        graph = vertex._parent_graph
+        data: ParsedEdgeAndVertexData = primitives_parsing.parse_graph_primitive(edge_or_vertex)
+
+        if data.edges:
+            if graph.has_edge(data.edges[0].vertex1.label, data.edges[0].vertex2.label):
+                edge = graph[data.edges[0].vertex1.label, data.edges[0].vertex2.label]
+                return edge in self._edge_set
+            return False
+        if data.vertices:
+            return data.vertices[0].label in self._vertex_set
+
+        raise ValueError("expected GraphPrimitive (EdgeType or VertexType); found "
+            f"{type(edge_or_vertex).__name__}")
+
+    def __len__(self) -> int:
+        """Returns the number of vertices in the search tree when the built-in Python function
+        ``len`` is used."""
+        return len(self._vertex_set)
+
+    def edges_in_discovery_order(self) -> Iterator[E]:
+        """Returns an iterator over the edges in the search tree in order of discovery."""
+        return iter(self._edges_in_discovery_order)
 
     @property
     def root(self) -> V:
         """The root vertex of the search tree."""
         return self._vertices_in_discovery_order[0]
 
-    def vertices_in_discovery_order(self) -> List[V]:
-        """Returns the vertices in the search tree in order of discovery."""
+    def vertices_in_discovery_order(self) -> Iterator[V]:
+        """Returns an iterator over the vertices in the search tree in order of discovery."""
         return self._vertices_in_discovery_order
 
     def _add_edge(self, edge: E) -> None:
