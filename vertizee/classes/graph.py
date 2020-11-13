@@ -44,9 +44,6 @@ Example:
 """
 # pylint: disable=too-many-public-methods
 
-# pylint: disable=unsubscriptable-object
-# Due to pylint bug. See pylint issue #2822: https://github.com/PyCQA/pylint/issues/2822
-
 # pylint: disable=attribute-defined-outside-init
 # Due to pylint bug. See pylint issue #2981: https://github.com/PyCQA/pylint/issues/2981
 
@@ -86,7 +83,7 @@ E = TypeVar("E", DiEdge, Edge, MultiDiEdge, MultiEdge)
 
 #: V: A generic type parameter that represents a :class:`Vertex <vertizee.classes.vertex.Vertex>`
 # or :class:`DiVertex <vertizee.classes.vertex.DiVertex>`.
-V = TypeVar("V", "DiVertex", "Vertex")
+V = TypeVar("V", DiVertex, MultiDiVertex, MultiVertex, Vertex)
 
 
 def _add_edge_obj_to_graph(graph: GraphBase[V, E], edge: EdgeClass) -> E:

@@ -18,12 +18,14 @@
 
 import pytest
 
-from vertizee.algorithms import DepthFirstSearchResults, SearchTree
+from vertizee.algorithms.algo_utils.search_utils import DepthFirstSearchResults, SearchTree
 from vertizee.algorithms.search.depth_first_search import (
     depth_first_search,
     dfs_labeled_edge_traversal,
     dfs_postorder_traversal,
     dfs_preorder_traversal,
+    Direction,
+    Label
 )
 from vertizee.classes.edge import Edge
 from vertizee.classes.graph import DiGraph, Graph, MultiDiGraph
@@ -117,17 +119,17 @@ class TestDepthFirstSearch:
         dfs: DepthFirstSearchResults = depth_first_search(g, "s")
 
         assert len(dfs.depth_first_search_trees()) == 1, (
-            "DFS search should find 1 DFS tree, since source vertex s was specified"
+            "DFS search should find 1 DFS tree, since source vertex 's' was specified"
         )
         t, *_ = dfs.depth_first_search_trees()
         tree: SearchTree = t
 
         assert len(tree.edges_in_discovery_order()) == 4, (
-            "DFS tree rooted at vertex s should have 4 edges"
+            "DFS tree rooted at vertex 's' should have 4 edges"
         )
         assert (
             len(tree.vertices_in_discovery_order()) == 5
-        ), "DFS tree rooted at vertex s should have 5 vertices"
+        ), "DFS tree rooted at vertex 's' should have 5 vertices"
 
         assert dfs.vertices_pre_order()[0] == "s", "first vertex should be s"
         assert not dfs.is_acyclic(), "graph should not be acyclic, since it contains cycles"
@@ -142,8 +144,10 @@ class TestDepthFirstSearch:
             "all vertices should be accounted for when a source vertex is not specified"
         )
 
-        classified_edge_count = (len(dfs.back_edges()) + len(dfs.cross_edges())
-            + len(dfs.forward_edges()) + len(dfs.tree_edges()))
+        dfs_no_source: DepthFirstSearchResults = depth_first_search(g)
+
+        classified_edge_count = (len(dfs_no_source.back_edges()) + len(dfs_no_source.cross_edges())
+            + len(dfs_no_source.forward_edges()) + len(dfs_no_source.tree_edges()))
         assert classified_edge_count == g.edge_count, "classified edges should equal total edges"
 
     def test_topological_sort(self):
@@ -173,7 +177,7 @@ class TestDepthFirstSearch:
         dfs_edge_tuples = list(edge_iter)
 
         tree_roots = set(parent for parent, child, label, direction in dfs_edge_tuples
-            if label == "dfs_tree_root")
+            if label == Label.TREE_ROOT)
         assert len(tree_roots) == 2, "there should be two DFS trees"
 
         vertices = set(child for parent, child, label, direction in dfs_edge_tuples)
@@ -184,25 +188,24 @@ class TestDepthFirstSearch:
         assert len(vertices) == 8, "DFS traversal should include all vertices"
 
         vertices_preorder = list(child for parent, child, label, direction in dfs_edge_tuples
-            if direction == "preorder")
+            if direction == Direction.PREORDER)
         vertices_postorder = list(child for parent, child, label, direction in dfs_edge_tuples
-            if direction == "postorder")
+            if direction == Direction.POSTORDER)
         assert len(vertices_preorder) == len(vertices_postorder), (
             "the number of preorder vertices should match the number of postorder vertices"
         )
 
         back_edges = set((parent, child) for parent, child, label, direction in dfs_edge_tuples
-            if label == "back_edge")
+            if label == Label.BACK_EDGE)
         cross_edges = set((parent, child) for parent, child, label, direction in dfs_edge_tuples
-            if label == "cross_edge")
+            if label == Label.CROSS_EDGE)
         forward_edges = set((parent, child) for parent, child, label, direction in dfs_edge_tuples
-            if label == "forward_edge")
+            if label == Label.FORWARD_EDGE)
 
         assert len(back_edges) > 0, "graph should have back edges, since there are cycles"
         assert (
             not cross_edges and not forward_edges
         ), "in an undirected graph, every edge is either a tree edge or a back edge"
-
 
     def test_dfs_traversal_directed_graph(self):
         g = DiGraph([(0, 1), (1, 2), (2, 1)])
@@ -214,13 +217,13 @@ class TestDepthFirstSearch:
         tuple_generator = dfs_labeled_edge_traversal(g, source=0)
         parent, child, label, direction = next(tuple_generator)
         assert parent == 0 and child == 0, "Traversal should start with source vertex 0."
-        assert label == "dfs_tree_root", "Source vertex should be a DFS tree root."
-        assert direction == "preorder", "Direction should start out as preorder."
+        assert label == Label.TREE_ROOT, "Source vertex should be a DFS tree root."
+        assert direction == Direction.PREORDER, "Direction should start out as preorder."
 
         parent, child, label, direction = next(tuple_generator)
         assert parent == 0 and child == 1, "Vertex after 0 should be 1."
-        assert label == "tree_edge", "Source vertex should be a DFS tree root."
-        assert direction == "preorder", "Direction should start out as preorder."
+        assert label == Label.TREE_EDGE, "Source vertex should be a DFS tree root."
+        assert direction == Direction.PREORDER, "Direction should start out as preorder."
 
         vertex_generator = dfs_postorder_traversal(g, source=0)
         v = next(vertex_generator)
@@ -268,10 +271,9 @@ class TestDepthFirstSearch:
         vertices = list(dfs_preorder_traversal(g, source=0))
         assert vertices == [0, 1, 4, 3], "Preorder vertices should be 0, 1, 4, 3."
         vertices = list(dfs_preorder_traversal(g, source=0, reverse_graph=True))
-        assert vertices == [0, 4, 1, 3, 2] or vertices == [
-            0,
-            4,
-            2,
-            1,
-            3,
-        ], "Reverse graph preorder vertices should be either [0, 4, 1, 3, 2] or [0, 4, 2, 1, 3]."
+
+        preorder1 = [0, 4, 1, 3, 2]
+        preorder2 = [0, 4, 2, 1, 3]
+        assert (
+            vertices in (preorder1, preorder2)
+        ), f"Reverse graph preorder vertices should be either {preorder1} or {preorder2}."

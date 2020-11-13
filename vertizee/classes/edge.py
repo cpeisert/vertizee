@@ -61,6 +61,8 @@ Functions:
 # pylint: disable=unsubscriptable-object
 # See pylint issue #2822: https://github.com/PyCQA/pylint/issues/2822
 
+# pylint: disable=anomalous-backslash-in-string
+
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
@@ -95,7 +97,7 @@ ConnectionKey = Hashable
 
 #: V: A generic type parameter that represents a :class:`Vertex <vertizee.classes.vertex.Vertex>`
 # or :class:`DiVertex <vertizee.classes.vertex.DiVertex>`.
-V = TypeVar("V", DiVertex, Vertex)
+V = TypeVar("V", DiVertex, MultiDiVertex, MultiVertex, Vertex)
 
 DEFAULT_WEIGHT: Final = 1.0
 DEFAULT_CONNECTION_KEY: Final = 0
@@ -189,7 +191,7 @@ def _contract_connection(edge: Connection, remove_loops: bool = False) -> None:
 
     edges_to_delete: List[EdgeClass] = []
     # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
-    for incident in v2.incident_edges:
+    for incident in v2.incident_edges():
         edges_to_delete.append(incident)
 
         if incident.is_loop():
@@ -224,9 +226,9 @@ def _contract_multiconnection(edge: MultiConnection, remove_loops: bool = False)
     v1 = edge.vertex1
     v2 = edge.vertex2
 
-    edges_to_delete: List[EdgeClass] = []
+    edges_to_delete: List[MultiConnection] = []
     # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
-    for incident in v2.incident_edges:
+    for incident in v2.incident_edges():
         edges_to_delete.append(incident)
 
         if incident.is_loop():
@@ -239,20 +241,16 @@ def _contract_multiconnection(edge: MultiConnection, remove_loops: bool = False)
             vertex1 = incident.vertex1
             vertex2 = v1
 
-        existing_keys = set()
+        multiedge = None
         if graph.has_edge(vertex1, vertex2):
-            for key, _ in graph[vertex1, vertex2].connection_items():
-                existing_keys.add(key)
+            multiedge = graph[vertex1, vertex2]
 
-        for key, connection in incident.connection_items():
-
-            if vertex1 == vertex2:
-                print(f"DEBUG: Adding loop connection {vertex1, vertex2}")
-
-            if key in existing_keys:
-                graph.add_edge(vertex1, vertex2, weight=connection.weight)
+        for connection in incident.connections():
+            attr = connection.attr if connection.has_attributes_dict() else dict()
+            if multiedge:
+                multiedge.add_connection(weight=connection.weight, **attr)
             else:
-                graph.add_edge(vertex1, vertex2, weight=connection.weight, key=key)
+                multiedge = graph.add_edge(vertex1, vertex2, weight=connection.weight, **attr)
 
     # Delete indicated edges after finishing loop iteration.
     for e in edges_to_delete:

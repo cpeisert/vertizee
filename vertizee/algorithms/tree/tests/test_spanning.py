@@ -19,8 +19,7 @@ import pytest
 from vertizee.algorithms.tree.spanning import spanning_tree_kruskal
 from vertizee.algorithms.tree.spanning import spanning_tree_prim
 from vertizee.algorithms.tree.spanning import spanning_tree_prim_fibonacci
-from vertizee.classes.digraph import DiGraph
-from vertizee.classes.graph import Graph
+from vertizee.classes.graph import DiGraph, Graph
 from vertizee.exception import GraphTypeNotSupported
 
 pytestmark = pytest.mark.skipif(

@@ -176,7 +176,7 @@ class SearchTree(Generic[V, E]):
         self._vertices_in_discovery_order.append(root)
 
     def edges_in_discovery_order(self) -> List[E]:
-        """Returns the edges in the depth-first tree in order of discovery."""
+        """Returns the edges in the search tree in order of discovery."""
         return self._edges_in_discovery_order
 
     @property
@@ -185,7 +185,7 @@ class SearchTree(Generic[V, E]):
         return self._vertices_in_discovery_order[0]
 
     def vertices_in_discovery_order(self) -> List[V]:
-        """Returns the vertices in the depth-first tree in order of discovery."""
+        """Returns the vertices in the search tree in order of discovery."""
         return self._vertices_in_discovery_order
 
     def _add_edge(self, edge: E) -> None:

@@ -90,7 +90,7 @@ class UnionFind(Generic[T]):
 
      .. [E2004_2] Eppstein, D. http://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
 
-     .. [N2020_2] NetworkX Python package: networkx.utils.union_find.py
+     .. [N2020_2] NetworkX module: networkx.utils.union_find.py
                   https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
     """
 

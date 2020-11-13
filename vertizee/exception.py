@@ -31,9 +31,9 @@ class EdgeNotFound(VertizeeException):
     """Exception raised if indicated edge is not present in the graph"""
 
 
-class Unfeasible(VertizeeException):
-    """Exception raised by algorithms trying to solve a problem
-    instance that has no feasible solution."""
+class Unfeasible(AlgorithmError):
+    """Exception raised by algorithms trying to solve a problem instance that has no feasible
+    solution."""
 
 
 class GraphTypeNotSupported(Unfeasible):
@@ -47,8 +47,8 @@ class NegativeWeightCycle(Unfeasible):
 
 
 class NoPath(Unfeasible):
-    """Exception for algorithms that should return a path when running
-    on graphs where such a path does not exist."""
+    """Exception for algorithms that should return a path when running on graphs where such a path
+    does not exist."""
 
 
 class ParallelEdgesNotAllowed(VertizeeException):

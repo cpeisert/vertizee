@@ -18,7 +18,7 @@ import math
 from typing import Dict, Optional
 
 from vertizee.classes.edge import Edge
-from vertizee.classes.graph_base import GraphBase
+from vertizee.classes.graph import GraphBase
 from vertizee.classes.vertex import Vertex
 
 

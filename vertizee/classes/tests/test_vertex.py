@@ -111,21 +111,21 @@ class TestVertexBase:
     def test_adj_vertices(self):
         g = Graph()
         g.add_vertex(1)
-        assert not g[1].adj_vertices, "vertex 1 should have no adjacent vertices"
+        assert not g[1].adj_vertices(), "vertex 1 should have no adjacent vertices"
 
         g.add_edge(1, 2)
-        assert next(iter(g[1].adj_vertices)) == 2, "vertex 1 should adjacent to vertex 2"
+        assert next(iter(g[1].adj_vertices())) == 2, "vertex 1 should adjacent to vertex 2"
 
         g.add_edge(1, 3)
-        assert len(g[1].adj_vertices) == 2, "vertex 1 should be adjacent to vertices 2 and 3"
-        assert next(iter(g[3].adj_vertices)) == g[1], "vertex 3 should be adjacent to vertex 1"
+        assert len(g[1].adj_vertices()) == 2, "vertex 1 should be adjacent to vertices 2 and 3"
+        assert next(iter(g[3].adj_vertices())) == g[1], "vertex 3 should be adjacent to vertex 1"
 
         g.add_edge(2, 4)
-        assert g[4] not in g[1].adj_vertices, "vertex 1 should not be adjacent to vertex 4"
-        assert g[2] not in g[2].adj_vertices, "vertex 2 should not be adjacent to itself"
+        assert g[4] not in g[1].adj_vertices(), "vertex 1 should not be adjacent to vertex 4"
+        assert g[2] not in g[2].adj_vertices(), "vertex 2 should not be adjacent to itself"
 
         g.add_edge(4, 4)
-        assert g[4] in g[4].adj_vertices, "vertex 4 should be adjacent to itself"
+        assert g[4] in g[4].adj_vertices(), "vertex 4 should be adjacent to itself"
 
     def test_attr_dictionary(self):
         g = Graph()
@@ -179,12 +179,12 @@ class TestVertexBase:
         with pytest.raises(VertizeeException):
             v2.remove()
 
-        assert len(v2.incident_edges) == 2, "v2 should have two incident edges"
+        assert len(v2.incident_edges()) == 2, "v2 should have two incident edges"
         v2.remove_loops()
         assert v2.loop_edge is None, "v2 should not have a loop edge after removal"
-        assert len(v2.incident_edges) == 1, "v2 should have one incident after removing loop"
+        assert len(v2.incident_edges()) == 1, "v2 should have one incident after removing loop"
         v2.remove_incident_edges()
-        assert len(v2.incident_edges) == 0, "v2 should not have any incident edges after removal"
+        assert len(v2.incident_edges()) == 0, "v2 should not have any incident edges after removal"
 
 
 class TestVertex:
@@ -206,12 +206,12 @@ class TestVertex:
 
         g.add_edge(1, 1)
         assert (
-            g[1].incident_edges == {g[1, 1]}
+            g[1].incident_edges() == {g[1, 1]}
         ), "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
 
         g.add_edge(1, 2)
-        assert len(g[1].incident_edges) == 2, "vertex 1 should have two incident edges"
+        assert len(g[1].incident_edges()) == 2, "vertex 1 should have two incident edges"
 
 
 class TestDiVertex:
@@ -231,25 +231,25 @@ class TestDiVertex:
     def test_adj_vertices(self):
         g = DiGraph([(1, 1)])
         assert (
-            g[1].adj_vertices == {g[1]}
+            g[1].adj_vertices() == {g[1]}
         ), "vertex with directed self-loop should be adjacent to itself"
         assert (
-            g[1].adj_vertices_incoming == {g[1]}
+            g[1].adj_vertices_incoming() == {g[1]}
         ), "vertex with directed self-loop should connect to itself via an incoming edge"
         assert (
-            g[1].adj_vertices_outgoing == {g[1]}
+            g[1].adj_vertices_outgoing() == {g[1]}
         ), "vertex with directed self-loop should connect to itself via an outgoing edge"
 
         g.add_edge(1, 2)
-        assert g[1].adj_vertices == {
+        assert g[1].adj_vertices() == {
             g[1],
             g[2]
         }, "vertex 1 should be adjacent to itself and vertex 2"
         assert (
-            g[1].adj_vertices_incoming == {g[1]}
+            g[1].adj_vertices_incoming() == {g[1]}
         ), "vertex 1 should only have itself as incoming adjacent vertex"
         assert (
-            g[1].adj_vertices_outgoing == {g[1], g[2]}
+            g[1].adj_vertices_outgoing() == {g[1], g[2]}
         ), "vertex 1 should only have itself and vertex 2 as outgoing adjacent vertex"
 
     def test_degree(self):
@@ -276,15 +276,15 @@ class TestDiVertex:
         g.add_edge(1, 0)
         g.add_edge(1, 2)
         g.add_edge(3, 1)
-        assert g[1].incident_edges == {
+        assert g[1].incident_edges() == {
             g[1, 0],
             g[1, 2],
             g[3, 1]
         }, "incident edges should be (1, 0), (1, 2), and (3, 1)"
 
-        assert g[1].incident_edges_incoming == {g[3, 1]}, "incoming edge should be (3, 1)"
+        assert g[1].incident_edges_incoming() == {g[3, 1]}, "incoming edge should be (3, 1)"
 
-        assert g[1].incident_edges_outgoing == {
+        assert g[1].incident_edges_outgoing() == {
             g[1, 0],
             g[1, 2],
         }, "outgoing edges should include (1, 0) and (1, 2)"
@@ -296,7 +296,7 @@ class TestDiVertex:
 
         g.add_edge(1, 1)
         assert (
-            g[1].incident_edges == {g[1, 1]}
+            g[1].incident_edges() == {g[1, 1]}
         ), "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
 
@@ -318,10 +318,10 @@ class TestMultiVertex:
     def test_adj_vertices(self):
         g = MultiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert (
-            g[1].adj_vertices == {g[1]}
+            g[1].adj_vertices() == {g[1]}
         ), "vertex with self-loops should be adjacent to itself"
         assert (
-            g[2].adj_vertices == {g[3]}
+            g[2].adj_vertices() == {g[3]}
         ), "vertex 2 (with parallel connections) should be adjacent to vertex 3"
 
     def test_degree(self):
@@ -346,15 +346,15 @@ class TestMultiVertex:
 
         g.add_edges_from([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert (
-            g[1].incident_edges == {g[1, 1]}
+            g[1].incident_edges() == {g[1, 1]}
         ), "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
 
         assert (
-            len(g[2].incident_edges) == 1
+            len(g[2].incident_edges()) == 1
         ), "vertex 2 should have one incident multiedge"
         assert (
-            next(iter(g[2].incident_edges)).multiplicity == 2
+            next(iter(g[2].incident_edges())).multiplicity == 2
         ), "multiedge (2, 3) should have multiplicity 2"
 
 
@@ -375,21 +375,21 @@ class TestMultiDiVertex:
     def test_adj_vertices(self):
         g = MultiDiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert (
-            g[1].adj_vertices == {g[1]}
+            g[1].adj_vertices() == {g[1]}
         ), "vertex with directed self-loop should be adjacent to itself"
         assert (
-            g[1].adj_vertices_incoming == {g[1]}
+            g[1].adj_vertices_incoming() == {g[1]}
         ), "vertex with directed self-loop should connect to itself via an incoming edge"
         assert (
-            g[1].adj_vertices_outgoing == {g[1]}
+            g[1].adj_vertices_outgoing() == {g[1]}
         ), "vertex with directed self-loop should connect to itself via an outgoing edge"
 
-        assert g[2].adj_vertices == {g[3]}, "vertex 2 should be adjacent to vertex 3"
+        assert g[2].adj_vertices() == {g[3]}, "vertex 2 should be adjacent to vertex 3"
         assert (
-            not g[2].adj_vertices_incoming
+            not g[2].adj_vertices_incoming()
         ), "vertex 2 should have no incoming adjacent vertices"
         assert (
-            g[2].adj_vertices_outgoing == {g[3]}
+            g[2].adj_vertices_outgoing() == {g[3]}
         ), "vertex 2 should have vertex 3 as outgoing adjacent vertex"
 
     def test_degree(self):
@@ -404,12 +404,12 @@ class TestMultiDiVertex:
 
     def test_incident_edges(self):
         g = MultiDiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
-        assert g[1].incident_edges == {g[1, 1]}, "vertex 1 should be incident on (1, 1)"
-        assert g[1].incident_edges_incoming == {g[1, 1]}, "incoming edge should be (1, 1)"
-        assert g[1].incident_edges_outgoing == {g[1, 1]}, "outgoing edge should be (1, 1)"
+        assert g[1].incident_edges() == {g[1, 1]}, "vertex 1 should be incident on (1, 1)"
+        assert g[1].incident_edges_incoming() == {g[1, 1]}, "incoming edge should be (1, 1)"
+        assert g[1].incident_edges_outgoing() == {g[1, 1]}, "outgoing edge should be (1, 1)"
 
-        assert g[2].incident_edges_outgoing == {g[2, 3]}, "outgoing edges should (2, 3)"
-        assert not g[2].incident_edges_incoming, "should be no incoming edges"
+        assert g[2].incident_edges_outgoing() == {g[2, 3]}, "outgoing edges should (2, 3)"
+        assert not g[2].incident_edges_incoming(), "should be no incoming edges"
 
     def test_loop_edge(self):
         g = MultiDiGraph()
@@ -419,7 +419,7 @@ class TestMultiDiVertex:
         g.add_edge(1, 1)
         g.add_edge(1, 1)
         assert (
-            g[1].incident_edges == {g[1, 1]}
+            g[1].incident_edges() == {g[1, 1]}
         ), "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
         assert g[1].loop_edge.multiplicity == 2, "vertex 1 should have two loops"

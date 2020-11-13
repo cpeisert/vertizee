@@ -62,10 +62,10 @@ class VertexDict(MutableMapping["VertexType", VT]):
         three
     """
 
-    def __init__(self, dict=None, /, **kwargs) -> None:
+    def __init__(self, dictionary=None, /, **kwargs) -> None:
         self.data: Dict[str, VT] = {}
-        if dict is not None:
-            self.update(dict)
+        if dictionary is not None:
+            self.update(dictionary)
         if kwargs:
             self.update(kwargs)
 

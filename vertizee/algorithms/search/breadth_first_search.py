@@ -70,13 +70,13 @@ def bfs_edge_traversal(
         >>> from vertizee.algorithms import bfs_edge_traversal
         >>> g = vz.DiGraph([(0, 1), (1, 2), (2, 1)])
         >>> pprint(list(dfs_labeled_edge_traversal(g, source=0)))
-        [(0, 0, 'dfs_tree_root', 'preorder'),
+        [(0, 0, 'tree_root', 'preorder'),
          (0, 1, 'tree_edge', 'preorder'),
          (1, 2, 'tree_edge', 'preorder'),
          (2, 1, 'back_edge', 'already_discovered'),
          (1, 2, 'tree_edge', 'postorder'),
          (0, 1, 'tree_edge', 'postorder'),
-         (0, 0, 'dfs_tree_root', 'postorder')]
+         (0, 0, 'tree_root', 'postorder')]
 
     See Also:
         * :func:`depth_first_search`
@@ -123,7 +123,7 @@ def bfs_edge_traversal(
                 timer.increment()
                 v.attr[TIME_DISCOVERED] = timer.time
                 if not v.attr[PREDECESSOR]:
-                    yield v, v, "dfs_tree_root", "preorder"
+                    yield v, v, "tree_root", "preorder"
                 else:
                     yield v.attr[PREDECESSOR], v, "tree_edge", "preorder"
 
@@ -148,7 +148,7 @@ def bfs_edge_traversal(
                 timer.increment()
                 v.attr[TIME_FINISHED] = timer.time
                 if not v.attr[PREDECESSOR]:
-                    yield v, v, "dfs_tree_root", "postorder"
+                    yield v, v, "tree_root", "postorder"
                 else:
                     yield v.attr[PREDECESSOR], v, "tree_edge", "postorder"
 

@@ -27,9 +27,8 @@ from vertizee.algorithms.shortest_paths.weighted import (
     shortest_paths_dijkstra_fibonacci,
 )
 from vertizee.classes.data_structures.vertex_dict import VertexDict
-from vertizee.classes.digraph import DiGraph, MultiDiGraph
+from vertizee.classes.graph import DiGraph, MultiDiGraph, MultiGraph
 from vertizee.classes.edge import Edge
-from vertizee.classes.graph import MultiGraph
 from vertizee.classes.vertex import Vertex
 
 pytestmark = pytest.mark.skipif(

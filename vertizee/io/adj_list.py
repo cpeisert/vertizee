@@ -106,7 +106,7 @@ from vertizee.exception import GraphTypeNotSupported
 
 if TYPE_CHECKING:
     from vertizee.classes.edge import Edge
-    from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.graph import GraphBase
     from vertizee.classes.primitives_parsing import EdgeTuple
     from vertizee.classes.vertex import Vertex
 

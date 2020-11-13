@@ -170,12 +170,14 @@ class TestEdgeBase:
 
     def test_contract(self):
         g = Graph([(1, 2), (1, 3), (2, 3), (2, 4), (2, 2)])
-        assert g[1].adj_vertices == {g[2], g[3]}, "vertex 1 should be adjacent to vertices 2 and 3"
+        assert (
+            g[1].adj_vertices() == {g[2], g[3]}
+        ), "vertex 1 should be adjacent to vertices 2 and 3"
 
         g[1, 2].contract(remove_loops=False)
 
         assert (
-            g[1].adj_vertices == {g[1], g[3], g[4]}
+            g[1].adj_vertices() == {g[1], g[3], g[4]}
         ), "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
         assert (
             g[1].loop_edge.label == "(1, 1)"
@@ -259,27 +261,33 @@ class TestMultiEdgeBase:
 
     def test_contract(self):
         g = MultiGraph([(1, 2), (1, 3), (2, 3), (2, 4), (2, 2), (2, 2)])
-        assert g[1].adj_vertices == {g[2], g[3]}, "vertex 1 should be adjacent to vertices 2 and 3"
+        assert (
+            g[1].adj_vertices() == {g[2], g[3]}
+        ), "vertex 1 should be adjacent to vertices 2 and 3"
         assert (
             g[1, 3].multiplicity == 1
         ), "before edge contraction, edge (1, 3) should have multiplicity 1"
+        assert g[2, 2].multiplicity == 2, "vertex 2 should have two loops"
 
         g[1, 2].contract(remove_loops=False)
 
         assert (
-            g[1].adj_vertices == {g[1], g[3], g[4]}
+            g[1].adj_vertices() == {g[1], g[3], g[4]}
         ), "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
         assert (
             g[1, 3].multiplicity == 2
         ), "after edge contraction, edge (1, 3) should have multiplicity 2"
         assert (
             g[1].loop_edge
-        ), "vertex 1 should have loop edge (1, 1), due to loop that was on vertex 2"
-        assert g[1].loop_edge.multiplicity == 2, "loop edge should have multiplicity 2"
+        ), "vertex 1 should have loop edge (1, 1)"
+        print(f"\nDEBUG: g[1].loop_edge => {g[1].loop_edge}\n")
+        assert g[1].loop_edge.multiplicity == 3, "loop edge should have multiplicity 3"
         assert not g.has_vertex(2), "after edge contraction, vertex 2 should be removed"
 
         g2 = MultiDiGraph([(1, 2), (2, 4), (2, 2), (2, 2)])
+
         g2[1, 2].contract(remove_loops=True)
+
         assert not g2[1].loop_edge, "loop edge should be removed after edge contraction"
 
     def test_loop(self):

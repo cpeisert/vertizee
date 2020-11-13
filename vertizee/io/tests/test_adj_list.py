@@ -20,13 +20,9 @@ import os
 
 import pytest
 
-from vertizee.classes.digraph import MultiDiGraph
-from vertizee.classes.graph import MultiGraph
+from vertizee.classes.graph import MultiDiGraph, MultiGraph
 from vertizee.io.adj_list import read_adj_list, write_adj_list_to_file
 
-pytestmark = pytest.mark.skipif(
-    False, reason="Set first param to False to run tests, or True to skip."
-)
 
 DIGRAPH_FILE01 = "adj_list_digraph01.txt"
 DIGRAPH_OUTPUT_FILE = "adj_list_digraph01_TEST_OUTPUT.txt"
@@ -37,7 +33,6 @@ GRAPH_OUTPUT_FILE01 = "adj_list_graph01_TEST_OUTPUT.txt"
 TEST_DIR = "vertizee/io/tests"
 
 
-@pytest.mark.usefixtures()
 class TestGraphIOAdjList:
     def test_digraph_read_adj_list(self):
         g = MultiDiGraph()

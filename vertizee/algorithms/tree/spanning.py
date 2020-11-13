@@ -24,7 +24,7 @@ from vertizee.classes.vertex import Vertex
 from vertizee.exception import GraphTypeNotSupported, VertexNotFound
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph_base import GraphBase
+    from vertizee.classes.graph import GraphBase
     from vertizee.classes.edge import DiEdge, Edge
     from vertizee.classes.vertex import VertexType
 

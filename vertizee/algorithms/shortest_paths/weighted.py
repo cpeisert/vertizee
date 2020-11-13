@@ -24,7 +24,7 @@ from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.edge import Edge
-from vertizee.classes.graph_base import GraphBase
+from vertizee.classes.graph import GraphBase
 from vertizee.classes.vertex import Vertex, VertexType
 
 INFINITY = float("inf")
@@ -290,7 +290,8 @@ def all_pairs_shortest_paths_johnson(
             dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
-            :func:`vertizee.algorithms.algo_utils.shortest_path_utils.reconstruct_path`. Defaults to False.
+            :func:`vertizee.algorithms.algo_utils.shortest_path_utils.reconstruct_path`. Defaults
+            to False.
 
     Returns:
         VertexDict[VertexDict[ShortestPath]]: A dictionary mapping source vertices to dictionaries
@@ -305,7 +306,8 @@ def all_pairs_shortest_paths_johnson(
         * :func:`all_pairs_shortest_paths_floyd_warshall`
         * :func:`all_pairs_shortest_paths_johnson_fibonacci`
         * :class:`Edge <vertizee.classes.edge.Edge>`
-        * :func:`reconstruct_path <vertizee.algorithms.algo_utils.shortest_path_utils.reconstruct_path>`
+        * :func:`reconstruct_path
+          <vertizee.algorithms.algo_utils.shortest_path_utils.reconstruct_path>`
         * :class:`ShortestPath <vertizee.algorithms.algo_utils.shortest_path_utils.ShortestPath>`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
 

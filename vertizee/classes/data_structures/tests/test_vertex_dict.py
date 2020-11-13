@@ -36,7 +36,22 @@ class TestVertexDict:
         d3 = VertexDict(pairs)
         assert len(d3) == 2, "Dict d3 should have 2 items"
 
-    def test_get_set(self):
+    def test_contains(self):
+        d = VertexDict(**{"1":"one", "2":"two"})
+        assert 1 in d
+        assert "1" in d
+        assert d.__contains__(2)
+
+        g = Graph([(0, "six")])
+        d2 = VertexDict()
+        d2[g[0]] = "zero"
+        d2[g["six"]] = "six"
+        assert 0 in d2
+        assert g[0] in d2
+        assert "six" in d2
+        assert g["six"] in d2
+
+    def test__getitem__setitem(self):
         g = Graph()
         v1: Vertex = g.add_vertex(1)
         pairs = [("1", "one"), (2, "two")]
