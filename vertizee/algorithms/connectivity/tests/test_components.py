@@ -33,17 +33,14 @@ class TestConnectedComponents:
         g = Graph([(1, 2), (2, 3), (4, 5), (7, 7)])
         component_list: List[Component] = list(components.connected_components(g))
         c_12_23: Component = [c for c in component_list if 1 in c][0]
-        for _ in c_12_23.edges():
-            break
         assert (
-            not c_12_23._edges_initialized
-        ), "without iterating all edges, `_edge_set` should not be fully initialized"
+            not c_12_23._edge_set
+        ), "without accessing edges, `_edge_set` should not be initialized"
 
-        for _ in c_12_23.edges():
-            pass
+        c_12_23.edges()
         assert (
-            c_12_23._edges_initialized
-        ), "after iterating all edges, `_edge_set` should be fully initialized"
+            c_12_23._edge_set
+        ), "after accessing edges, `_edge_set` should be initialized"
 
         c_45 = None
         for component in component_list:
@@ -53,10 +50,10 @@ class TestConnectedComponents:
                 c_77 = component
 
         assert (
-            c_45._edges_initialized
+            c_45._edge_set
         ), "calling __contains__ should result in _edge_set initialization"
         assert (
-            c_77._edges_initialized
+            c_77._edge_set
         ), "calling __contains__ should result in _edge_set initialization"
         assert 7 in c_77, "vertex 7 should be in component containing edge (7, 7)"
 

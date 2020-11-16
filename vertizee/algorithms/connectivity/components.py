@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for strongly connected components."""
+"""Algorithms for connected components."""
 
 from __future__ import annotations
 from typing import Callable, Generic, Iterable, Iterator, Optional, Set, Union
 
 import vertizee.algorithms.search.depth_first_search as dfs_module
-from vertizee.classes.graph import DiGraph, E, GraphBase, MultiDiGraph, V
 from vertizee.classes import primitives_parsing
+from vertizee.classes.collection_views import SetView
+from vertizee.classes.graph import DiGraph, E, GraphBase, MultiDiGraph, V
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 from vertizee import exception
 
@@ -33,7 +34,6 @@ class Component(Generic[V, E]):
 
     def __init__(self, initial_vertex: V) -> None:
         self._edge_set = None
-        self._edges_initialized = False
         self._vertex_set: Set[V] = set()
         self._vertex_set.add(initial_vertex)
 
@@ -48,8 +48,8 @@ class Component(Generic[V, E]):
         if data.edges:
             if graph.has_edge(data.edges[0].vertex1.label, data.edges[0].vertex2.label):
                 edge = graph[data.edges[0].vertex1.label, data.edges[0].vertex2.label]
-                if not self._edges_initialized:
-                    set(self.edges())  # Executed for side effects to initialize self._edges.
+                if not self._edge_set:
+                    self.edges()  # Executed for side effects to initialize self._edges.
                 return edge in self._edge_set
             return False
         if data.vertices:
@@ -67,24 +67,24 @@ class Component(Generic[V, E]):
         ``len`` is used."""
         return len(self._vertex_set)
 
-    def edges(self) -> Iterator[E]:
-        """Returns an iterator over the component edges."""
-        if self._edge_set and self._edges_initialized:
-            for edge in self._edge_set:
-                yield edge
-        else:
-            self._edge_set = set()
-            for i, vertex in enumerate(self._vertex_set):
-                for j, edge in enumerate(vertex.incident_edges()):
-                    if (i + 1) == len(self._vertex_set) and (j + 1) == len(vertex.incident_edges()):
-                        self._edges_initialized = True
-                    if edge.vertex1 in self._vertex_set and edge.vertex2 in self._vertex_set:
-                        if edge not in self._edge_set:
-                            self._edge_set.add(edge)
-                            yield edge
+    def edges(self) -> SetView[E]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
+        edges."""
+        if self._edge_set:
+            return SetView(self._edge_set)
 
-    def vertices(self) -> Iterator[V]:
-        """Returns an iterator over the component vertices."""
+        self._edge_set = set()
+        for vertex in self._vertex_set:
+            for edge in vertex.incident_edges():
+                if edge.vertex1 in self._vertex_set and edge.vertex2 in self._vertex_set:
+                    if edge not in self._edge_set:
+                        self._edge_set.add(edge)
+        return SetView(self._edge_set)
+
+
+    def vertices(self) -> SetView[V]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
+        vertices."""
         yield from self._vertex_set
 
 
