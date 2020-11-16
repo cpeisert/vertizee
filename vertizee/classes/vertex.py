@@ -43,11 +43,13 @@ from abc import ABC, abstractmethod
 import collections.abc
 from typing import Any, Generic, Optional, Set, Tuple, TYPE_CHECKING, TypeVar, Union
 
-from vertizee.utils import abc_utils
+from vertizee.classes.collection_views import SetView
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
-    from vertizee.classes.edge import DiEdge, Edge, EdgeClass, MultiDiEdge, MultiEdge
+    from vertizee.classes.edge import (
+        Connection, DiEdge, Edge, EdgeClass, MultiConnection, MultiDiEdge, MultiEdge
+    )
     from vertizee.classes.graph import GraphBase
     from vertizee.classes.primitives_parsing import GraphPrimitive
 
@@ -63,12 +65,15 @@ VertexTupleAttr = Tuple[VertexLabel, AttributesDict]
 # ``Tuple[VertexLabel, AttributesDict]``.
 VertexType = Union[VertexClass, VertexLabel, VertexTupleAttr]
 
-# Generic type parameters
+# Generic type parameters.
 
-#: E: A generic type parameter that represents an :class:`Edge <vertizee.classes.edge.Edge>`,
-# :class:`DiEdge <vertizee.classes.edge.DiEdge>`, :class:`MultiEdge
-# <vertizee.classes.edge.MultiEdge>` or a :class:`MultiDiEdge <vertizee.classes.edge.MultiDiEdge>`.
-E = TypeVar("E", "DiEdge", "Edge", "MultiDiEdge", "MultiEdge")
+#: E: A generic type parameter that represents an edge class type (for example, DiEdge, Edge,
+#: MultiDiEdge, MultiEdge).
+E = TypeVar("E", "Connection", "DiEdge", "Edge", "MultiConnection", "MultiDiEdge", "MultiEdge")
+
+#: V: A generic type parameter that represents a vertex class type (for example, DiVertex,
+# MultiDiVertex, MultiVertex, Vertex).
+V = TypeVar("V", "DiVertex", "MultiDiVertex", "MultiVertex", "Vertex", "VertexBase")
 
 
 def get_vertex_label(other: "VertexType") -> str:
@@ -178,17 +183,9 @@ class VertexBase(ABC, Generic[E]):
     def __str__(self) -> str:
         return self.label
 
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is VertexBase:
-            return abc_utils.check_methods(C, "adj_vertices", "attr", "degree", "incident_edges",
-                "is_isolated", "label", "loop_edge", "remove", "remove_incident_edges",
-                "remove_loops")
-        return NotImplemented
-
     @abstractmethod
-    def adj_vertices(self) -> Set[VertexBase]:
-        """The set of all adjacent vertices."""
+    def adj_vertices(self) -> SetView[VertexBase]:
+        """Returns a dynamic, set-like view of all adjacent vertices."""
 
     @property
     def attr(self) -> dict:
@@ -211,8 +208,9 @@ class VertexBase(ABC, Generic[E]):
         return self._attr is not None
 
     @abstractmethod
-    def incident_edges(self) -> Set[E]:
-        """The set of all incident edges (incoming, outgoing, and self-loops)."""
+    def incident_edges(self) -> SetView[E]:
+        """Returns a dynamic, set-like view of all incident edges (incoming, outgoing, and
+        self-loops)."""
 
     def is_isolated(self) -> bool:
         """Returns True if this vertex has no incident edges other than self loops."""
@@ -337,12 +335,12 @@ class Vertex(VertexBase["Edge"]):
     __slots__ = ()
 
     @abstractmethod
-    def adj_vertices(self) -> Set[Vertex]:
-        """The set of all adjacent vertices."""
+    def adj_vertices(self) -> SetView[Vertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices."""
 
     @abstractmethod
-    def incident_edges(self) -> Set[Edge]:
-        """The set of all incident edges (including self-loops)."""
+    def incident_edges(self) -> SetView[Edge]:
+        """Returns a dynamic, set-like view of all incident edges (including self-loops)."""
 
     @property
     @abstractmethod
@@ -384,42 +382,31 @@ class DiVertex(VertexBase["DiEdge"]):
     __slots__ = ()
 
     @abstractmethod
-    def adj_vertices(self) -> Set[DiVertex]:
-        """The set of all adjacent vertices."""
+    def adj_vertices(self) -> SetView[DiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices."""
 
     @abstractmethod
-    def adj_vertices_incoming(self) -> Set[DiEdge]:
-        """The set of all adjacent vertices from incoming edges. This is an empty set for
-        undirected graphs."""
+    def adj_vertices_incoming(self) -> SetView[DiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices from incoming edges."""
 
     @abstractmethod
-    def adj_vertices_outgoing(self) -> Set[DiEdge]:
-        """The set of all adjacent vertices from outgoing edges. This is an empty set for
-        undirected graphs."""
+    def adj_vertices_outgoing(self) -> SetView[DiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices from outgoing edges."""
 
     @abstractmethod
-    def incident_edges(self) -> Set[DiEdge]:
-        """The set of all incident edges (incoming, outgoing, and self-loops)."""
+    def incident_edges(self) -> SetView[DiEdge]:
+        """Returns a dynamic, set-like view of all incident edges (incoming, outgoing, and
+        self-loops)."""
 
     @abstractmethod
-    def incident_edges_incoming(self) -> Set[DiEdge]:
-        """The set of incoming incident edges (i.e. edges where this vertex is the head).
-
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[DiEdge]: The incoming edges.
-        """
+    def incident_edges_incoming(self) -> SetView[DiEdge]:
+        """Returns a dynamic, set-like view of incoming incident edges (i.e. edges where this
+        vertex is the head)."""
 
     @abstractmethod
-    def incident_edges_outgoing(self) -> Set[DiEdge]:
-        """The set of outgoing incident edges (i.e. edges where this vertex is the tail).
-
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[DiEdge]: The outgoing edges.
-        """
+    def incident_edges_outgoing(self) -> SetView[DiEdge]:
+        """Returns a dynamic, set-like view of outgoing incident edges (i.e. edges where this
+        vertex is the tail)."""
 
     @property
     @abstractmethod
@@ -455,12 +442,12 @@ class MultiVertex(VertexBase["MultiEdge"]):
     __slots__ = ()
 
     @abstractmethod
-    def adj_vertices(self) -> Set[MultiVertex]:
-        """The set of all adjacent vertices."""
+    def adj_vertices(self) -> SetView[MultiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices."""
 
     @abstractmethod
-    def incident_edges(self) -> Set[MultiEdge]:
-        """The set of all incident edges (including self-loops)."""
+    def incident_edges(self) -> SetView[MultiEdge]:
+        """Returns a dynamic, set-like view of all incident edges (including self-loops)."""
 
     @property
     @abstractmethod
@@ -486,47 +473,46 @@ class MultiDiVertex(VertexBase["MultiDiEdge"]):
     __slots__ = ()
 
     @abstractmethod
-    def adj_vertices(self) -> Set[MultiDiVertex]:
-        """The set of all adjacent vertices."""
+    def adj_vertices(self) -> SetView[MultiDiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices."""
 
     @abstractmethod
-    def adj_vertices_incoming(self) -> Set[MultiDiEdge]:
-        """The set of all adjacent vertices from incoming edges. This is an empty set for
-        undirected graphs."""
+    def adj_vertices_incoming(self) -> SetView[MultiDiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices from incoming edges."""
 
     @abstractmethod
-    def adj_vertices_outgoing(self) -> Set[MultiDiEdge]:
-        """The set of all adjacent vertices from outgoing edges. This is an empty set for
-        undirected graphs."""
+    def adj_vertices_outgoing(self) -> SetView[MultiDiVertex]:
+        """Returns a dynamic, set-like view of all adjacent vertices from outgoing edges."""
 
     @abstractmethod
-    def incident_edges(self) -> Set[MultiDiEdge]:
-        """The set of all incident edges (incoming, outgoing, and self-loops)."""
+    def incident_edges(self) -> SetView[MultiDiEdge]:
+        """Returns a dynamic, set-like view of all incident edges (incoming, outgoing, and
+        self-loops)."""
 
     @abstractmethod
-    def incident_edges_incoming(self) -> Set[MultiDiEdge]:
-        """The set of incoming incident edges (i.e. edges where this vertex is the head).
-
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[MultiDiEdge]: The incoming edges.
-        """
+    def incident_edges_incoming(self) -> SetView[MultiDiEdge]:
+        """Returns a dynamic, set-like view of incoming incident edges (i.e. edges where this
+        vertex is the head)."""
 
     @abstractmethod
-    def incident_edges_outgoing(self) -> Set[MultiDiEdge]:
-        """The set of outgoing incident edges (i.e. edges where this vertex is the tail).
+    def incident_edges_outgoing(self) -> SetView[MultiDiEdge]:
+        """Returns a dynamic, set-like view of outgoing incident edges (i.e. edges where this
+        vertex is the tail)."""
 
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[MultiDiEdge]: The outgoing edges.
-        """
+    @property
+    @abstractmethod
+    def indegree(self) -> int:
+        """The indegree of this vertex, which is the number of incoming incident edges."""
 
     @property
     @abstractmethod
     def loop_edge(self) -> Optional[MultiDiEdge]:
-        """The loop multiedge if this vertex has one or more self loops."""
+        """The loop edge if this vertex has a self loop."""
+
+    @property
+    @abstractmethod
+    def outdegree(self) -> int:
+        """The outdegree of this vertex, which is the number of outgoing incident edges."""
 
 
 class _Vertex(Vertex, VertexBase["Edge"]):
@@ -534,28 +520,23 @@ class _Vertex(Vertex, VertexBase["Edge"]):
 
     __slots__ = ()
 
-    def adj_vertices(self) -> Set[Vertex]:
-        """The set of all adjacent vertices."""
-        return self._incident_edges.adj_vertices.copy()
+    def adj_vertices(self) -> SetView[Vertex]:
+        return SetView(self._incident_edges.adj_vertices)
 
     @property
     def degree(self) -> int:
-        """The degree (or valance) of this vertex.
-
-        The degree is the number of incident edges. Self-loops are counted twice.
-        """
+        """The degree (or valance) of this vertex. The degree is the number of incident edges.
+        Self-loops are counted twice."""
         total = len(self.incident_edges())
         if self.loop_edge:
             total += 1
         return total
 
-    def incident_edges(self) -> Set[Edge]:
-        """The set of all incident edges (including self-loops)."""
-        return self._incident_edges.incident_edges
+    def incident_edges(self) -> SetView[Edge]:
+        return SetView(self._incident_edges.incident_edges)
 
     @property
     def loop_edge(self) -> Optional[Edge]:
-        """The loop edge if this vertex has a self loop."""
         return self._incident_edges.loop_edge
 
 
@@ -564,76 +545,43 @@ class _DiVertex(DiVertex, VertexBase["DiEdge"]):
 
     __slots__ = ()
 
-    def adj_vertices(self) -> Set[DiEdge]:
-        """The set of all adjacent vertices."""
-        return self._incident_edges.adj_vertices.copy()
+    def adj_vertices(self) -> SetView[DiVertex]:
+        return SetView(self._incident_edges.adj_vertices)
 
-    def adj_vertices_incoming(self) -> Set[DiEdge]:
-        """The set of all adjacent vertices from incoming edges. This is an empty set for
-        undirected graphs."""
-        return self._incident_edges.adj_vertices_incoming.copy()
+    def adj_vertices_incoming(self) -> SetView[DiVertex]:
+        return SetView(self._incident_edges.adj_vertices_incoming)
 
-    def adj_vertices_outgoing(self) -> Set[DiEdge]:
-        """The set of all adjacent vertices from outgoing edges. This is an empty set for
-        undirected graphs."""
-        return self._incident_edges.adj_vertices_outgoing.copy()
+    def adj_vertices_outgoing(self) -> SetView[DiVertex]:
+        return SetView(self._incident_edges.adj_vertices_outgoing)
 
     @property
     def degree(self) -> int:
-        """The degree (or valance) of this vertex.
-
-        The degree is the number of incident edges. Self-loops are counted twice.
-        """
+        """The degree (or valance) of this vertex. The degree is the number of incident edges.
+        Self-loops are counted twice."""
         total = len(self.incident_edges())
         if self.loop_edge:
             total += 1
         return total
 
-    def incident_edges(self) -> Set[DiEdge]:
-        """The set of all incident edges (incoming, outgoing, and self-loops)."""
-        return self._incident_edges.incident_edges
+    def incident_edges(self) -> SetView[DiEdge]:
+        return SetView(self._incident_edges.incident_edges)
 
-    def incident_edges_incoming(self) -> Set[DiEdge]:
-        """The set of incoming incident edges (i.e. edges where this vertex is the head).
+    def incident_edges_incoming(self) -> SetView[DiEdge]:
+        return SetView(self._incident_edges.incoming)
 
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[DiEdge]: The incoming edges.
-        """
-        return self._incident_edges.incoming.copy()
-
-    def incident_edges_outgoing(self) -> Set[DiEdge]:
-        """The set of outgoing incident edges (i.e. edges where this vertex is the tail).
-
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[DiEdge]: The outgoing edges.
-        """
-        return self._incident_edges.outgoing.copy()
+    def incident_edges_outgoing(self) -> SetView[DiEdge]:
+        return SetView(self._incident_edges.outgoing)
 
     @property
     def indegree(self) -> int:
-        """The indegree of this vertex.
-
-        The indegree is the number of incoming incident edges. For undirected graphs, the indegree
-        is the same as the degree.
-        """
         return len(self._incident_edges.incoming)
 
     @property
     def loop_edge(self) -> Optional[DiEdge]:
-        """The loop edge if this vertex has a self loop."""
         return self._incident_edges.loop_edge
 
     @property
     def outdegree(self) -> int:
-        """The outdegree of this vertex.
-
-        The outdegree is the number of outgoing incident edges. For undirected graphs, the outdegree
-        is the same as the degree.
-        """
         return len(self._incident_edges.outgoing)
 
 
@@ -642,28 +590,23 @@ class _MultiVertex(MultiVertex, VertexBase["MultiEdge"]):
 
     __slots__ = ()
 
-    def adj_vertices(self) -> Set[MultiEdge]:
-        """The set of all adjacent vertices."""
-        return self._incident_edges.adj_vertices.copy()
+    def adj_vertices(self) -> SetView[MultiEdge]:
+        return SetView(self._incident_edges.adj_vertices)
 
     @property
     def degree(self) -> int:
-        """The degree (or valance) of this vertex.
-
-        The degree is the number of incident edges. Self-loops are counted twice.
-        """
+        """The degree (or valance) of this vertex. The degree is the number of incident edges.
+        Self-loops are counted twice."""
         total = sum(e.multiplicity for e in self.incident_edges())
         if self.loop_edge:
             total += self.loop_edge.multiplicity
         return total
 
-    def incident_edges(self) -> Set[MultiEdge]:
-        """The set of all incident multiedges (including self-loops)."""
-        return self._incident_edges.incident_edges
+    def incident_edges(self) -> SetView[MultiEdge]:
+        return SetView(self._incident_edges.incident_edges)
 
     @property
     def loop_edge(self) -> Optional[MultiEdge]:
-        """The loop multiedge if this vertex has one or more self loops."""
         return self._incident_edges.loop_edge
 
 
@@ -672,76 +615,43 @@ class _MultiDiVertex(MultiDiVertex, VertexBase["MultiDiEdge"]):
 
     __slots__ = ()
 
-    def adj_vertices(self) -> Set[MultiDiEdge]:
-        """The set of all adjacent vertices."""
-        return self._incident_edges.adj_vertices.copy()
+    def adj_vertices(self) -> SetView[MultiDiEdge]:
+        return SetView(self._incident_edges.adj_vertices.copy())
 
-    def adj_vertices_incoming(self) -> Set[MultiDiEdge]:
-        """The set of all adjacent vertices from incoming edges. This is an empty set for
-        undirected graphs."""
-        return self._incident_edges.adj_vertices_incoming.copy()
+    def adj_vertices_incoming(self) -> SetView[MultiDiEdge]:
+        return SetView(self._incident_edges.adj_vertices_incoming)
 
-    def adj_vertices_outgoing(self) -> Set[MultiDiEdge]:
-        """The set of all adjacent vertices from outgoing edges. This is an empty set for
-        undirected graphs."""
-        return self._incident_edges.adj_vertices_outgoing.copy()
+    def adj_vertices_outgoing(self) -> SetView[MultiDiEdge]:
+        return SetView(self._incident_edges.adj_vertices_outgoing)
 
     @property
     def degree(self) -> int:
-        """The degree (or valance) of this vertex.
-
-        The degree is the number of incident edges. Self-loops are counted twice.
-        """
+        """The degree (or valance) of this vertex. The degree is the number of incident edges.
+        Self-loops are counted twice."""
         total = sum(e.multiplicity for e in self.incident_edges())
         if self.loop_edge:
             total += self.loop_edge.multiplicity
         return total
 
-    def incident_edges(self) -> Set[MultiDiEdge]:
-        """The set of all incident multiedges (incoming, outgoing, and self-loops)."""
-        return self._incident_edges.incident_edges
+    def incident_edges(self) -> SetView[MultiDiEdge]:
+        return SetView(self._incident_edges.incident_edges)
 
-    def incident_edges_incoming(self) -> Set[MultiDiEdge]:
-        """The set of incoming incident edges (i.e. edges where this vertex is the head).
+    def incident_edges_incoming(self) -> SetView[MultiDiEdge]:
+        return SetView(self._incident_edges.incoming)
 
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[E_DIRECTED]: The incoming edges.
-        """
-        return self._incident_edges.incoming.copy()
-
-    def incident_edges_outgoing(self) -> Set[MultiDiEdge]:
-        """The set of outgoing incident edges (i.e. edges where this vertex is the tail).
-
-        This is an empty set for undirected graphs. Use ``incident_edges`` instead.
-
-        Returns:
-            Set[E_DIRECTED]: The outgoing edges.
-        """
-        return self._incident_edges.outgoing.copy()
+    def incident_edges_outgoing(self) -> SetView[MultiDiEdge]:
+        return SetView(self._incident_edges.outgoing)
 
     @property
     def indegree(self) -> int:
-        """The indegree of this vertex.
-
-        The indegree is the number of incoming incident edges. For undirected graphs, the indegree
-        is the same as the degree.
-        """
         return sum(e.multiplicity for e in self._incident_edges.incoming)
 
     @property
     def loop_edge(self) -> Optional[MultiDiEdge]:
-        """The loop multiedge if this vertex has one or more self loops."""
         return self._incident_edges.loop_edge
 
     @property
     def outdegree(self) -> int:
-        """The outdegree of this vertex.
-
-        The outdegree is the number of outgoing incident edges. For undirected graphs, the outdegree
-        is the same as the degree.
-        """
         return sum(e.multiplicity for e in self._incident_edges.outgoing)
 
 
@@ -750,9 +660,10 @@ class _IncidentEdges(Generic[E]):
 
     Attempting to add an edge that does not have the shared vertex raises an error. Self loops are
     tracked and may be accessed with the ``loop_edge`` property. Loops cause a vertex to be adjacent
-    to itself and the loop is an incident edge. [LOOP2020]_ In the case of directed edges, incident
-    edges are also classified as ``incoming`` and ``outgoing``. Collections of adjacent vertices are
-    also maintained for algorithmic efficiency.
+    to itself and the loop is an incident edge. [LOOP2020]_
+
+    In the case of directed edges, incident edges may be also be filtered as ``incoming`` or
+    ``outgoing``.
 
     Args:
         shared_vertex_label: The vertex label of the vertex shared by the incident edges.

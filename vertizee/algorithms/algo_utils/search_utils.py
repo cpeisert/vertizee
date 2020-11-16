@@ -22,10 +22,11 @@
 from __future__ import annotations
 from typing import Generic, List, Iterator, Set
 
-from vertizee.classes.graph import E, GraphBase, V
+from vertizee import exception
 from vertizee.classes import primitives_parsing
+from vertizee.classes.collection_views import ListView, SetView
+from vertizee.classes.graph import E, GraphBase, V
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
-from vertizee.exception import AlgorithmError
 
 
 class DepthFirstSearchResults(Generic[V, E]):
@@ -41,7 +42,7 @@ class DepthFirstSearchResults(Generic[V, E]):
         * Cycle detection: For both directed and undirected graphs, if there is a back edge, then
           the graph has a cycle and the state ``is_acyclic`` is set to False. A cycle
           is a path (with at least one edge) whose first and last vertices are the same. The
-          minimal cycle is a self loop and second smallest cycle is two vertices connected by
+          minimal cycle is a self loop and the second smallest cycle is two vertices connected by
           parallel edges (in the case of a directed graph, the parallel edges must be facing
           opposite directions).
         * Edge classification: The edges of the graph are classified into the following categories:
@@ -69,9 +70,9 @@ class DepthFirstSearchResults(Generic[V, E]):
         dfs_forest: A depth-first forest, which is a set of :class:`SearchTree` objects.
         edges_in_discovery_order: The edges in the order traversed by the depth-first search.
         tree_edges: The set of tree edges.
-        vertices_pre_order: The list of vertices in ascending order of first discovery times during
+        vertices_preorder: The list of vertices in ascending order of first discovery times during
             the DFS.
-        vertices_post_order: The list of vertices in descending order of discovery finishing time.
+        vertices_postorder: The list of vertices in descending order of discovery finishing time.
             The finishing time is the time at which all of the paths incident to the vertex have
             been fully explored. For directed, acyclic graphs, the reverse postorder is a
             topological sort.
@@ -98,32 +99,40 @@ class DepthFirstSearchResults(Generic[V, E]):
         self._cross_edges: Set[E] = set()
         self._forward_edges: Set[E] = set()
         self._tree_edges: Set[E] = set()
-        self._vertices_post_order: List[V] = []
-        self._vertices_pre_order: List[V] = []
+        self._vertices_postorder: List[V] = []
+        self._vertices_preorder: List[V] = []
 
         self._is_acyclic = True
 
-    def back_edges(self) -> Iterator[E]:
-        """Returns an iterator over the back edges found during the depth-first search."""
-        return iter(self._back_edges)
+    def __iter__(self) -> Iterator[V]:
+        """Returns an iterator over the preorder vertices found during the depth-first search. The
+        preorder is the order in which the vertices were discovered."""
+        yield from self._vertices_preorder
 
-    def cross_edges(self) -> Iterator[E]:
-        """Returns an iterator over the cross edges found during the depth-first search."""
-        return iter(self._cross_edges)
+    def back_edges(self) -> SetView[E]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the back edges
+        found during the depth-first search."""
+        return SetView(self._back_edges)
 
-    def depth_first_search_trees(self) -> Iterator[SearchTree[V, E]]:
-        """Returns an iterator over the depth-first search trees found during the depth-first
-        search."""
-        return iter(self._dfs_forest)
+    def cross_edges(self) -> SetView[E]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the cross edges
+        found during the depth-first search."""
+        return SetView(self._cross_edges)
 
-    def edges_in_discovery_order(self) -> Iterator[E]:
-        """Returns an iterator over the edges found during the the depth-first search in order of
-        discovery."""
-        return iter(self._edges_in_discovery_order)
+    def depth_first_search_trees(self) -> SetView[SearchTree[V, E]]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the the
+        depth-first search trees found during the depth-first search."""
+        return SetView(self._dfs_forest)
 
-    def forward_edges(self) -> Iterator[E]:
-        """Returns the set of forward edges found during the depth-first search."""
-        return iter(self._forward_edges)
+    def edges_in_discovery_order(self) -> ListView[E]:
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the edges
+        found during the depth-first search in order of discovery."""
+        return ListView(self._edges_in_discovery_order)
+
+    def forward_edges(self) -> SetView[E]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the forward
+        edges found during the depth-first search."""
+        return SetView(self._forward_edges)
 
     def is_acyclic(self) -> bool:
         """Returns True if the graph cycle free (i.e. does not contain cycles)."""
@@ -131,38 +140,35 @@ class DepthFirstSearchResults(Generic[V, E]):
 
     def topological_sort(self) -> Iterator[V]:
         """Returns an iterator over the topologically sorted vertices. If the graph is not directed
-        and acyclic, the iterator will be empty.
+        and acyclic, the list will be empty.
 
         Note:
             The topological ordering is the reverse of the depth-first search postordering. The
             reverse of the postordering is not the same as the preordering.
         """
         if self._graph.is_directed() and self.is_acyclic():
-            return iter(reversed(self._vertices_post_order))
-        return iter([])
+            yield from reversed(self._vertices_postorder)
+        yield from ()
 
-    def tree_edges(self) -> Iterator[E]:
-        """Returns an iterator over the tree edges found during the depth-first search."""
-        return iter(self._tree_edges)
+    def tree_edges(self) -> SetView[E]:
+        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the tree
+        edges found during the depth-first search."""
+        return SetView(self._tree_edges)
 
-    def vertices_post_order(self) -> Iterator[V]:
-        """Returns an iterator over the vertices in the depth-first tree in postorder."""
-        return iter(self._vertices_post_order)
+    def vertices_postorder(self) -> ListView[V]:
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
+        in the depth-first tree in postorder."""
+        return ListView(self._vertices_postorder)
 
-    def vertices_pre_order(self) -> Iterator[V]:
-        """Returns an iterator over the vertices in the depth-first tree in preorder."""
-        return iter(self._vertices_pre_order)
+    def vertices_preorder(self) -> ListView[V]:
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
+        in the depth-first tree in preorder (i.e., in order of discovery)."""
+        return ListView(self._vertices_preorder)
 
 
 class SearchTree(Generic[V, E]):
-    """A search tree is a tree comprised of vertices and edges discovered during a
-    breadth-first or depth-first search.
-
-    Attributes:
-        root: The root vertex of the search tree.
-        edges_in_discovery_order: The edges in the order traversed by the breadth-first or
-            depth-first search of the tree.
-        vertices_in_discovery_order: The vertices visited during the search in discovery order.
+    """A search tree is a tree comprised of vertices and edges discovered during a breadth-first
+    or depth-first search.
 
     Args:
         root: The root vertex of the search tree.
@@ -194,26 +200,32 @@ class SearchTree(Generic[V, E]):
         if data.vertices:
             return data.vertices[0].label in self._vertex_set
 
-        raise ValueError("expected GraphPrimitive (EdgeType or VertexType); found "
+        raise exception.VertizeeException("expected GraphPrimitive (EdgeType or VertexType); found "
             f"{type(edge_or_vertex).__name__}")
+
+    def __iter__(self) -> Iterator[V]:
+        """Iterates over the vertices of the depth-first search tree in discovery order."""
+        yield from self._vertices_in_discovery_order
 
     def __len__(self) -> int:
         """Returns the number of vertices in the search tree when the built-in Python function
         ``len`` is used."""
         return len(self._vertex_set)
 
-    def edges_in_discovery_order(self) -> Iterator[E]:
-        """Returns an iterator over the edges in the search tree in order of discovery."""
-        return iter(self._edges_in_discovery_order)
+    def edges_in_discovery_order(self) -> ListView[E]:
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the edges in
+        the search tree in order of discovery."""
+        return ListView(self._edges_in_discovery_order)
 
     @property
     def root(self) -> V:
         """The root vertex of the search tree."""
         return self._vertices_in_discovery_order[0]
 
-    def vertices_in_discovery_order(self) -> Iterator[V]:
-        """Returns an iterator over the vertices in the search tree in order of discovery."""
-        return self._vertices_in_discovery_order
+    def vertices_in_discovery_order(self) -> ListView[V]:
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
+        in the search tree in order of discovery."""
+        return ListView(self._vertices_in_discovery_order)
 
     def _add_edge(self, edge: E) -> None:
         """Adds a new edge to the search tree. Exactly one of the edge's vertices should already
@@ -229,8 +241,8 @@ class SearchTree(Generic[V, E]):
         if edge in self._edge_set:
             return
         if edge.vertex1 not in self._vertex_set and edge.vertex2 not in self._vertex_set:
-            raise AlgorithmError(f"neither of the edge vertices {edge} were found in the search "
-                "tree; exactly one of the vertices must already be in the tree")
+            raise exception.AlgorithmError(f"neither of the edge vertices {edge} were found in the "
+                "search tree; exactly one of the vertices must already be in the tree")
 
         self._edge_set.add(edge)
         self._edges_in_discovery_order.append(edge)

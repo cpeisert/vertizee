@@ -182,7 +182,7 @@ def breadth_first_search(
         >>> g = vz.Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         >>> dfs_results = depth_first_search(g)
-        >>> dfs_results.vertices_pre_order
+        >>> dfs_results.vertices_preorder
         [3, 1, 0, 2, 5, 4, 7, 6]
         >>> [str(edge) for edge in dfs_results.edges_in_discovery_order]
         ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']

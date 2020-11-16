@@ -440,7 +440,7 @@ class TestMultiGraph:
 
         g = MultiGraph(g0)
         assert g.has_edge(1, 2), "multigraph should have edge (1, 2) copied from graph"
-        connection12 = next(g[1, 2].connections())
+        connection12 = g[1, 2].connections()[0]
         assert (
             connection12["color"] == "red"
         ), "edge connection (1, 2) should have 'color' attribute set to red"
@@ -456,7 +456,7 @@ class TestMultiGraph:
         assert isinstance(edge, MultiEdge), "new edge should a MultiEdge object"
         assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
 
-        connection12 = next(g[1, 2].connections())
+        connection12 = g[1, 2].connections()[0]
         assert connection12["color"] == "blue", "edge should have 'color' attribute set to 'blue'"
         assert connection12["mass"] == 42, "edge should have 'mass' attribute set to 42"
 
@@ -470,7 +470,7 @@ class TestMultiGraph:
 
         g.add_edge(3, 4)
         assert g[3, 4].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        connection34 = next(g[3, 4].connections())
+        connection34 = g[3, 4].connections()[0]
         assert not connection34.has_attributes_dict(), "edge should not have attributes dictionary"
 
     def test_add_edges_from(self):
@@ -483,8 +483,8 @@ class TestMultiGraph:
             (7, 8)
         ])
 
-        connection12 = next(g[1, 2].connections())
-        connection34 = next(g[3, 4].connections())
+        connection12 = g[1, 2].connections()[0]
+        connection34 = g[3, 4].connections()[0]
         assert g.edge_count == 5, "graph should have 5 edge connections"
         assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
         assert connection12["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
@@ -531,7 +531,7 @@ class TestMultiDiGraph:
 
         g = MultiDiGraph(g0)
         assert g.has_edge(2, 1), "multigraph should have edge (2, 1) copied from graph"
-        connection21 = next(g[2, 1].connections())
+        connection21 = g[2, 1].connections()[0]
         assert (
             connection21["color"] == "red"
         ), "first connection of edge (2, 1) should have 'color' attribute set to red"
@@ -546,7 +546,7 @@ class TestMultiDiGraph:
         assert isinstance(edge, MultiDiEdge), "new edge should a MultiDiEdge object"
         assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
 
-        connection12 = next(g[1, 2].connections())
+        connection12 = g[1, 2].connections()[0]
         assert connection12["color"] == "blue", "edge should have 'color' attribute set to 'blue'"
         assert connection12["mass"] == 42, "edge should have 'mass' attribute set to 42"
 
@@ -560,7 +560,7 @@ class TestMultiDiGraph:
 
         g.add_edge(3, 4)
         assert g[3, 4].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        connection34 = next(g[3, 4].connections())
+        connection34 = g[3, 4].connections()[0]
         assert not connection34.has_attributes_dict(), "edge should not have attributes dictionary"
 
     def test_add_edges_from(self):
@@ -574,8 +574,8 @@ class TestMultiDiGraph:
             (7, 8)
         ])
 
-        connection12 = next(g[1, 2].connections())
-        connection43 = next(g[4, 3].connections())
+        connection12 = g[1, 2].connections()[0]
+        connection43 = g[4, 3].connections()[0]
 
         assert g.edge_count == 6, "graph should have 6 edges"
         assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"

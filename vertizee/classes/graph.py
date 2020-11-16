@@ -56,7 +56,7 @@ import collections.abc
 import copy
 import random
 from typing import (
-    Dict, Generic, Iterable, Iterator, Optional, overload, Type, TypeVar, ValuesView
+    Dict, Generic, Iterable, Iterator, Optional, overload, Type, ValuesView
 )
 
 from vertizee import exception
@@ -65,25 +65,14 @@ from vertizee.classes import primitives_parsing
 from vertizee.classes import vertex as vertex_module
 
 from vertizee.classes.edge import (
-    ConnectionKey, DiEdge, Edge, EdgeClass, EdgeType, MultiConnection, MultiDiEdge, MultiEdge
+    ConnectionKey, DiEdge, E, Edge, EdgeClass, EdgeType, MultiConnection, MultiDiEdge, MultiEdge
 )
 from vertizee.classes.primitives_parsing import (
     EdgeData, VertexData, GraphPrimitive, ParsedEdgeAndVertexData
 )
 from vertizee.classes.vertex import (
-    DiVertex, MultiDiVertex, MultiVertex, Vertex, VertexType
+    DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
 )
-
-# Generic type parameters
-
-#: E: A generic type parameter that represents an :class:`Edge <vertizee.classes.edge.Edge>`,
-# :class:`DiEdge <vertizee.classes.edge.DiEdge>`, :class:`MultiEdge
-# <vertizee.classes.edge.MultiEdge>` or a :class:`MultiDiEdge <vertizee.classes.edge.MultiDiEdge>`.
-E = TypeVar("E", DiEdge, Edge, MultiDiEdge, MultiEdge)
-
-#: V: A generic type parameter that represents a :class:`Vertex <vertizee.classes.vertex.Vertex>`
-# or :class:`DiVertex <vertizee.classes.vertex.DiVertex>`.
-V = TypeVar("V", DiVertex, MultiDiVertex, MultiVertex, Vertex)
 
 
 def _add_edge_obj_to_graph(graph: GraphBase[V, E], edge: EdgeClass) -> E:
@@ -445,7 +434,7 @@ class GraphBase(ABC, Generic[V, E]):
 
     @abstractmethod
     def edges(self) -> ValuesView[E]:
-        """A view of graph edges."""
+        """A view of the graph edges."""
         return self._edges.values()
 
     @abstractmethod

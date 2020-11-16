@@ -23,6 +23,7 @@ from vertizee.algorithms.algo_utils.search_utils import (
     SearchTree
 )
 from vertizee.classes import edge as edge_module
+from vertizee.classes.collection_views import SetView
 from vertizee.classes.graph import E, GraphBase, V
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
@@ -117,7 +118,7 @@ def depth_first_search(
         >>> g = vz.Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         >>> dfs_results = depth_first_search(g)
-        >>> dfs_results.vertices_pre_order
+        >>> dfs_results.vertices_preorder
         [3, 1, 0, 2, 5, 4, 7, 6]
         >>> [str(edge) for edge in dfs_results.edges_in_discovery_order]
         ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
@@ -153,16 +154,16 @@ def depth_first_search(
             if label == Label.TREE_ROOT:
                 dfs_tree = SearchTree(root=vertex)
                 dfs_results._dfs_forest.add(dfs_tree)
-                dfs_results._vertices_pre_order.append(vertex)
+                dfs_results._vertices_preorder.append(vertex)
         elif direction == Direction.POSTORDER:
-            dfs_results._vertices_post_order.append(vertex)
+            dfs_results._vertices_postorder.append(vertex)
 
         if label == Label.TREE_EDGE and direction == Direction.PREORDER:
             edge = graph[parent, child]
             dfs_results._tree_edges.add(edge)
             dfs_tree._add_edge(edge)
             dfs_results._edges_in_discovery_order.append(edge)
-            dfs_results._vertices_pre_order.append(vertex)
+            dfs_results._vertices_preorder.append(vertex)
             if dfs_results._is_acyclic:
                 _check_for_parallel_edge_cycle(graph, dfs_results, edge)
         elif label == Label.BACK_EDGE:

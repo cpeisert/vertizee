@@ -58,6 +58,10 @@ class Component(Generic[V, E]):
         raise ValueError("expected GraphPrimitive (EdgeType or VertexType); found "
             f"{type(edge_or_vertex).__name__}")
 
+    def __iter__(self) -> Iterator[V]:
+        """Iterates over the vertices in the component."""
+        yield from self._vertex_set
+
     def __len__(self) -> int:
         """Returns the number of vertices in the component when the built-in Python function
         ``len`` is used."""
@@ -81,7 +85,7 @@ class Component(Generic[V, E]):
 
     def vertices(self) -> Iterator[V]:
         """Returns an iterator over the component vertices."""
-        return iter(self._vertex_set)
+        yield from self._vertex_set
 
 
 def connected_components(graph: GraphBase[V, E]) -> Iterator[Component[V, E]]:

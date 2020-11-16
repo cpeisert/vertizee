@@ -13,10 +13,10 @@ from vertizee.exception import *
 from vertizee.classes.edge import (
     Connection,
     DiEdge,
-    DiEdgeView,
+    DiConnectionView,
     Edge,
     EdgeType,
-    EdgeView,
+    ConnectionView,
     MultiConnection,
     MultiDiEdge,
     MultiEdge

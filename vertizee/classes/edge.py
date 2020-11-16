@@ -19,12 +19,14 @@ Classes and type aliases:
 * :class:`Connection[V] <Connection>` - A single connection between two vertices in a graph.
 * :class:`MultiConnection[V] <MultiConnection>` - A connection that may include multiple parallel
   connections between two vertices in a graph.
-* :class:`EdgeViewBase[V] <EdgeViewBase>` - A dynamic view of an edge. Edge views provide an
-  edge-like API for each of the parallel edge connections in a multiedge.
-* :class:`EdgeView(EdgeViewBase[Vertex]) <EdgeView>` - A dynamic view of an undirected edge. Edge
-  views provide an edge-like API for each of the parallel edge connections in a multiedge.
-* :class:`DiEdgeView(EdgeViewBase[DiVertex]) <DiEdgeView>` - A dynamic view of a directed edge.
-  Edge views provide an edge-like API for each of the parallel edge connections in a multiedge.
+* :class:`ConnectionViewBase[V] <ConnectionViewBase>` - A dynamic view of an edge. Edge views
+  provide an edge-like API for each of the parallel edge connections in a multiedge.
+* :class:`ConnectionView(ConnectionViewBase[Vertex]) <ConnectionView>` - A dynamic view of an
+  undirected edge. Edge views provide an edge-like API for each of the parallel edge connections in
+  a multiedge.
+* :class:`DiConnectionView(ConnectionViewBase[DiVertex]) <DiConnectionView>` - A dynamic view of a
+  directed edge. Edge views provide an edge-like API for each of the parallel edge connections in a
+  multiedge.
 * :class:`EdgeBase(Connection[V]) <EdgeBase>` - Abstract base class from which all single-connection
   edge classes inherit.
 * :class:`MultiEdgeBase(MultiConnection[V]) <MultiEdgeBase>` - Abstract base class from which all
@@ -67,12 +69,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
 from typing import (
-    Any, Dict, Final, Generic, Hashable, Iterable, Iterator, List, Optional, Tuple, TYPE_CHECKING,
-    TypeVar, Union
+    Any, Dict, Final, Generic, Hashable, Iterable, List, Optional, Tuple, TYPE_CHECKING, TypeVar,
+    Union
 )
 
 from vertizee.classes import vertex as vertex_module
-from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, Vertex, VertexType
+from vertizee.classes.collection_views import ItemsView, ListView
+from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
 from vertizee.utils import abc_utils
 
 # pylint: disable=cyclic-import
@@ -90,21 +93,21 @@ EdgeTupleWeightedAttr = Tuple[VertexType, VertexType, Weight, AttributesDict]
 EdgeLiteral = Union[EdgeTuple, EdgeTupleWeighted, EdgeTupleAttr, EdgeTupleWeightedAttr]
 
 #: EdgeType: A type alias defined as ``Union[EdgeClass, EdgeLiteral]``,
-# where ``EdgeLiteral`` is an alias for various edge-tuple formats.
+#: where ``EdgeLiteral`` is an alias for various edge-tuple formats.
 EdgeType = Union[EdgeClass, EdgeLiteral]
 
 ConnectionKey = Hashable
 
-#: V: A generic type parameter that represents a :class:`Vertex <vertizee.classes.vertex.Vertex>`
-# or :class:`DiVertex <vertizee.classes.vertex.DiVertex>`.
-V = TypeVar("V", DiVertex, MultiDiVertex, MultiVertex, Vertex)
+#: E: A generic type parameter that represents an edge class type (for example, DiEdge, Edge,
+# MultiDiEdge, MultiEdge).
+E = TypeVar("E", "Connection", "DiEdge", "Edge", "MultiConnection", "MultiDiEdge", "MultiEdge")
 
 DEFAULT_WEIGHT: Final = 1.0
 DEFAULT_CONNECTION_KEY: Final = 0
 
 
 def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed: bool) -> str:
-    """Creates a consistent string representation of the edge.
+    """Creates a consistent string representation of an edge.
 
     Directed edges have labels with the vertices ordered based on the initialization order.
     Undirected edges have labels with the vertices sorted lexicographically. For example, both
@@ -312,7 +315,9 @@ def _str_for_multiconnection(
 
 
 class Connection(ABC, Generic[V]):
-    """A single connection between two vertices in a graph."""
+    """A single connection between two vertices in a graph. The Connection API only defines methods
+    that do not change the state of an edge connection, with the exception of custom attributes
+    stored in the ``attr`` dictionary. Subclasses may change this behavior and add mutability."""
 
     __slots__ = ()
 
@@ -376,7 +381,8 @@ class Connection(ABC, Generic[V]):
 
 class MultiConnection(ABC, Generic[V]):
     """A connection that may include multiple parallel connections between two vertices in a
-    graph."""
+    graph. The MultiConnection API only defines methods that do not change the state of an edge
+    connection. Subclasses may change this behavior and add mutability."""
 
     __slots__ = ()
 
@@ -388,35 +394,18 @@ class MultiConnection(ABC, Generic[V]):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is MultiConnection:
-            return abc_utils.check_methods(C, "__eq__", "add_connection", "connections",
-                "get_connection", "is_loop", "label", "multiplicity", "vertex1", "vertex2",
-                "weight")
+            return abc_utils.check_methods(C, "__eq__", "connections", "get_connection", "is_loop",
+                "label", "multiplicity", "vertex1", "vertex2", "weight")
         return NotImplemented
 
     @abstractmethod
-    def add_connection(
-        self, weight: float = DEFAULT_WEIGHT, key: ConnectionKey = DEFAULT_CONNECTION_KEY, **attr
-    ) -> Connection[V]:
-        """Adds a new connection to this multiconnection.
-
-        Args:
-            weight: Optional; The connection weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
-            key: Optional; The key to associate with the new connection that distinguishes it from
-                other parallel connections in the multiedge.
-            **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
-
-        Returns:
-            Connection[V]: The newly added connection.
-        """
+    def connections(self) -> ListView[Connection[V]]:
+        """Returns a ListView of the connections in the multiconnection."""
 
     @abstractmethod
-    def connections(self) -> Iterator[Connection[V]]:
-        """An iterator over the connections in the multiconnection."""
-
-    @abstractmethod
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, Connection[V]]]:
-        """An iterator over the connection keys and their associated connections in the
-        multiconnection."""
+    def connection_items(self) -> ItemsView[ConnectionKey, Connection[V]]:
+        """Returns an ItemsView, where each item is a tuple containing a connection key and the
+        corresponding connection in the multiconnection."""
 
     @abstractmethod
     def get_connection(self, key: ConnectionKey) -> Connection[V]:
@@ -482,9 +471,9 @@ class _EdgeConnectionData:
         return self._attr is not None
 
 
-class EdgeViewBase(Connection[V], Generic[V]):
-    """A dynamic view of an edge connection. Edge views provide an edge-like API for each of the
-    parallel connections in a multiedge.
+class ConnectionViewBase(Connection[V], Generic[V]):
+    """A dynamic view of an edge connection. Connection views provide an edge-like API for each of
+    the parallel connections in a multiedge.
 
     Args:
         multiconnection: A multiconnection object representing multiple parallel edge connections.
@@ -492,13 +481,13 @@ class EdgeViewBase(Connection[V], Generic[V]):
             represents.
     """
 
-    __slots__ = ("edge_data", "multiconnection")
+    __slots__ = ("_edge_data", "_multiconnection")
 
     def __init__(self, multiconnection: MultiConnection[V], edge_data: _EdgeConnectionData):
-        self.multiconnection = multiconnection
-        self.edge_data = edge_data
+        self._multiconnection = multiconnection
+        self._edge_data = edge_data
 
-    def __eq__(self, other: EdgeViewBase[V]) -> bool:  # type: ignore[override]
+    def __eq__(self, other: ConnectionViewBase[V]) -> bool:  # type: ignore[override]
         """Returns True if ``self`` is logically equal to ``other``."""
         if isinstance(other, Connection):
             return _are_connections_equal(self, other)
@@ -506,38 +495,38 @@ class EdgeViewBase(Connection[V], Generic[V]):
 
     def __getitem__(self, key: Hashable) -> Any:
         """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
-        return self.edge_data.attr[key]
+        return self._edge_data.attr[key]
 
     def __repr__(self) -> str:
         return self.__str__()
 
     def __setitem__(self, key: Hashable, value: Any) -> None:
         """Supports index accessor notation to set values in the ``attr`` dictionary."""
-        self.edge_data.attr[key] = value
+        self._edge_data.attr[key] = value
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}{self.multiconnection.label}"
+        return f"{self.__class__.__name__}{self._multiconnection.label}"
 
     @property
     def attr(self) -> Dict[Hashable, Any]:
         """Attribute dictionary to store optional data associated with an edge."""
-        return self.edge_data.attr
+        return self._edge_data.attr
 
     def has_attributes_dict(self) -> bool:
         """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
         ``attr`` dictionary is only created as needed, this method can be used to save memory.
         Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
         dictionary instantiation."""
-        return self.edge_data.has_attributes_dict()
+        return self._edge_data.has_attributes_dict()
 
     def is_loop(self) -> bool:
         """Returns True if this edge connects a vertex to itself."""
-        return self.multiconnection.is_loop()
+        return self._multiconnection.is_loop()
 
     @property
     def label(self) -> str:
         """A consistent string representation."""
-        return self.multiconnection.label
+        return self._multiconnection.label
 
     @property
     @abstractmethod
@@ -552,15 +541,16 @@ class EdgeViewBase(Connection[V], Generic[V]):
     @property
     def weight(self) -> float:
         """The edge weight."""
-        return self.edge_data.weight
+        return self._edge_data.weight
 
 
-class EdgeView(EdgeViewBase[MultiVertex]):
-    """A dynamic view of an undirected edge. Edge views provide an edge-like API for each of the
-    parallel edge connections in a multiedge.
+class ConnectionView(ConnectionViewBase[MultiVertex]):
+    """A dynamic view of an undirected edge connection. Connection views provide an edge-like API
+    for each of the parallel edge connections in a multiedge.
 
     Args:
-        multiconnection: A multiconnection object representing multiple parallel edge connections.
+        multiconnection: A :class:`MultiConnection` object representing multiple parallel edge
+            connections.
         edge_data: The data associated with the particular edge connection that this edge view
             represents.
     """
@@ -570,20 +560,21 @@ class EdgeView(EdgeViewBase[MultiVertex]):
     @property
     def vertex1(self) -> MultiVertex:
         """The first vertex."""
-        return self.multiconnection.vertex1
+        return self._multiconnection.vertex1
 
     @property
     def vertex2(self) -> MultiVertex:
         """The second vertex."""
-        return self.multiconnection.vertex2
+        return self._multiconnection.vertex2
 
 
-class DiEdgeView(EdgeViewBase[MultiDiVertex]):
-    """A dynamic view of a directed edge. Edge views provide an edge-like API for each of the
-    parallel edge connections in a multiedge.
+class DiConnectionView(ConnectionViewBase[MultiDiVertex]):
+    """A dynamic view of a directed edge connection. Directed connection views provide an edge-like
+    API for each of the parallel edge connections in a multiedge.
 
     Args:
-        multiconnection: A multiconnection object representing multiple parallel edge connections.
+        multiconnection: A :class:`MultiConnection` object representing multiple parallel edge
+            connections.
         edge_data: The data associated with the particular edge connection that this edge view
             represents.
     """
@@ -593,22 +584,22 @@ class DiEdgeView(EdgeViewBase[MultiDiVertex]):
     @property
     def head(self) -> MultiDiVertex:
         """The head vertex, which is the destination of the directed edge."""
-        return self.vertex2
+        return self._multiconnection.vertex2
 
     @property
     def tail(self) -> MultiDiVertex:
         """The tail vertex, which is the origin of the directed edge."""
-        return self.vertex1
+        return self._multiconnection.vertex1
 
     @property
     def vertex1(self) -> MultiDiVertex:
         """The first vertex. This is a synonym for the ``tail`` property."""
-        return self.multiconnection.vertex1
+        return self._multiconnection.vertex1
 
     @property
     def vertex2(self) -> MultiDiVertex:
         """The second vertex. This is a synonym for the ``head`` property."""
-        return self.multiconnection.vertex2
+        return self._multiconnection.vertex2
 
 
 class EdgeBase(Connection[V], Generic[V]):
@@ -818,7 +809,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
 
     def add_connection(
         self, weight: float = DEFAULT_WEIGHT, key: Optional[ConnectionKey] = None, **attr
-    ) -> EdgeViewBase[V]:
+    ) -> ConnectionViewBase[V]:
         """Adds a new edge connection to this multiedge. If the connection key already exists, then
         the existing connection key data is replaced with ``weight`` and ``**attr``.
 
@@ -829,7 +820,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
             **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
 
         Returns:
-            EdgeViewBase[V]: The newly added edge connection.
+            ConnectionViewBase[V]: The newly added edge connection.
         """
         new_key = key
         if key is not None and key in self._connections:
@@ -845,21 +836,18 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
                 new_key = _create_connection_key(self._connections.keys())
 
         self._connections[new_key] = edge_data
-        return EdgeView(self, self._connections[new_key])
+        return ConnectionView(self, self._connections[new_key])
 
     @abstractmethod
-    def connections(self) -> Iterator[EdgeViewBase[V]]:
-        """An iterator over the edge connections in the multiconnection."""
+    def connections(self) -> ListView[ConnectionViewBase[V]]:
+        """Returns a ListView of the connections in the multiconnection, where each connection
+        is represented as either a ConnectionView or a DiConnectionView."""
 
     @abstractmethod
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, EdgeViewBase[V]]]:
-        """An iterator over the connection keys and their associated connections in the
-        multiedge.
-
-        Yields:
-            Tuple[ConnectionKey, EdgeViewBase[V]]: Yields a tuple containing the connection key
-            and the edge view.
-        """
+    def connection_items(self) -> ItemsView[ConnectionKey, ConnectionViewBase[V]]:
+        """Returns an ItemsView, where each item is a tuple containing a connection key and the
+        corresponding connection in the multiconnection. Each connection is represented as either a
+        ConnectionView or a DiConnectionView."""
 
     def contract(self, remove_loops: bool = False) -> None:
         """Contracts this multiedge by removing it from the graph and merging its two incident
@@ -898,10 +886,10 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         """
         _contract_multiconnection(self, remove_loops)
 
-    def get_connection(self, key: ConnectionKey) -> EdgeViewBase[V]:
+    def get_connection(self, key: ConnectionKey) -> ConnectionViewBase[V]:
         """Supports index accessor notation to retrieve a multiedge connection by its key."""
         if key in self._connections:
-            return DiEdgeView(self, self._connections[key])
+            return DiConnectionView(self, self._connections[key])
         raise KeyError(key)
 
     def is_loop(self) -> bool:
@@ -1073,18 +1061,15 @@ class MultiEdge(MultiEdgeBase[Vertex]):
         """
 
     @abstractmethod
-    def connections(self) -> Iterator[EdgeView]:
-        """An iterator over the edge connections in the multiedge."""
+    def connections(self) -> ListView[ConnectionView]:
+        """Returns a ListView of the connections in the multiconnection, where each connection
+        is represented as a ConnectionView."""
 
     @abstractmethod
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, EdgeView]]:
-        """An iterator over the connection keys and their associated edge connections in the
-        multiedge.
-
-        Yields:
-            Tuple[ConnectionKey, EdgeView]: Yields a tuple containing the connection key
-            and the edge view.
-        """
+    def connection_items(self) -> ItemsView[ConnectionKey, ConnectionView]:
+        """Returns an ItemsView, where each item is a tuple containing a connection key and the
+        corresponding connection in the multiconnection. Each connection is represented as a
+        ConnectionView."""
 
 
 class MultiDiEdge(MultiEdgeBase[DiVertex]):
@@ -1123,18 +1108,15 @@ class MultiDiEdge(MultiEdgeBase[DiVertex]):
         """
 
     @abstractmethod
-    def connections(self) -> Iterator[DiEdgeView]:
-        """An iterator over the connections in the directed multiedge."""
+    def connections(self) -> ListView[DiConnectionView]:
+        """Returns a ListView of the connections in the multiconnection, where each connection
+        is represented as a DiConnectionView."""
 
     @abstractmethod
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, DiEdgeView]]:
-        """An iterator over the connection keys and their associated connections in the
-        directed multiedge.
-
-        Yields:
-            Tuple[ConnectionKey, DiEdgeView]: Yields a tuple containing the connection key
-            and the directed edge view.
-        """
+    def connection_items(self) -> ItemsView[ConnectionKey, DiConnectionView]:
+        """Returns an ItemsView, where each item is a tuple containing a connection key and the
+        corresponding connection in the multiconnection. Each connection is represented as a
+        DiConnectionView."""
 
     @property
     def head(self) -> DiVertex:
@@ -1173,17 +1155,15 @@ class _MultiEdge(MultiEdge):
     def __str__(self) -> str:
         return _str_for_multiconnection(self._vertex1, self._vertex2, self._connections)
 
-    def connections(self) -> Iterator[EdgeView]:
-        """An iterator over the connections in the multiedge."""
-        for connection in self._connections.values():
-            yield EdgeView(self, connection)
+    def connections(self) -> ListView[ConnectionView]:
+        return ListView([ConnectionView(self, c) for c in self._connections.values()])
 
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, EdgeView]]:
-        """An iterator over the connection keys and their associated connections in the
-        multiedge."""
+    def connection_items(self) -> ItemsView[ConnectionKey, ConnectionView]:
+        items = dict()
         for key, connection in self._connections.items():
-            view = EdgeView(self, connection)
-            yield key, view
+            view = ConnectionView(self, connection)
+            items[key] = view
+        return ItemsView(items)
 
 
 class _MultiDiEdge(MultiDiEdge):
@@ -1194,14 +1174,12 @@ class _MultiDiEdge(MultiDiEdge):
     def __str__(self) -> str:
         return _str_for_multiconnection(self._vertex1, self._vertex2, self._connections)
 
-    def connections(self) -> Iterator[DiEdgeView]:
-        """An iterator over the connections in the directed multiedge."""
-        for connection in self._connections.values():
-            yield DiEdgeView(self, connection)
+    def connections(self) -> ListView[DiConnectionView]:
+        return ListView([DiConnectionView(self, c) for c in self._connections.values()])
 
-    def connection_items(self) -> Iterator[Tuple[ConnectionKey, DiEdgeView]]:
-        """An iterator over the connection keys and their associated connections in the
-        directed multiedge."""
+    def connection_items(self) -> ItemsView[ConnectionKey, DiConnectionView]:
+        items = dict()
         for key, connection in self._connections.items():
-            view = DiEdgeView(self, connection)
-            yield key, view
+            view = DiConnectionView(self, connection)
+            items[key] = view
+        return ItemsView(items)
