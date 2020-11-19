@@ -16,12 +16,13 @@
 disjoint, dynamic sets."""
 
 # pytype: disable=not-supported-yet
+import collections.abc
 
 from collections import defaultdict
 from typing import Dict, Generic, Iterator, Set, TypeVar
 
 #:Type variable for values in a generic UnionFind data structure.
-T = TypeVar("T")
+T = TypeVar("T", bound=collections.abc.Hashable)
 
 
 class UnionFind(Generic[T]):
@@ -29,7 +30,9 @@ class UnionFind(Generic[T]):
     of disjoint, dynamic sets.
 
     The dynamic sets are comprised of objects of generic type :class:`T`.
-    IMPORTANT: The objects stored in UnionFind must be hashable.
+
+    Note:
+        The objects stored in UnionFind must be hashable.
 
     **Traditional operations:**
 
@@ -46,9 +49,10 @@ class UnionFind(Generic[T]):
         * :func:`set_count` - Returns the number of sets.
         * :func:`to_sets` - Returns an iterator over the sets.
 
-    This implementation is based on the **disjoint-set forest** presented by Cormen, Leiserson,
-    Rivest, and Stein [CLRS2009_7]_ as well as the NetworkX [N2020_2]_ UnionFind implementation,
-    which was in turn based on work by Josiah Carlson [CAR]_ and D. Eppstein [E2004_2]_.
+    Notes:
+        This implementation is based on the **disjoint-set forest** presented by Cormen, Leiserson,
+        Rivest, and Stein [CLRS2009_7]_ as well as the NetworkX [N2020_2]_ UnionFind implementation,
+        which was in turn based on work by Josiah Carlson [CAR]_ and D. Eppstein [E2004_2]_.
 
     Args:
         *args (Generic[T]): Optional; Items to initialize as disjoint sets. Each item is added to

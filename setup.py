@@ -20,6 +20,10 @@ python setup.py install
 """
 #pylint: disable=exec-used, undefined-variable
 
+#
+# TODO(cpeisert): Prior to public release, run all Example code to ensure it works.
+#
+
 import sys
 from setuptools import find_packages, setup
 

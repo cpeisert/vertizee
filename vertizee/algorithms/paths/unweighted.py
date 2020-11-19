@@ -14,6 +14,11 @@
 
 """Algorithms for calculating shortest paths for unweighted graphs."""
 
+########################
+# TODO(cpeisert):
+# - delete module "unweighted". Add algorithm below to "shortest_paths.py"
+########################
+
 from __future__ import annotations
 from collections import deque
 from typing import Set, TYPE_CHECKING

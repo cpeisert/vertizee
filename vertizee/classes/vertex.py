@@ -69,11 +69,11 @@ VertexType = Union[VertexClass, VertexLabel, VertexTupleAttr]
 
 #: E: A generic type parameter that represents an edge class type (for example, DiEdge, Edge,
 #: MultiDiEdge, MultiEdge).
-E = TypeVar("E", "Connection", "DiEdge", "Edge", "MultiConnection", "MultiDiEdge", "MultiEdge")
+E = TypeVar("E", bound=Union["Connection", "MultiConnection"])
 
 #: V: A generic type parameter that represents a vertex class type (for example, DiVertex,
 # MultiDiVertex, MultiVertex, Vertex).
-V = TypeVar("V", "DiVertex", "MultiDiVertex", "MultiVertex", "Vertex", "VertexBase")
+V = TypeVar("V", bound="VertexBase")
 
 
 def get_vertex_label(other: "VertexType") -> str:
@@ -705,13 +705,6 @@ class _IncidentEdges(Generic[E]):
         str_edges = ", ".join(self.incident_edge_labels)
         return f"_IncidentEdges: {str_edges}"
 
-    @property
-    def incident_edge_labels(self) -> Set[str]:
-        """Property to handle lazy initialization of incident edge label set."""
-        if not self._incident_edge_labels:
-            self._incident_edge_labels = set()
-        return self._incident_edge_labels
-
     def add_edge(self, edge: E) -> None:
         """Adds an edge incident on the vertex specified by ``shared_vertex_label``.
 
@@ -721,7 +714,7 @@ class _IncidentEdges(Generic[E]):
         shared = self.shared_vertex_label
         if shared not in (edge.vertex1.label, edge.vertex2.label):
             raise ValueError(f"cannot add edge {edge} since it is not incident on vertex "
-                f"'{shared}'.")
+                f"'{shared}'")
 
         self.incident_edge_labels.add(edge.label)
         if edge.is_loop():
@@ -776,6 +769,13 @@ class _IncidentEdges(Generic[E]):
         return set(self.parent_graph._vertices[v] for v in vertices)
 
     @property
+    def incident_edge_labels(self) -> Set[str]:
+        """Property to handle lazy initialization of incident edge label set."""
+        if not self._incident_edge_labels:
+            self._incident_edge_labels = set()
+        return self._incident_edge_labels
+
+    @property
     def incident_edges(self) -> Set[E]:
         """The set of all incident edges: parallel, self loops, incoming, and outgoing."""
         return set(self.parent_graph._edges[e] for e in self.incident_edge_labels)
@@ -796,7 +796,7 @@ class _IncidentEdges(Generic[E]):
 
         if self.has_loop:
             shared = self.shared_vertex_label
-            edges.add(self.parent_graph[shared, shared].label)
+            edges.add(__create_edge_label(shared, shared, self.parent_graph.is_directed()))
         return set(self.parent_graph._edges[e] for e in edges)
 
     @property
@@ -823,7 +823,7 @@ class _IncidentEdges(Generic[E]):
 
         if self.has_loop:
             shared = self.shared_vertex_label
-            edges.add(self.parent_graph[shared, shared].label)
+            edges.add(__create_edge_label(shared, shared, self.parent_graph.is_directed()))
         return set(self.parent_graph._edges[e] for e in edges)
 
     def remove_edge(self, edge: E) -> None:
@@ -832,3 +832,21 @@ class _IncidentEdges(Generic[E]):
             self.incident_edge_labels.remove(edge.label)
             if edge.is_loop():
                 self.has_loop = False
+
+
+def __create_edge_label(v1_label: str, v2_label: str, is_directed: bool) -> str:
+    """Creates a consistent string representation of an edge.
+
+    This function is used instead of `edge.create_edge_label` to avoid circular dependencies.
+
+    Args:
+        v1_label: The first vertex label of the edge.
+        v2_label: The second vertex label of the edge.
+        is_directed (bool): True indicates a directed edge, False an undirected edge.
+
+    Returns:
+        str: The edge label.
+    """
+    if not is_directed and v1_label > v2_label:
+        return f"({v2_label}, {v1_label})"
+    return f"({v1_label}, {v2_label})"

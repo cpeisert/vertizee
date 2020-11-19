@@ -979,7 +979,7 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
 
     @property
     def edge_count(self) -> int:
-        """The number of edges."""
+        """The number of edges, including parallel edge connections."""
         return sum(e.multiplicity for e in self._edges.values())
 
     def edges(self) -> ValuesView[MultiEdge]:
@@ -1116,7 +1116,7 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
 
     @property
     def edge_count(self) -> int:
-        """The number of edges."""
+        """The number of edges, including parallel edge connections."""
         return sum(e.multiplicity for e in self._edges.values())
 
     def edges(self) -> ValuesView[MultiDiEdge]:

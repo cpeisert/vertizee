@@ -17,6 +17,7 @@
 from __future__ import annotations
 from typing import Callable, Generic, Iterable, Iterator, Optional, Set, Union
 
+from vertizee.algorithms.algo_utils import search_utils
 import vertizee.algorithms.search.depth_first_search as dfs_module
 from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import SetView
@@ -211,7 +212,7 @@ def _plain_depth_first_search(
 
         component = Component(initial_vertex=vertex)
         children = adjacency_function(vertex, parent=None)
-        stack = [dfs_module._StackFrame(vertex, children)]
+        stack = [search_utils.VertexSearchState(vertex, children)]
 
         while stack:
             parent = stack[-1].parent
@@ -226,6 +227,6 @@ def _plain_depth_first_search(
                 seen.add(child)
                 component._vertex_set.add(child)
                 grandchildren = adjacency_function(child=child, parent=parent)
-                stack.append(dfs_module._StackFrame(child, grandchildren))
+                stack.append(search_utils.VertexSearchState(child, grandchildren))
 
         yield component

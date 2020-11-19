@@ -100,7 +100,7 @@ ConnectionKey = Hashable
 
 #: E: A generic type parameter that represents an edge class type (for example, DiEdge, Edge,
 # MultiDiEdge, MultiEdge).
-E = TypeVar("E", "Connection", "DiEdge", "Edge", "MultiConnection", "MultiDiEdge", "MultiEdge")
+E = TypeVar("E", bound=Union["Connection", "MultiConnection"])
 
 DEFAULT_WEIGHT: Final = 1.0
 DEFAULT_CONNECTION_KEY: Final = 0
