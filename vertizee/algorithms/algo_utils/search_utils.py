@@ -25,7 +25,9 @@ from typing import Final, Generic, List, Iterator, Optional, Set
 from vertizee import exception
 from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import ListView, SetView
-from vertizee.classes.graph import E, GraphBase, V
+from vertizee.classes.edge import E
+from vertizee.classes.graph import G
+from vertizee.classes.vertex import V
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 
 
@@ -86,7 +88,7 @@ class SearchResults(Generic[V, E]):
         * :class:`SearchTree`
     """
 
-    def __init__(self, graph: GraphBase[V, E], depth_first_search: bool) -> None:
+    def __init__(self, graph: G[V, E], depth_first_search: bool) -> None:
         self._depth_first_search = depth_first_search
         self._graph = graph
         self._edges_in_discovery_order: List[E] = []

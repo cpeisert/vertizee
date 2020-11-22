@@ -25,7 +25,7 @@ import pytest
 
 from vertizee import (
     Graph,
-    GraphBase,
+    G,
     Edge,
     EdgeNotFound,
     DiGraph,
@@ -41,7 +41,7 @@ from vertizee import (
 from vertizee.classes import edge as edge_module
 
 
-def _check_for_memory_leak(cls_graph: Type[GraphBase]):
+def _check_for_memory_leak(cls_graph: Type[G]):
     def count_objects_of_type(_type):
         return sum(1 for obj in gc.get_objects() if isinstance(obj, _type))
 
@@ -72,8 +72,8 @@ def _check_for_memory_leak(cls_graph: Type[GraphBase]):
     assert before == after, "unassigned graph reference should have been garbage collected"
 
 
-class TestGraphBase:
-    """Tests for GraphBase features shared by all graph classes."""
+class TestG:
+    """Tests for G features shared by all graph classes."""
 
     def test__contains__(self):
         g = Graph()

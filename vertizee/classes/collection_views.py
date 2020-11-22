@@ -42,7 +42,9 @@ The collection view classes are modelled after the Python standard library ``Map
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import collections.abc
-from typing import Collection, Dict, Generic, Iterator, List, Optional, Set, Tuple, Type, TypeVar
+from typing import (
+    Collection, Dict, Generic, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
+)
 
 T = TypeVar('T')  # Any type.
 KT = TypeVar('KT')  # Key type.
@@ -142,8 +144,17 @@ class ListView(CollectionView, Generic[T]):
     def __init__(self, list_collection: List[T]) -> None:
         super().__init__(collection=list_collection)
 
-    def __getitem__(self, key: int) -> T:
-        return self._collection[key]
+    def __getitem__(self, key: Union[int, slice]) -> T:
+        if isinstance(key, int) :
+            if key < 0 : #Handle negative indices
+                key += len(self)
+            if key < 0 or key >= len(self):
+                raise IndexError(f"index {key} is out of range")
+            return self._collection[key]
+        if isinstance(key, slice) :
+            start, stop, step = key.indices(len(self))
+            return ListView([self[i] for i in range(start, stop, step)])
+        raise TypeError(f"invalid key type '{type(key).__name__}'; expected int or slice")
 
     def __len__(self) -> int:
         """Returns the number of items in the list."""

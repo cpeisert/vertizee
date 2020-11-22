@@ -21,7 +21,7 @@ from vertizee.algorithms.algo_utils import search_utils
 import vertizee.algorithms.search.depth_first_search as dfs_module
 from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import SetView
-from vertizee.classes.graph import DiGraph, E, GraphBase, MultiDiGraph, V
+from vertizee.classes.graph import DiGraph, E, G, MultiDiGraph, V
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 from vertizee import exception
 
@@ -89,7 +89,7 @@ class Component(Generic[V, E]):
         yield from self._vertex_set
 
 
-def connected_components(graph: GraphBase[V, E]) -> Iterator[Component[V, E]]:
+def connected_components(graph: G[V, E]) -> Iterator[Component[V, E]]:
     """Returns an iterator over the connected components; if the graph is directed, then the
     components are the strongly-connected components of the graph.
 
@@ -99,7 +99,7 @@ def connected_components(graph: GraphBase[V, E]) -> Iterator[Component[V, E]]:
     created by representing each SCC as a vertex).
 
     Args:
-        graph (GraphBase): The graph to analyze.
+        graph (G): The graph to analyze.
 
     Yields:
         Component: An iterator of :class:`Component` objects.
@@ -125,7 +125,7 @@ def strongly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterat
     SCC as a vertex).
 
     Args:
-        graph (GraphBase): The graph to analyze.
+        graph (G): The graph to analyze.
 
     Yields:
         Component: An iterator of :class:`Component` objects.
@@ -152,7 +152,7 @@ def weakly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterator
     weakly connected components are strongly connected.
 
     Args:
-        graph (GraphBase): The graph to analyze.
+        graph (G): The graph to analyze.
 
     Yields:
         Component: An iterator of :class:`Component` objects.

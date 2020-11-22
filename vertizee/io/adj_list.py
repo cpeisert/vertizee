@@ -106,12 +106,12 @@ from vertizee.exception import GraphTypeNotSupported
 
 if TYPE_CHECKING:
     from vertizee.classes.edge import Edge
-    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.graph import G
     from vertizee.classes.primitives_parsing import EdgeTuple
     from vertizee.classes.vertex import Vertex
 
 
-def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s+") -> None:
+def read_adj_list(path: str, new_graph: "G", delimiters: str = r",\s*|\s+") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
@@ -157,7 +157,7 @@ def read_adj_list(path: str, new_graph: "GraphBase", delimiters: str = r",\s*|\s
         new_graph.add_edges_from(edge_tuples)
 
 
-def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
+def read_weighted_adj_list(path: str, new_graph: "G") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
@@ -201,7 +201,7 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase") -> None:
 
 def write_adj_list_to_file(
     path: str,
-    graph: "GraphBase",
+    graph: "G",
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -326,7 +326,7 @@ def _add_loop_edges_to_line(
 
 
 def _get_incident_edges_excluding_loops(
-    graph: "GraphBase", vertex: "Vertex", reverse_graph: bool = False
+    graph: "G", vertex: "Vertex", reverse_graph: bool = False
 ) -> Set["Edge"]:
     """Helper function to retrieve the incident edges of a vertex, excluding self loops.
 
@@ -335,7 +335,7 @@ def _get_incident_edges_excluding_loops(
     direction of all edges in the digraph.
 
     Args:
-        graph (GraphBase): The graph to search.
+        graph (G): The graph to search.
         vertex (Vertex): The vertex whose incident edges are to be retrieved.
         reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
             as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to

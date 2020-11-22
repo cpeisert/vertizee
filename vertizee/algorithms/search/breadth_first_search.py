@@ -30,14 +30,97 @@ from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes import edge as edge_module
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph import E, GraphBase, V
+    from vertizee.classes.graph import E, G, V
     from vertizee.classes.vertex import VertexType
 
 INFINITY: Final = float("inf")
 
 
+def bfs(
+    graph: G[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
+) -> SearchResults[V, E]:
+    """Performs a breadth-first-search and provides detailed results (e.g. a forest of
+    breadth-first-search trees and edge classification).
+
+    Running time: :math:`O(|V| + |E|)`
+
+    If a ``source`` is not specified, then vertices are repeatedly selected until all components in
+    the graph have been searched.
+
+    Note:
+        Breadth-first search does not support cycle detection. For cycle detection, use
+        :func:`depth_first_search
+        <vertizee.algorithms.search.depth_first_search.depth_first_search>`.
+
+    Args:
+        graph: The graph to search.
+        source: Optional; The source vertex from which to begin the search. When ``source`` is
+            specified, only the component reachable from the source is searched. Defaults to None.
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
+            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            False.
+
+    Returns:
+        SearchResults: The results of the depth-first search.
+
+#### TODO(cpeisert): Update example below
+
+    Example:
+        >>> import vertizee as vz
+        >>> from vertizee.algorithms import search
+        >>> g = vz.Graph()
+        >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
+        >>> results = search.breadth_first_search(g)
+        >>> results.vertices_preorder
+        [3, 1, 0, 2, 5, 4, 7, 6]
+        >>> [str(edge) for edge in results.edges_in_discovery_order]
+        ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
+
+    See Also:
+        * :class:`SearchResults
+          <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
+        * :class:`SearchTree
+          <vertizee.algorithms.algo_utils.search_utils.SearchTree>`
+        * :func:`bfs_labeled_edge_traversal`
+
+    Note:
+        The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.
+    """
+    results = SearchResults(graph, depth_first_search=False)
+
+    labeled_edge_tuple_iterator = bfs_labeled_edge_traversal(
+        graph, source=source, reverse_graph=reverse_graph
+    )
+
+    for (parent, child, label, direction, _) in labeled_edge_tuple_iterator:
+        vertex = child
+
+        if direction == Direction.PREORDER:
+            if label == Label.TREE_ROOT:
+                bfs_tree = SearchTree(root=vertex)
+                results._search_tree_forest.add(bfs_tree)
+                results._vertices_preorder.append(vertex)
+        elif direction == Direction.POSTORDER:
+            results._vertices_postorder.append(vertex)
+
+        if label == Label.TREE_EDGE and direction == Direction.PREORDER:
+            edge = graph[parent, child]
+            results._tree_edges.add(edge)
+            bfs_tree._add_edge(edge)
+            results._edges_in_discovery_order.append(edge)
+            results._vertices_preorder.append(vertex)
+        elif label == Label.BACK_EDGE:
+            results._back_edges.add(graph[parent, child])
+        elif label == Label.CROSS_EDGE:
+            results._cross_edges.add(graph[parent, child])
+        elif label == Label.FORWARD_EDGE:
+            results._forward_edges.add(graph[parent, child])
+
+    return results
+
+
 def bfs_labeled_edge_traversal(
-    graph: GraphBase[V, E],
+    graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False
@@ -235,7 +318,7 @@ def bfs_labeled_edge_traversal(
 
 
 def bfs_preorder_traversal(
-    graph: GraphBase[V, E],
+    graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
@@ -276,89 +359,6 @@ def bfs_preorder_traversal(
     )
     return (child for parent, child, label, direction, depth in edges
         if direction == Direction.PREORDER)
-
-
-def breadth_first_search(
-    graph: GraphBase[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
-) -> SearchResults[V, E]:
-    """Performs a breadth-first-search and provides detailed results (e.g. a forest of
-    breadth-first-search trees and edge classification).
-
-    Running time: :math:`O(|V| + |E|)`
-
-    If a ``source`` is not specified, then vertices are repeatedly selected until all components in
-    the graph have been searched.
-
-    Note:
-        Breadth-first search does not support cycle detection. For cycle detection, use
-        :func:`depth_first_search
-        <vertizee.algorithms.search.depth_first_search.depth_first_search>`.
-
-    Args:
-        graph: The graph to search.
-        source: Optional; The source vertex from which to begin the search. When ``source`` is
-            specified, only the component reachable from the source is searched. Defaults to None.
-        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
-            False.
-
-    Returns:
-        SearchResults: The results of the depth-first search.
-
-#### TODO(cpeisert): Update example below
-
-    Example:
-        >>> import vertizee as vz
-        >>> from vertizee.algorithms import search
-        >>> g = vz.Graph()
-        >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        >>> results = search.breadth_first_search(g)
-        >>> results.vertices_preorder
-        [3, 1, 0, 2, 5, 4, 7, 6]
-        >>> [str(edge) for edge in results.edges_in_discovery_order]
-        ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
-
-    See Also:
-        * :class:`SearchResults
-          <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
-        * :class:`SearchTree
-          <vertizee.algorithms.algo_utils.search_utils.SearchTree>`
-        * :func:`bfs_labeled_edge_traversal`
-
-    Note:
-        The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.
-    """
-    results = SearchResults(graph, depth_first_search=False)
-
-    labeled_edge_tuple_iterator = bfs_labeled_edge_traversal(
-        graph, source=source, reverse_graph=reverse_graph
-    )
-
-    for (parent, child, label, direction, _) in labeled_edge_tuple_iterator:
-        vertex = child
-
-        if direction == Direction.PREORDER:
-            if label == Label.TREE_ROOT:
-                bfs_tree = SearchTree(root=vertex)
-                results._search_tree_forest.add(bfs_tree)
-                results._vertices_preorder.append(vertex)
-        elif direction == Direction.POSTORDER:
-            results._vertices_postorder.append(vertex)
-
-        if label == Label.TREE_EDGE and direction == Direction.PREORDER:
-            edge = graph[parent, child]
-            results._tree_edges.add(edge)
-            bfs_tree._add_edge(edge)
-            results._edges_in_discovery_order.append(edge)
-            results._vertices_preorder.append(vertex)
-        elif label == Label.BACK_EDGE:
-            results._back_edges.add(graph[parent, child])
-        elif label == Label.CROSS_EDGE:
-            results._cross_edges.add(graph[parent, child])
-        elif label == Label.FORWARD_EDGE:
-            results._forward_edges.add(graph[parent, child])
-
-    return results
 
 
 def _get_adjacent_to_child(

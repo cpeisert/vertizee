@@ -18,7 +18,7 @@ import math
 from typing import Dict, Optional
 
 from vertizee.classes.edge import Edge
-from vertizee.classes.graph import GraphBase
+from vertizee.classes.graph import G
 from vertizee.classes.vertex import Vertex
 
 
@@ -36,16 +36,16 @@ class KargerResults:
 
     def __init__(
         self,
-        contracted_graph: Optional[GraphBase] = None,
+        contracted_graph: Optional[G] = None,
         cut_edge: Optional[Edge] = None,
         karger_contract_run_count: int = 0,
     ):
-        self.contracted_graph: Optional[GraphBase] = contracted_graph
+        self.contracted_graph: Optional[G] = contracted_graph
         self.cut_edge: Optional[Edge] = cut_edge
         self.karger_contract_run_count = karger_contract_run_count
 
 
-def brute_force_min_cut(graph: GraphBase) -> KargerResults:
+def brute_force_min_cut(graph: G) -> KargerResults:
     """Uses multiple iterations of the Karger algorithm to find the minimum cut of the graph.
 
     Note that for the Karger algorithm to be guaranteed of finding a minimum cut on a graph with
@@ -86,7 +86,7 @@ def brute_force_min_cut(graph: GraphBase) -> KargerResults:
     """
 
 
-def fast_min_cut(graph: GraphBase) -> KargerResults:
+def fast_min_cut(graph: G) -> KargerResults:
     """Uses the Karger-Stein algorithm to find the minimum cut of the graph.
 
     Args:
@@ -125,7 +125,7 @@ def fast_min_cut(graph: GraphBase) -> KargerResults:
     )
 
 
-def karger_contract(graph: GraphBase, minimum_vertices: int = 2) -> KargerResults:
+def karger_contract(graph: G, minimum_vertices: int = 2) -> KargerResults:
     """Use the Karger algorithm to contract the graph by repeatedly selecting a random edge,
     removing the edge, and merging the vertices of the deleted edge.
 

@@ -15,7 +15,7 @@
 """Algorithms for finding minimum/maximum spanning trees of graphs."""
 
 from __future__ import annotations
-from typing import Iterator, Optional, TYPE_CHECKING
+from typing import Final, Iterator, Optional, TYPE_CHECKING
 
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
@@ -24,11 +24,11 @@ from vertizee.classes.vertex import Vertex
 from vertizee.exception import GraphTypeNotSupported, VertexNotFound
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.graph import G
     from vertizee.classes.edge import DiEdge, Edge
     from vertizee.classes.vertex import VertexType
 
-INFINITY = float("inf")
+INFINITY: Final = float("inf")
 
 
 def _weight_function(edge: "Edge", weight: str = "Edge__weight", minimum: bool = True) -> float:
@@ -66,7 +66,7 @@ def _weight_function(edge: "Edge", weight: str = "Edge__weight", minimum: bool =
 
 
 def spanning_arborescence_ggst(
-    graph: "GraphBase", weight: str = "Edge__weight", minimum: bool = True
+    graph: "G", weight: str = "Edge__weight", minimum: bool = True
 ) -> Iterator["DiEdge"]:
     """Iterates over a minimum (or maximum) spanning arborescence of a weighted, directed graph.
 
@@ -86,7 +86,7 @@ def spanning_arborescence_ggst(
 
 
 def spanning_tree_kruskal(
-    graph: "GraphBase", weight: str = "Edge__weight", minimum: bool = True
+    graph: "G", weight: str = "Edge__weight", minimum: bool = True
 ) -> Iterator["Edge"]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted, undirected graph using
     Kruskal's algorithm.
@@ -140,7 +140,7 @@ def spanning_tree_kruskal(
 
 
 def spanning_tree_prim(
-    graph: "GraphBase",
+    graph: "G",
     root: Optional["VertexType"] = None,
     weight: str = "Edge__weight",
     minimum: bool = True,
@@ -243,7 +243,7 @@ def spanning_tree_prim(
 
 
 def spanning_tree_prim_fibonacci(
-    graph: "GraphBase", root: Vertex = None, weight: str = "Edge__weight", minimum: bool = True
+    graph: "G", root: Vertex = None, weight: str = "Edge__weight", minimum: bool = True
 ) -> Iterator["Edge"]:
     """Iterates over a minimum (or maximum) spanning tree of a weighted, undirected graph using
     Prim's algorithm implemented using a Fibonacci heap.

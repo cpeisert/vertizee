@@ -29,8 +29,9 @@ from vertizee.classes import edge as edge_module
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph import E, GraphBase, V
-    from vertizee.classes.vertex import VertexType
+    from vertizee.classes.edge import E
+    from vertizee.classes.graph import G
+    from vertizee.classes.vertex import V, VertexType
 
 BLACK: Final = "black"
 GRAY: Final = "gray"
@@ -39,8 +40,8 @@ WHITE: Final = "white"
 INFINITY: Final = float("inf")
 
 
-def depth_first_search(
-    graph: GraphBase[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
+def dfs(
+    graph: G[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
 ) -> SearchResults[V, E]:
     """Performs a depth-first-search and provides detailed results (e.g. a forest of
     depth-first-search trees, cycle detection, and edge classification).
@@ -126,7 +127,7 @@ def depth_first_search(
 
 
 def dfs_labeled_edge_traversal(
-    graph: GraphBase[V, E],
+    graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False
@@ -316,7 +317,7 @@ def dfs_labeled_edge_traversal(
 
 
 def dfs_postorder_traversal(
-    graph: GraphBase[V, E],
+    graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
@@ -365,7 +366,7 @@ def dfs_postorder_traversal(
 
 
 def dfs_preorder_traversal(
-    graph: GraphBase[V, E],
+    graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
@@ -405,7 +406,7 @@ def dfs_preorder_traversal(
 
 
 def _check_for_parallel_edge_cycle(
-    graph: GraphBase[V, E], dfs_results: SearchResults[V, E], edge: E
+    graph: G[V, E], dfs_results: SearchResults[V, E], edge: E
 ) -> None:
     """Helper function to check for parallel edge cycles."""
     if edge is None:

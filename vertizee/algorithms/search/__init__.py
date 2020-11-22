@@ -3,13 +3,13 @@
 """
 
 from vertizee.algorithms.search.breadth_first_search import (
-    breadth_first_search,
+    bfs,
     bfs_preorder_traversal,
     bfs_labeled_edge_traversal
 )
 
 from vertizee.algorithms.search.depth_first_search import (
-    depth_first_search,
+    dfs,
     dfs_labeled_edge_traversal,
     dfs_preorder_traversal,
     dfs_postorder_traversal

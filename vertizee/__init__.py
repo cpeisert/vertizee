@@ -14,6 +14,7 @@ from vertizee.classes.edge import (
     Connection,
     DiEdge,
     DiConnectionView,
+    E,
     Edge,
     EdgeType,
     ConnectionView,
@@ -24,7 +25,7 @@ from vertizee.classes.edge import (
 from vertizee.classes.graph import (
     DiGraph,
     Graph,
-    GraphBase,
+    G,
     MultiDiGraph,
     MultiGraph
 )
@@ -33,7 +34,9 @@ from vertizee.classes.vertex import (
     DiVertex,
     MultiDiVertex,
     MultiVertex,
+    V,
     Vertex,
+    VertexBase,
     VertexLabel,
     VertexType
 )

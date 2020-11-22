@@ -80,7 +80,7 @@ from vertizee.utils import abc_utils
 
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
-    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.graph import G
 
 # Type aliases
 AttributesDict = dict
@@ -98,8 +98,8 @@ EdgeType = Union[EdgeClass, EdgeLiteral]
 
 ConnectionKey = Hashable
 
-#: E: A generic type parameter that represents an edge class type (for example, DiEdge, Edge,
-# MultiDiEdge, MultiEdge).
+#: E: A generic type parameter that represents an edge (for example, DiEdge, Edge, MultiDiEdge,
+# MultiEdge).
 E = TypeVar("E", bound=Union["Connection", "MultiConnection"])
 
 DEFAULT_WEIGHT: Final = 1.0
@@ -623,7 +623,7 @@ class EdgeBase(Connection[V], Generic[V]):
         self._label = create_edge_label(vertex1, vertex2,
             is_directed=vertex1._parent_graph.is_directed())
 
-        self._parent_graph: GraphBase = vertex1._parent_graph
+        self._parent_graph: G[V, Connection] = vertex1._parent_graph
         self._weight = weight
 
         self._attr: Optional[dict] = None  # Initialized lazily using property getter.
@@ -693,7 +693,7 @@ class EdgeBase(Connection[V], Generic[V]):
         If the graph does not contain an edge matching the new endpoints after replacing ``vertex2``
         with ``vertex1``, then a new edge object is added to the graph.
 
-        Note that if either ``GraphBase._allow_self_loops`` is False or ``remove_loops`` is True,
+        Note that if either ``G._allow_self_loops`` is False or ``remove_loops`` is True,
         self loops will be deleted from the merged vertex (``vertex1``).
 
         Args:
@@ -784,7 +784,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
 
         self._label = create_edge_label(vertex1, vertex2,
             is_directed=vertex1._parent_graph.is_directed())
-        self._parent_graph: GraphBase = vertex1._parent_graph
+        self._parent_graph: G[V, MultiConnection] = vertex1._parent_graph
 
     def __eq__(self, other) -> bool:
         if isinstance(other, MultiConnection):
@@ -835,6 +835,11 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
             if key is None:
                 new_key = _create_connection_key(self._connections.keys())
 
+        if weight != DEFAULT_WEIGHT:
+            self._parent_graph._is_weighted_graph = True
+        if weight < 0:
+            self._parent_graph._has_negative_edge_weights = True
+
         self._connections[new_key] = edge_data
         return ConnectionView(self, self._connections[new_key])
 
@@ -878,7 +883,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         If the graph does not contain an edge matching the new endpoints after replacing ``vertex2``
         with ``vertex1``, then a new multiedge object is added to the graph.
 
-        Note that if either ``GraphBase._allow_self_loops`` is False or ``remove_loops`` is True,
+        Note that if either ``G._allow_self_loops`` is False or ``remove_loops`` is True,
         self loops will be deleted from the merged vertex (``vertex1``).
 
         Args:
@@ -1026,7 +1031,7 @@ class DiEdge(EdgeBase[DiVertex]):
         return self._vertex1
 
 
-class MultiEdge(MultiEdgeBase[Vertex]):
+class MultiEdge(MultiEdgeBase[MultiVertex]):
     """Undirected multiedge that allows multiple parallel connections between its two vertices.
 
     To help ensure the integrity of graphs, the ``MultiEdge`` class is abstract and cannot be
@@ -1044,7 +1049,7 @@ class MultiEdge(MultiEdgeBase[Vertex]):
     __slots__ = ()
 
     def __init__(
-        self, vertex1: Vertex, vertex2: Vertex, weight: float = DEFAULT_WEIGHT,
+        self, vertex1: MultiVertex, vertex2: MultiVertex, weight: float = DEFAULT_WEIGHT,
         key: ConnectionKey = DEFAULT_CONNECTION_KEY, **attr
     ) -> None:
         super().__init__(vertex1, vertex2, weight=weight, key=key, **attr)
@@ -1072,7 +1077,7 @@ class MultiEdge(MultiEdgeBase[Vertex]):
         ConnectionView."""
 
 
-class MultiDiEdge(MultiEdgeBase[DiVertex]):
+class MultiDiEdge(MultiEdgeBase[MultiDiVertex]):
     """Directed multiedge that allows multiple directed connections between its two vertices.
 
     To help ensure the integrity of graphs, ``MultiDiEdge`` is abstract and cannot be instantiated
@@ -1091,7 +1096,7 @@ class MultiDiEdge(MultiEdgeBase[DiVertex]):
     __slots__ = ("_connections",)
 
     def __init__(
-        self, tail: DiVertex, head: DiVertex, weight: float = DEFAULT_WEIGHT,
+        self, tail: MultiDiVertex, head: MultiDiVertex, weight: float = DEFAULT_WEIGHT,
         key: ConnectionKey = DEFAULT_CONNECTION_KEY, **attr
     ):
         super().__init__(vertex1=tail, vertex2=head, weight=weight, key=key, **attr)
@@ -1119,12 +1124,12 @@ class MultiDiEdge(MultiEdgeBase[DiVertex]):
         DiConnectionView."""
 
     @property
-    def head(self) -> DiVertex:
+    def head(self) -> MultiDiVertex:
         """The head vertex, which is the destination of the directed edge."""
         return self._vertex2
 
     @property
-    def tail(self) -> DiVertex:
+    def tail(self) -> MultiDiVertex:
         """The tail vertex, which is the origin of the directed edge."""
         return self._vertex1
 

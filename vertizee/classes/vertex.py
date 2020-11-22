@@ -50,7 +50,7 @@ if TYPE_CHECKING:
     from vertizee.classes.edge import (
         Connection, DiEdge, Edge, EdgeClass, MultiConnection, MultiDiEdge, MultiEdge
     )
-    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.graph import G
     from vertizee.classes.primitives_parsing import GraphPrimitive
 
 # Type aliases
@@ -67,12 +67,12 @@ VertexType = Union[VertexClass, VertexLabel, VertexTupleAttr]
 
 # Generic type parameters.
 
-#: E: A generic type parameter that represents an edge class type (for example, DiEdge, Edge,
-#: MultiDiEdge, MultiEdge).
+#: E: A generic type parameter that represents an edge (for example, DiEdge, Edge, MultiDiEdge,
+# MultiEdge).
 E = TypeVar("E", bound=Union["Connection", "MultiConnection"])
 
-#: V: A generic type parameter that represents a vertex class type (for example, DiVertex,
-# MultiDiVertex, MultiVertex, Vertex).
+#: V: A generic type parameter that represents a vertex (for example, DiVertex, MultiDiVertex,
+# MultiVertex, Vertex).
 V = TypeVar("V", bound="VertexBase")
 
 
@@ -116,7 +116,7 @@ class VertexBase(ABC, Generic[E]):
 
     __slots__ = ('_attr', '_incident_edges', '_label', '_parent_graph')
 
-    def __init__(self, label: VertexLabel, parent_graph: GraphBase, **attr) -> None:
+    def __init__(self, label: VertexLabel, parent_graph: G, **attr) -> None:
         self._label = str(label)
 
         self._attr: Optional[dict] = None  # Initialized lazily using property getter.
@@ -677,7 +677,7 @@ class _IncidentEdges(Generic[E]):
 
     __slots__ = ("_incident_edge_labels", "has_loop", "parent_graph", "shared_vertex_label")
 
-    def __init__(self, shared_vertex_label: str, parent_graph: GraphBase) -> None:
+    def __init__(self, shared_vertex_label: str, parent_graph: G) -> None:
         self._incident_edge_labels: Set[str] = None
         """The set of edge labels for edges adjacent to the shared vertex."""
 

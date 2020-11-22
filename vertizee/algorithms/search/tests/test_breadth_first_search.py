@@ -26,9 +26,9 @@ from vertizee.algorithms.algo_utils.search_utils import (
     SearchTree
 )
 from vertizee.algorithms.search.breadth_first_search import (
+    bfs,
     bfs_labeled_edge_traversal,
     bfs_preorder_traversal,
-    breadth_first_search,
     INFINITY
 )
 from vertizee.classes.edge import Edge
@@ -41,12 +41,12 @@ class TestBreadthFirstSearch:
     def test_bfs_undirected_cyclic_graph(self):
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        bfs: SearchResults = breadth_first_search(g, 0)
-        tree: SearchTree = next(iter(bfs.graph_search_trees()))
+        results: SearchResults = bfs(g, 0)
+        tree: SearchTree = next(iter(results.graph_search_trees()))
 
         assert tree.root == 0, "BFS tree should be rooted at vertex 0"
         assert (
-            len(bfs.graph_search_trees()) == 1
+            len(results.graph_search_trees()) == 1
         ), "BFS search with source vertex should yield one BFS tree"
         assert (
             len(tree.vertices_in_discovery_order()) == 6
@@ -58,53 +58,53 @@ class TestBreadthFirstSearch:
 
         # Breadth-first search does not support cycle detection.
         with pytest.raises(exception.VertizeeException):
-            bfs.is_acyclic()
+            results.is_acyclic()
 
-        assert not bfs.has_topological_ordering(), "no topological ordering for undirected graphs"
+        assert not results.has_topological_ordering(), "no topological ordering for undirected graphs"
         with pytest.raises(exception.Unfeasible):
-            bfs.vertices_topological_order()
+            results.vertices_topological_order()
 
-        assert bfs.vertices_preorder() == tree.vertices_in_discovery_order(), (
+        assert results.vertices_preorder() == tree.vertices_in_discovery_order(), (
             "BFS vertices should match the BFS tree, since only one tree was searched"
         )
         assert (
-            bfs.vertices_preorder() == bfs.vertices_postorder()
+            results.vertices_preorder() == results.vertices_postorder()
         ), "a BFS should yield vertices in same order for both preorder and postorder"
         assert (
-            bfs.edges_in_discovery_order() == tree.edges_in_discovery_order()
+            results.edges_in_discovery_order() == tree.edges_in_discovery_order()
         ), "BFS edges should match the BFS tree, since only one tree was searched"
-        assert not bfs.back_edges(), "BFS on undirected graph cannot have back edges"
-        assert not bfs.forward_edges(), "BFS on undirected graph cannot have forward edges"
-        assert len(bfs.cross_edges()) == 2, "tree should have 2 cross edges"
+        assert not results.back_edges(), "BFS on undirected graph cannot have back edges"
+        assert not results.forward_edges(), "BFS on undirected graph cannot have forward edges"
+        assert len(results.cross_edges()) == 2, "tree should have 2 cross edges"
 
-        first_edge: Edge = bfs.edges_in_discovery_order()[0]
+        first_edge: Edge = results.edges_in_discovery_order()[0]
         assert first_edge.vertex1 == 0, "first edge should have vertex1 of 0"
         assert first_edge.vertex2 == 1, "first edge should have vertex2 of 1"
 
     def test_bfs_undirected_graph_with_self_loop_and_two_trees(self):
         g = Graph([(0, 0), (0, 1), (1, 2), (3, 4)])
-        bfs: SearchResults = breadth_first_search(g)
+        results: SearchResults = bfs(g)
 
         assert (
-            len(bfs.graph_search_trees()) == 2
+            len(results.graph_search_trees()) == 2
         ), "BFS should have discovered two BFS trees"
-        assert len(bfs.vertices_preorder()) == 5, "BFS tree should have 5 vertices"
+        assert len(results.vertices_preorder()) == 5, "BFS tree should have 5 vertices"
         assert (
-            bfs.vertices_preorder() == bfs.vertices_postorder()
+            results.vertices_preorder() == results.vertices_postorder()
         ), "a BFS should yield vertices in same order for both preorder and postorder"
-        assert len(bfs.back_edges()) == 1, "graph should have one self-loop back edge"
+        assert len(results.back_edges()) == 1, "graph should have one self-loop back edge"
 
     def test_bfs_directed_cyclic_graph(self):
         g = MultiDiGraph()
         g.add_edges_from([(1, 2), (2, 2), (2, 1), (1, 3), (4, 3), (4, 5), (4, 7), (5, 7), (5, 7),
             (7, 5), (7,6), (6, 5), (7, 8), (5, 8)])
 
-        bfs1: SearchResults = breadth_first_search(g, 1)
+        results1: SearchResults = bfs(g, 1)
 
-        assert len(bfs1.graph_search_trees()) == 1, (
+        assert len(results1.graph_search_trees()) == 1, (
             "BFS search should find 1 BFS tree, since source vertex was specified"
         )
-        tree: SearchTree = next(iter(bfs1.graph_search_trees()))
+        tree: SearchTree = next(iter(results1.graph_search_trees()))
 
         assert len(tree.edges_in_discovery_order()) == 2, (
             "BFS tree rooted at vertex 1 should have 2 tree edges"
@@ -113,33 +113,33 @@ class TestBreadthFirstSearch:
             len(tree.vertices_in_discovery_order()) == 3
         ), "BFS tree rooted at vertex 1 should have 3 vertices"
 
-        assert bfs1.vertices_preorder()[0] == 1, "first vertex should be 1"
-        assert len(bfs1.tree_edges()) == 2
-        assert len(bfs1.back_edges()) == 2
-        assert not bfs1.forward_edges()
-        assert not bfs1.cross_edges()
+        assert results1.vertices_preorder()[0] == 1, "first vertex should be 1"
+        assert len(results1.tree_edges()) == 2
+        assert len(results1.back_edges()) == 2
+        assert not results1.forward_edges()
+        assert not results1.cross_edges()
 
-        bfs4: SearchResults = breadth_first_search(g, 4)
-        assert len(bfs4.tree_edges()) == 5
-        assert len(bfs4.back_edges()) == 1
-        assert len(bfs4.cross_edges()) == 2
-        assert len(bfs4.forward_edges()) == 1
+        results4: SearchResults = bfs(g, 4)
+        assert len(results4.tree_edges()) == 5
+        assert len(results4.back_edges()) == 1
+        assert len(results4.cross_edges()) == 2
+        assert len(results4.forward_edges()) == 1
 
         # Test DiGraph BFS without specifying a source vertex.
-        bfs: SearchResults = breadth_first_search(g)
+        results: SearchResults = bfs(g)
 
-        assert len(bfs.graph_search_trees()) > 1, (
+        assert len(results.graph_search_trees()) > 1, (
             "BFS search should find at least 2 BFS trees"
         )
         assert (
-            bfs.vertices_preorder() == bfs.vertices_postorder()
+            results.vertices_preorder() == results.vertices_postorder()
         ), "vertices should be the same in preorder and postorder"
-        assert len(bfs.vertices_postorder()) == 8, (
+        assert len(results.vertices_postorder()) == 8, (
             "all vertices should be accounted for when a source vertex is not specified"
         )
 
-        classified_edge_count = (len(bfs.back_edges()) + len(bfs.cross_edges())
-            + len(bfs.forward_edges()) + len(bfs.tree_edges()))
+        classified_edge_count = (len(results.back_edges()) + len(results.cross_edges())
+            + len(results.forward_edges()) + len(results.tree_edges()))
         assert classified_edge_count == len(g.edges()), "classified edges should equal total edges"
 
     def test_bfs_traversal_undirected_graph(self):

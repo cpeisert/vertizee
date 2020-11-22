@@ -30,9 +30,6 @@ See Also:
     * :class:`MultiDiVertex <vertizee.classes.vertex.MultiDiVertex>`
     * :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
 
-Note:
-    All graph types except :class:`SimpleGraph` allow self loops.
-
 Example:
     >>> import vertizee as vz
     >>> g = vz.Graph()
@@ -42,8 +39,6 @@ Example:
     >>> g[0].degree
     2
 """
-# pylint: disable=too-many-public-methods
-
 # pylint: disable=attribute-defined-outside-init
 # Due to pylint bug. See pylint issue #2981: https://github.com/PyCQA/pylint/issues/2981
 
@@ -75,7 +70,7 @@ from vertizee.classes.vertex import (
 )
 
 
-def _add_edge_obj_to_graph(graph: GraphBase[V, E], edge: EdgeClass) -> E:
+def _add_edge_obj_to_graph(graph: G[V, E], edge: EdgeClass) -> E:
     """Adds an edge to ``graph`` by copying data from ``edge``. This function is motivated to
     simplify making graph copies.
 
@@ -117,7 +112,7 @@ def _add_edge_obj_to_graph(graph: GraphBase[V, E], edge: EdgeClass) -> E:
 
 
 def _add_edge_to_graph(
-    graph: GraphBase[V, E], edge_class: Type[E], vertex1: "VertexType", vertex2: "VertexType",
+    graph: G[V, E], edge_class: Type[E], vertex1: "VertexType", vertex2: "VertexType",
     weight: float, key: Optional[ConnectionKey] = None, **attr
 ) -> E:
     """Adds a new edge to the graph. If an existing edge matches the vertices, the existing edge is
@@ -156,6 +151,8 @@ def _add_edge_to_graph(
 
     if weight != edge_module.DEFAULT_WEIGHT:
         graph._is_weighted_graph = True
+    if weight < 0:
+        graph._has_negative_edge_weights = True
 
     v1_obj = graph._add_vertex_from_vertex_data(vertex1_data)
     v2_obj = graph._add_vertex_from_vertex_data(vertex2_data)
@@ -175,7 +172,7 @@ def _add_edge_to_graph(
 
 
 def _add_vertex_to_graph(
-    graph: GraphBase[V, E], vertex_class: Type[V], label: "VertexLabel", **attr
+    graph: G[V, E], vertex_class: Type[V], label: "VertexLabel", **attr
 ) -> V:
     """Adds a vertex to the graph. If an existing vertex matches the vertex label, the existing
     vertex is returned.
@@ -201,7 +198,7 @@ def _add_vertex_to_graph(
     return new_vertex
 
 
-def _init_graph_from_graph(new_graph: GraphBase, other: GraphBase) -> None:
+def _init_graph_from_graph(new_graph: G, other: G) -> None:
     """Initialize a graph using the data from another graph.
 
     Args:
@@ -215,7 +212,7 @@ def _init_graph_from_graph(new_graph: GraphBase, other: GraphBase) -> None:
         _add_edge_obj_to_graph(new_graph, edge)
 
 
-class GraphBase(ABC, Generic[V, E]):
+class G(ABC, Generic[V, E]):
     """Generic abstract base class from which all graph classes inherit.
 
     Args:
@@ -229,8 +226,8 @@ class GraphBase(ABC, Generic[V, E]):
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
     """
 
-    __slots__ = ("_allow_self_loops", "_attr", "_edges", "__is_directed", "__is_multigraph",
-        "_is_weighted_graph", "_vertices")
+    __slots__ = ("_allow_self_loops", "_attr", "_edges", "_has_negative_edge_weights",
+        "__is_directed", "__is_multigraph", "_is_weighted_graph", "_vertices")
 
     def __init__(self, allow_self_loops: bool = True, is_directed: bool = False,
             is_multigraph: bool = False, is_weighted_graph: bool = False, **attr) -> None:
@@ -241,6 +238,9 @@ class GraphBase(ABC, Generic[V, E]):
         self._is_weighted_graph = is_weighted_graph
         """If an edge is added with a weight that is not equal to
         ``vertizee.classes.edge.DEFAULT_WEIGHT``, then this flag is set to True."""
+
+        self._has_negative_edge_weights: bool = False
+        """If an edge is added with a negative weight, this flag is set to True."""
 
         self._edges: Dict[str, E] = dict()
         """A dictionary mapping edge labels to edge objects. See :func:`create_edge_label
@@ -263,12 +263,13 @@ class GraphBase(ABC, Generic[V, E]):
         raise ValueError("expected GraphPrimitive (EdgeType or VertexType); found "
             f"{type(edge_or_vertex).__name__}")
 
-    def __deepcopy__(self, memo) -> "GraphBase":
+    def __deepcopy__(self, memo) -> "G":
         new = self.__class__()
         new._allow_self_loops = self._allow_self_loops
         new.__is_directed = self.__is_directed
         new.__is_multigraph = self.__is_multigraph
         new._is_weighted_graph = self._is_weighted_graph
+        new._has_negative_edge_weights = self._has_negative_edge_weights
         new._attr = copy.deepcopy(self.attr)
         for vertex in self._vertices.values():
             if vertex.has_attributes_dict():
@@ -424,7 +425,7 @@ class GraphBase(ABC, Generic[V, E]):
         """Removes all edges and vertices from the graph."""
 
     @abstractmethod
-    def deepcopy(self) -> "GraphBase":
+    def deepcopy(self) -> "G":
         """Returns a deep copy of this graph."""
 
     @property
@@ -472,6 +473,10 @@ class GraphBase(ABC, Generic[V, E]):
         """
         label = edge_module.create_edge_label(vertex1, vertex2, self.__is_directed)
         return label in self._edges
+
+    def has_negative_edge_weights(self) -> bool:
+        """Returns True if the graph contains an edge with a negative weight."""
+        return self._has_negative_edge_weights
 
     def has_vertex(self, vertex: "VertexType") -> bool:
         """Returns True if the graph contains the specified vertex."""
@@ -666,7 +671,7 @@ class GraphBase(ABC, Generic[V, E]):
         return None
 
 
-class Graph(GraphBase[Vertex, Edge]):
+class Graph(G[Vertex, Edge]):
     """An undirected graph without parallel edges.
 
     Args:
@@ -691,7 +696,7 @@ class Graph(GraphBase[Vertex, Edge]):
 
     @overload
     def __init__(
-        self, graph: Optional[GraphBase] = None,
+        self, graph: Optional[G] = None,
         allow_self_loops: bool = True,
         **attr
     ) -> None:
@@ -701,14 +706,14 @@ class Graph(GraphBase[Vertex, Edge]):
         super().__init__(allow_self_loops=allow_self_loops, is_directed=False,
             is_multigraph=False, is_weighted_graph=False, **attr)
 
-        if edges_or_graph and isinstance(edges_or_graph, GraphBase):
+        if edges_or_graph and isinstance(edges_or_graph, G):
             _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
 
         elif edges_or_graph:
-            raise TypeError(f"edges_or_graph must be None or an instance of GraphBase or Iterable;"
+            raise TypeError(f"edges_or_graph must be None or an instance of G or Iterable;"
                 f" found {type(edges_or_graph).__name__}")
 
     def add_edge(
@@ -774,7 +779,7 @@ class Graph(GraphBase[Vertex, Edge]):
         return self._vertices.values()
 
 
-class DiGraph(GraphBase[DiVertex, DiEdge]):
+class DiGraph(G[DiVertex, DiEdge]):
     """A directed graph without parallel edges.
 
     Args:
@@ -799,7 +804,7 @@ class DiGraph(GraphBase[DiVertex, DiEdge]):
 
     @overload
     def __init__(
-        self, graph: Optional[GraphBase] = None,
+        self, graph: Optional[G] = None,
         allow_self_loops: bool = True,
         **attr
     ) -> None:
@@ -809,14 +814,14 @@ class DiGraph(GraphBase[DiVertex, DiEdge]):
         super().__init__(allow_self_loops=allow_self_loops, is_directed=True,
             is_multigraph=False, is_weighted_graph=False, **attr)
 
-        if edges_or_graph and isinstance(edges_or_graph, GraphBase):
+        if edges_or_graph and isinstance(edges_or_graph, G):
             _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
 
         elif edges_or_graph:
-            raise TypeError(f"edges_or_graph must be None or an instance of GraphBase or Iterable;"
+            raise TypeError(f"edges_or_graph must be None or an instance of G or Iterable;"
                 f" found {type(edges_or_graph).__name__}")
 
     def add_edge(
@@ -882,7 +887,7 @@ class DiGraph(GraphBase[DiVertex, DiEdge]):
         return self._vertices.values()
 
 
-class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
+class MultiGraph(G[MultiVertex, MultiEdge]):
     """An undirected graph that supports multiple parallel connections between each pair of
     vertices.
 
@@ -907,7 +912,7 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
 
     @overload
     def __init__(
-        self, graph: Optional[GraphBase] = None,
+        self, graph: Optional[G] = None,
         allow_self_loops: bool = True,
         **attr
     ) -> None:
@@ -917,14 +922,14 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
         super().__init__(allow_self_loops=allow_self_loops, is_directed=False,
             is_multigraph=True, is_weighted_graph=False, **attr)
 
-        if edges_or_graph and isinstance(edges_or_graph, GraphBase):
+        if edges_or_graph and isinstance(edges_or_graph, G):
             _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
 
         elif edges_or_graph:
-            raise TypeError(f"edges_or_graph must be None or an instance of GraphBase or Iterable;"
+            raise TypeError(f"edges_or_graph must be None or an instance of G or Iterable;"
                 f" found {type(edges_or_graph).__name__}")
 
     def add_edge(
@@ -1018,7 +1023,7 @@ class MultiGraph(GraphBase[MultiVertex, MultiEdge]):
         return self._vertices.values()
 
 
-class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
+class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
     """A directed graph that supports multiple parallel connections between each pair of
     vertices.
 
@@ -1043,7 +1048,7 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
 
     @overload
     def __init__(
-        self, graph: Optional[GraphBase] = None,
+        self, graph: Optional[G] = None,
         allow_self_loops: bool = True,
         **attr
     ) -> None:
@@ -1053,14 +1058,14 @@ class MultiDiGraph(GraphBase[MultiDiVertex, MultiDiEdge]):
         super().__init__(allow_self_loops=allow_self_loops, is_directed=True,
             is_multigraph=True, is_weighted_graph=False, **attr)
 
-        if edges_or_graph and isinstance(edges_or_graph, GraphBase):
+        if edges_or_graph and isinstance(edges_or_graph, G):
             _init_graph_from_graph(self, edges_or_graph)
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
             self.add_edges_from(edges_or_graph)
 
         elif edges_or_graph:
-            raise TypeError(f"edges_or_graph must be None or an instance of GraphBase or Iterable;"
+            raise TypeError(f"edges_or_graph must be None or an instance of G or Iterable;"
                 f" found {type(edges_or_graph).__name__}")
 
     def add_edge(

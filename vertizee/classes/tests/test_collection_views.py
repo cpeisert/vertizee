@@ -64,6 +64,9 @@ class TestCollectionViews:
         assert list_view > [5, 6, 7]
         assert list_view[0] == 5
         assert list_view[2] == 7
+        assert list_view[1:3] == [6, 7]
+        assert list_view[0:4:2] == [5, 7]
+        assert list_view[::-1] == [5, 7, 6, 5]
         assert list_view.count(5) == 2
         assert list_view.index(6) == 1
         assert list_view.index(5, start=2, end=4) == 3
