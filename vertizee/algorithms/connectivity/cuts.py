@@ -49,7 +49,7 @@ def brute_force_min_cut(graph: G) -> KargerResults:
     """Uses multiple iterations of the Karger algorithm to find the minimum cut of the graph.
 
     Note that for the Karger algorithm to be guaranteed of finding a minimum cut on a graph with
-    n vertices, it must be run at least n^2 * log(n) iterations.
+    n vertices, it must be run at least :math:`n^2 * \\log{n}` iterations.
 
     Args:
         graph: The multigraph in which to find the minimum cut.

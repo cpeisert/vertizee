@@ -12,7 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for breadth-first search."""
+"""Algorithms for breadth-first search.
+
+Note:
+    * :math:`G = (V, E)` is a :term:`graph` consisting of a set of :term:`vertices <vertex>`
+      :math:`V` and a set of :term:`edges <edge>` :math:`E`.
+    * :math:`m = |E|` (the number of edges)
+    * :math:`n = |V|` (the number of vertices)
+
+Functions:
+
+* :func:`bfs` - Performs a breadth-first-search and provides detailed results (e.g. a :term:`forest`
+  of breadth-first-search :term:`trees <tree>` and edge classification). Running time:
+  :math:`O(m + n)`
+* :func:`bfs_labeled_edge_traversal` - Iterates over the labeled :term:`edges <edge>` of a
+  breadth-first search traversal. Running time: :math:`O(m + n)`
+* :func:`bfs_preorder_traversal` - Iterates over :term:`vertices <vertex>` in breadth-first search
+  :term:`preorder`. Running time: :math:`O(m + n)`
+"""
 
 from __future__ import annotations
 import collections
@@ -23,9 +40,9 @@ from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
     SearchResults,
-    SearchTree,
     VertexSearchState
 )
+from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes import edge as edge_module
 
@@ -42,7 +59,7 @@ def bfs(
     """Performs a breadth-first-search and provides detailed results (e.g. a forest of
     breadth-first-search trees and edge classification).
 
-    Running time: :math:`O(|V| + |E|)`
+    Running time: :math:`O(m + n)`
 
     If a ``source`` is not specified, then vertices are repeatedly selected until all components in
     the graph have been searched.
@@ -77,10 +94,8 @@ def bfs(
         ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
 
     See Also:
-        * :class:`SearchResults
-          <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
-        * :class:`SearchTree
-          <vertizee.algorithms.algo_utils.search_utils.SearchTree>`
+        * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
+        * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
         * :func:`bfs_labeled_edge_traversal`
 
     Note:
@@ -97,7 +112,7 @@ def bfs(
 
         if direction == Direction.PREORDER:
             if label == Label.TREE_ROOT:
-                bfs_tree = SearchTree(root=vertex)
+                bfs_tree = Tree(root=vertex)
                 results._search_tree_forest.add(bfs_tree)
                 results._vertices_preorder.append(vertex)
         elif direction == Direction.POSTORDER:
@@ -106,7 +121,7 @@ def bfs(
         if label == Label.TREE_EDGE and direction == Direction.PREORDER:
             edge = graph[parent, child]
             results._tree_edges.add(edge)
-            bfs_tree._add_edge(edge)
+            bfs_tree.add_edge(edge)
             results._edges_in_discovery_order.append(edge)
             results._vertices_preorder.append(vertex)
         elif label == Label.BACK_EDGE:
@@ -127,7 +142,7 @@ def bfs_labeled_edge_traversal(
 ) -> Iterator[Tuple[V, V, str]]:
     """Iterates over the labeled edges of a breadth-first search traversal.
 
-    Running time: :math:`O(|V| + |E|)`
+    Running time: :math:`O(m + n)`
 
     Note:
         If ``source`` is specified, then only vertices within the graph component containing

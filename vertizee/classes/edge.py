@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data types supporting directed and undirected graph edges.
+"""Data types supporting directed and undirected :term:`edges <edge>`.
 
 Classes and type aliases:
 
-* :class:`Connection[V] <Connection>` - A single connection between two vertices in a graph.
-* :class:`MultiConnection[V] <MultiConnection>` - A connection that may include multiple parallel
-  connections between two vertices in a graph.
+* :class:`Connection[V] <Connection>` - An :term:`edge` that has exactly one :term:`connection`
+  between its :term:`endpoints <endpoint>`.
+* :class:`MultiConnection[V] <MultiConnection>` - A edge that may have :term:`parallel edges
+  <parallel edge>` between its :term:`endpoints <endpoint>`.
 * :class:`ConnectionViewBase[V] <ConnectionViewBase>` - A dynamic view of an edge. Edge views
   provide an edge-like API for each of the parallel edge connections in a multiedge.
 * :class:`ConnectionView(ConnectionViewBase[Vertex]) <ConnectionView>` - A dynamic view of an
@@ -38,11 +39,11 @@ Classes and type aliases:
   defines the ``tail`` as the starting vertex and the ``head`` as the destination vertex. Parallel
   connections are not allowed. This is the class to use when adding type hints for directed edge
   objects.
-* :class:`MultiEdge(MultiEdgeBase[Vertex]) <MultiEdge>` - An undirected multiedge that allows
-  multiple parallel connections between its two vertices. This is the class to use when adding type
-  hints for undirected multiedge objects.
-* :class:`MultiDiEdge(MultiEdgeBase[DiVertex]) <MultiDiEdge>` - A directed multiedge that allows
-  multiple directed connections between its two vertices. The ``tail`` is the starting vertex and
+* :class:`MultiEdge(MultiEdgeBase[Vertex]) <MultiEdge>` - An undirected edge that allows parallel
+  connections between its two endpoints. This is the class to use when adding type hints for
+  undirected multiedge objects.
+* :class:`MultiDiEdge(MultiEdgeBase[DiVertex]) <MultiDiEdge>` - A directed edge that allows
+  multiple directed connections between its two endpoints. The ``tail`` is the starting vertex and
   the ``head`` is the destination vertex. This is the class to use when adding type hints for
   directed multiedge objects.
 * :class:`EdgeType` - A type alias defined as
@@ -69,18 +70,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
 from typing import (
-    Any, Dict, Final, Generic, Hashable, Iterable, List, Optional, Tuple, TYPE_CHECKING, TypeVar,
-    Union
+    Any, Dict, Final, Generic, Hashable, Iterable, List, Optional, Tuple, TypeVar, Union
 )
 
 from vertizee.classes import vertex as vertex_module
 from vertizee.classes.collection_views import ItemsView, ListView
 from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
 from vertizee.utils import abc_utils
-
-# pylint: disable=cyclic-import
-if TYPE_CHECKING:
-    from vertizee.classes.graph import G
 
 # Type aliases
 AttributesDict = dict
@@ -107,16 +103,16 @@ DEFAULT_CONNECTION_KEY: Final = 0
 
 
 def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed: bool) -> str:
-    """Creates a consistent string representation of an edge.
+    """Creates a consistent string representation of an :term:`edge`.
 
-    Directed edges have labels with the vertices ordered based on the initialization order.
-    Undirected edges have labels with the vertices sorted lexicographically. For example, both
-    :math:`(1, 2)` and  :math:`(2, 1)` refer to the same undirected edge connection, but the label
+    :term:`Directed edges <directed edge>` have labels with the endpoints in initialization order.
+    Undirected edges have labels with the endpoints sorted lexicographically. For example, both
+    :math:`(1, 2)` and  :math:`(2, 1)` refer to the same *undirected* edge connection, but the label
     would always be "(1, 2)".
 
     Args:
-        vertex1: The first vertex of the edge.
-        vertex2: The second vertex of the edge.
+        vertex1: The first endpoint of the edge.
+        vertex2: The second endpoint of the edge.
         is_directed (bool): True indicates a directed edge, False an undirected edge.
 
     Returns:
@@ -315,9 +311,9 @@ def _str_for_multiconnection(
 
 
 class Connection(ABC, Generic[V]):
-    """A single connection between two vertices in a graph. The Connection API only defines methods
-    that do not change the state of an edge connection, with the exception of custom attributes
-    stored in the ``attr`` dictionary. Subclasses may change this behavior and add mutability."""
+    """A single connection between two vertices in a graph. The ``Connection`` API only defines
+    methods that do not change its state, with the exception of custom attributes stored in the
+    ``attr`` dictionary. Subclasses may change this behavior by adding mutability."""
 
     __slots__ = ()
 
@@ -380,9 +376,10 @@ class Connection(ABC, Generic[V]):
 
 
 class MultiConnection(ABC, Generic[V]):
-    """A connection that may include multiple parallel connections between two vertices in a
-    graph. The MultiConnection API only defines methods that do not change the state of an edge
-    connection. Subclasses may change this behavior and add mutability."""
+    """An :term:`edge` connection that may have :term:`parallel connections <parallel edge>`
+    between its :term:`endpoints <endpoint>`. A multiconnection can be thought of as a collection
+    of parallel :term:`connections <connection>`. The ``MultiConnection`` API only defines methods
+    that do not change its state. Subclasses may change this behavior by adding mutability."""
 
     __slots__ = ()
 
@@ -442,7 +439,7 @@ class MultiConnection(ABC, Generic[V]):
 
 
 class _EdgeConnectionData:
-    """Unique data associated with a connection in a multiedge, such as a weight and custom
+    """Unique data associated with a connection in a :term:`multiedge`, such as a weight and custom
     attributes.
 
     Args:
@@ -472,11 +469,11 @@ class _EdgeConnectionData:
 
 
 class ConnectionViewBase(Connection[V], Generic[V]):
-    """A dynamic view of an edge connection. Connection views provide an edge-like API for each of
-    the parallel connections in a multiedge.
+    """A dynamic view of an term:`edge` connection. Connection views provide an edge-like API for
+    each of the parallel connections in a :term:`multiedge`.
 
     Args:
-        multiconnection: A multiconnection object representing multiple parallel edge connections.
+        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
         edge_data: The data associated with the particular edge connection that this edge view
             represents.
     """
@@ -545,12 +542,11 @@ class ConnectionViewBase(Connection[V], Generic[V]):
 
 
 class ConnectionView(ConnectionViewBase[MultiVertex]):
-    """A dynamic view of an undirected edge connection. Connection views provide an edge-like API
-    for each of the parallel edge connections in a multiedge.
+    """A dynamic view of an undirected :term:`edge` connection. Connection views provide an
+    edge-like API for each of the parallel edge connections in a :term:`multiedge`.
 
     Args:
-        multiconnection: A :class:`MultiConnection` object representing multiple parallel edge
-            connections.
+        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
         edge_data: The data associated with the particular edge connection that this edge view
             represents.
     """
@@ -569,12 +565,11 @@ class ConnectionView(ConnectionViewBase[MultiVertex]):
 
 
 class DiConnectionView(ConnectionViewBase[MultiDiVertex]):
-    """A dynamic view of a directed edge connection. Directed connection views provide an edge-like
-    API for each of the parallel edge connections in a multiedge.
+    """A dynamic view of a :term:`directed edge` connection. Directed connection views provide an
+    edge-like API for each of the parallel edge connections in a :term:`multiedge`.
 
     Args:
-        multiconnection: A :class:`MultiConnection` object representing multiple parallel edge
-            connections.
+        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
         edge_data: The data associated with the particular edge connection that this edge view
             represents.
     """
@@ -603,7 +598,7 @@ class DiConnectionView(ConnectionViewBase[MultiDiVertex]):
 
 
 class EdgeBase(Connection[V], Generic[V]):
-    """Abstract base class from which all single-connection edge classes inherit.
+    """Abstract base class from which all single-connection :term`edge` classes inherit.
 
     Args:
         vertex1: The first vertex. In undirected edges, the order of ``vertex1`` and ``vertex2``
@@ -671,7 +666,7 @@ class EdgeBase(Connection[V], Generic[V]):
         vertices.
 
         Edge contraction is written as :math:`G/e`, which should not be confused with set
-        difference, written as :math:`B \setminus A = \{ x\in B \mid x \notin A \}`.
+        difference, written as :math:`B \\setminus A = \\{ x\\in B \\mid x \\notin A \\}`.
 
         For a formal definition, see Wikipedia, `"Edge contraction"
         <https://en.wikipedia.org/wiki/Edge_contraction>`_ [WEC2020]_.
@@ -727,14 +722,14 @@ class EdgeBase(Connection[V], Generic[V]):
         """
         return self._label
 
-    def remove(self, remove_isolated_vertices: bool = False) -> None:
+    def remove(self, remove_self_isolated_vertices: bool = False) -> None:
         """Removes this edge from the graph.
 
         Args:
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
+            remove_self_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+                :term:`self-isolated` after the edge removal are also removed. Defaults to False.
         """
-        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_isolated_vertices)
+        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_self_isolated_vertices)
 
     @property
     def vertex1(self) -> V:
@@ -753,7 +748,7 @@ class EdgeBase(Connection[V], Generic[V]):
 
 
 class MultiEdgeBase(MultiConnection[V], Generic[V]):
-    """Abstract base class from which all multiedge classes inherit.
+    """Abstract base class from which all :term:`multiedge` classes inherit.
 
     Args:
         vertex1: The first vertex. In undirected multiedges, the order of ``vertex1`` and
@@ -859,7 +854,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         vertices.
 
         Edge contraction is written as :math:`G/e`, which should not be confused with set
-        difference, written as :math:`B \setminus A = \{ x\in B \mid x \notin A \}`.
+        difference, written as :math:`B \\setminus A = \\{ x\\in B \\mid x \\notin A \\}`.
 
         For a formal definition, see Wikipedia, `"Edge contraction"
         <https://en.wikipedia.org/wiki/Edge_contraction>`_ [WEC2020]_.
@@ -920,14 +915,14 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         """
         return len(self._connections)
 
-    def remove(self, remove_isolated_vertices: bool = False) -> None:
+    def remove(self, remove_self_isolated_vertices: bool = False) -> None:
         """Removes this edge from the graph.
 
         Args:
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
+            remove_self_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+                :term:`self-isolated` after the edge removal are also removed. Defaults to False.
         """
-        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_isolated_vertices)
+        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_self_isolated_vertices)
 
     def remove_connection(self, key: ConnectionKey) -> None:
         """Removes an edge connection from this multiedge based on its key. If the multiedge only
@@ -957,7 +952,7 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
 
 
 class Edge(EdgeBase[Vertex]):
-    """An undirected edge that does not allow parallel connections between its vertices.
+    """An undirected :term:`edge` that does not allow parallel connections between its endpoints.
 
     To help ensure the integrity of graphs, the ``Edge`` class is abstract and cannot be
     instantiated directly. To create edges, use :meth:`Graph.add_edge
@@ -987,7 +982,7 @@ class Edge(EdgeBase[Vertex]):
 
 
 class DiEdge(EdgeBase[DiVertex]):
-    """A directed edge that does not allow parallel connections between its vertices.
+    """A :term:`directed edge` that does not allow parallel connections between its endpoints.
 
     To help ensure the integrity of graphs, the ``DiEdge`` class is abstract and cannot be
     instantiated directly. To create directed edges, use :meth:`DiGraph.add_edge
@@ -1032,7 +1027,7 @@ class DiEdge(EdgeBase[DiVertex]):
 
 
 class MultiEdge(MultiEdgeBase[MultiVertex]):
-    """Undirected multiedge that allows multiple parallel connections between its two vertices.
+    """Undirected :term:`edge` that allows parallel connections between its endpoints.
 
     To help ensure the integrity of graphs, the ``MultiEdge`` class is abstract and cannot be
     instantiated directly. To create ``MultiEdge`` objects, use :meth:`MultiGraph.add_edge
@@ -1078,7 +1073,7 @@ class MultiEdge(MultiEdgeBase[MultiVertex]):
 
 
 class MultiDiEdge(MultiEdgeBase[MultiDiVertex]):
-    """Directed multiedge that allows multiple directed connections between its two vertices.
+    """Directed :term:`multiedge` that allows parallel, directed connections between its endpoints.
 
     To help ensure the integrity of graphs, ``MultiDiEdge`` is abstract and cannot be instantiated
     directly. To create edges, use :meth:`MultiDiGraph.add_edge

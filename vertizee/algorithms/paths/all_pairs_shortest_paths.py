@@ -15,8 +15,7 @@
 """Algorithms for the all-pairs-shortest-paths problem.
 
 Note:
-    For asymptotic runtime analysis, :math:`m = |E|` (the number of edges) and :math:`n = |V|`
-    (the number of vertices).
+    :math:`m = |E|` (the number of edges) and :math:`n = |V|` (the number of vertices)
 
 * :func:`all_shortest_paths` - Finds the shortest paths between all pairs of vertices in a graph.
   This function chooses the fastest available all-pairs-shortest-paths algorithm depending on the
@@ -24,10 +23,10 @@ Note:
 * :func:`floyd_warshall` - Finds the shortest paths between all pairs of vertices in a graph using
   the Floyd-Warshall algorithm. Running time: :math:`O(n^3)`
 * :func:`johnson` - Finds the shortest paths between all pairs of vertices in a graph using
-  Donald Johnson's algorithm. Running time: :math:`O(mn(log(n)))`
+  Donald Johnson's algorithm. Running time: :math:`O(mn(\\log{n}))`
 * :func:`johnson_fibonacci` - Finds the shortest paths between all pairs of vertices in a graph
   using Donald Johnson's algorithm implemented with a Fibonacci heap version of Dijkstra's
-  algorithm. Running time: :math:`O((n^2)log(n) + mn)`
+  algorithm. Running time: :math:`O((n^2)\\log{n} + mn)`
 """
 
 from __future__ import annotations
@@ -89,7 +88,7 @@ def all_shortest_paths(
     properties of the graph. Note that :math:`m = |E|` (the number of edges) and :math:`n = |V|`
     (the number of vertices):
 
-        * If the graph is sufficient dense that :math:`m > (n^2)/log(n)`, then the
+        * If the graph is sufficient dense that :math:`m > (n^2)/\\log{n}`, then the
           :func:`Floyd-Warshall algorithm <floyd_warshall>` is used.
         * Otherwise, :func:`Johnson's algorithm <johnson>` is used.
 
@@ -104,8 +103,8 @@ def all_shortest_paths(
             path. To reconstruct specific shortest paths, see
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`.
             Defaults to False.
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
+        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
+            default value (``Edge__weight``) uses the property ``E.weight``.
 
     Returns:
         VertexDict[VertexDict[ShortestPath[V]]]: A dictionary mapping source vertices to
@@ -113,8 +112,7 @@ def all_shortest_paths(
         <vertizee.algorithms.algo_utils.path_utils.ShortestPath>` objects.
 
     Raises:
-        NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
-            undirected graphs, any negative weight edge is a negative weight cycle.**
+        NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
         * :func:`floyd_warshall`
@@ -170,7 +168,7 @@ def floyd_warshall(
     * if ``save_paths`` is False: :math:`O(n^2)`
     * if ``save_paths`` is True: :math:`O(n^3)`
 
-    When the number of edges is less than :math:`(n^2)/log(n)`, then the graph is sufficiently
+    When the number of edges is less than :math:`(n^2)/\\log{n}`, then the graph is sufficiently
     sparse that Johnson's algorithm will provide better asymptotic running time. See
     :func:`johnson`.
 
@@ -190,8 +188,8 @@ def floyd_warshall(
             path. To reconstruct specific shortest paths, see
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`.
             Defaults to False.
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
+        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
+            default value (``Edge__weight``) uses the property ``E.weight``.
 
     Returns:
         VertexDict[VertexDict[ShortestPath[V]]]: A dictionary mapping source vertices to
@@ -199,8 +197,7 @@ def floyd_warshall(
         <vertizee.algorithms.algo_utils.path_utils.ShortestPath>` objects.
 
     Raises:
-        NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
-            undirected graphs, any negative weight edge is a negative weight cycle.**
+        NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
         * :func:`johnson`
@@ -238,9 +235,6 @@ def floyd_warshall(
      .. [CLRS2009] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
                    Introduction to Algorithms: Third Edition, pages 685-699. The MIT Press, 2009.
     """
-    if not graph.is_directed() and graph.has_negative_edge_weights():
-        raise exception.NegativeWeightCycle("found a negative weight cycle")
-
     weight_function = get_weight_function(weight)
     source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()
 
@@ -286,12 +280,12 @@ def johnson(
     """Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm.
 
-    Running time: :math:`O(mn(log(n)))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(mn(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
 
-    For a theoretically faster implementation with running time :math:`O((n^2)log(n) + mn)`, see
+    For a theoretically faster implementation with running time :math:`O((n^2)\\log{n} + mn)`, see
     :func:`shortest_paths.weighted.johnson_fibonacci`.
 
-    When :math:`m > (n^2)/log(n)`, then the graph is sufficiently dense that the Floyd-Warshall
+    When :math:`m > (n^2)/\\log{n}`, then the graph is sufficiently dense that the Floyd-Warshall
     algorithm will provide better asymptotic running time. See
     :func:`floyd_warshall`.
 
@@ -307,8 +301,8 @@ def johnson(
             path. To reconstruct specific shortest paths, see
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`. Defaults
             to False.
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
+        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
+            default value (``Edge__weight``) uses the property ``E.weight``.
 
     Returns:
         VertexDict[VertexDict[ShortestPath]]: A dictionary mapping source vertices to dictionaries
@@ -316,8 +310,7 @@ def johnson(
         <vertizee.algorithms.algo_utils.path_utils.ShortestPath>` objects.
 
     Raises:
-        NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
-            undirected graphs, any negative weight edge is a negative weight cycle.**
+        NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
         * :func:`floyd_warshall`
@@ -368,7 +361,7 @@ def johnson_fibonacci(
     """Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm implemented with a Fibonacci heap version of Dijkstra's algorithm.
 
-    Running time: :math:`O((n^2)log(n) + mn)` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O((n^2)\\log{n} + mn)` where :math:`m = |E|` and :math:`n = |V|`
 
     Pairs of vertices for which there is no connecting path will have path length infinity. In
     additional, `ShortestPath.is_destination_reachable()` will return False.
@@ -381,8 +374,8 @@ def johnson_fibonacci(
         save_paths: Optional; If True, saves the actual vertex sequences comprising each
             path. To reconstruct specific shortest paths, see
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`. Defaults to False.
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
+        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
+            default value (``Edge__weight``) uses the property ``E.weight``.
 
     Returns:
         VertexDict[VertexDict[ShortestPath]]: A dictionary mapping source vertices to dictionaries
@@ -390,8 +383,7 @@ def johnson_fibonacci(
         <vertizee.algorithms.algo_utils.path_utils.ShortestPath>` objects.
 
     Raises:
-        NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
-            undirected graphs, any negative weight edge is a negative weight cycle.**
+        NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
         * :func:`floyd_warshall`

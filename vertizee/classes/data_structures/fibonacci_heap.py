@@ -102,10 +102,9 @@ class FibonacciHeap(Generic[T]):
      .. [CLRS2009_8] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
                      Introduction to Algorithms: Third Edition, pages 505-526. The MIT Press, 2009.
 
-     .. [FT1987] Fredman, Michael Lawrence; Tarjan, Robert E. (July 1987)
-                 :download:`"Fibonacci heaps and their uses in improved network optimization
-                 algorithms." </references/Fibonacci-Heap-Tarjan.pdf>` Journal of the Association of
-                 Computing Machinery, pages 596-615.
+     .. [FT1987] Michael Lawrence Fredman and Robert E. Tarjan. :download:`"Fibonacci heaps and
+                 their uses in improved network optimization algorithms."
+                 </references/Fibonacci-Heap-Tarjan.pdf>` Journal of the ACM, 34(3):596-615, 1987.
     """
 
     def __init__(

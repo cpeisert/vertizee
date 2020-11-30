@@ -18,6 +18,5 @@ from vertizee.algorithms.search.depth_first_search import (
 from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
-    SearchResults,
-    SearchTree
+    SearchResults
 )

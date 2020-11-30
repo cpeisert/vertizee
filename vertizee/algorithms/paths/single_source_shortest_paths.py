@@ -15,8 +15,7 @@
 """Algorithms for the single-source-shortest-paths problem.
 
 Note:
-    For asymptotic runtime analysis, :math:`m = |E|` (the number of edges) and :math:`n = |V|`
-    (the number of vertices).
+    :math:`m = |E|` (the number of edges) and :math:`n = |V|` (the number of vertices)
 
 * :func:`shortest_paths` - Finds the shortest paths and associated lengths from the source vertex
   to all reachable vertices. This function chooses the fastest available single-source-shortest-path
@@ -26,10 +25,10 @@ Note:
 * :func:`breadth_first_search_shortest_paths` - Finds the shortest paths in an unweighted graph
   using a breadth-first search. Running time: :math:`O(m + n)`
 * :func:`dijkstra` - Finds the shortest paths in a graph with positive edge weights using Dijkstra's
-  algorithm. Running time: :math:`O((m + n)log(n))`
+  algorithm. Running time: :math:`O((m + n)\\log{n})`
 * :func:`dijkstra_fibonacci` - Finds the shortest paths in a graph with positive edge weights using
   Dijkstra's algorithm implemented using a Fibonacci-heap-based priority queue. Running time:
-  :math:`O(n(log(n)) + m)`
+  :math:`O(n(\\log{n}) + m)`
 """
 
 from __future__ import annotations
@@ -94,9 +93,9 @@ def get_weight_function(
 
     Args:
         weight: Optional; If callable, then ``weight`` itself is returned. If
-            a string is specified, it is the key to use to retrieve the weight from an ``Edge.attr``
+            a string is specified, it is the key to use to retrieve the weight from an ``E.attr``
             dictionary. The default value (``Edge__weight``) returns a function that accesses the
-            ``Edge.weight`` property.
+            ``E.weight`` property.
 
     Returns:
         Callable[[V, V, bool], float]: A function that accepts two vertices
@@ -161,7 +160,7 @@ def shortest_paths(
           for unweighted graphs. Running time: :math:`O(m + n)`
         * weighted (positive weights only) - :func:`Dijkstra's algorithm <dijkstra>`
           is used for weighted graphs that only contain positive edge weights. Running time:
-          :math:`O((m + n)log(n))`
+          :math:`O((m + n)\\log{n})`
         * weighted (contains negative edge weights) - The :func:`Bellman-Ford algorithm
           <bellman_ford>` is used for weighted graphs that contain at least one negative edge
           weight. Running time: :math:`O(mn)`
@@ -186,16 +185,15 @@ def shortest_paths(
             False.
         weight: Optional; If callable, then ``weight`` must be a function accepting two vertex
             objects (edge endpoints) that returns an edge weight (or length). If a string is
-            specified, it is the key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
+            specified, it is the key to use to retrieve the weight from the ``E.attr``
+            dictionary. The default value (``Edge__weight``) uses the property ``E.weight``.
 
     Returns:
         VertexDict[ShortestPath[V]]: A dictionary mapping vertices to their shortest paths relative
         to the ``source`` vertex.
 
     Raises:
-        NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
-            undirected graphs, any negative weight edge is a negative weight cycle.**
+        NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
         * :func:`get_weight_function`
@@ -262,11 +260,6 @@ def bellman_ford(
     <vertizee.algorithms.algo_utils.path_utils.ShortestPath.is_destination_reachable>`
     will return False.
 
-    The edge classes have a built-in ``weight`` property, which is used by default to determine
-    edge weights (i.e. edge lengths). Alternatively, a weight function may be specified that
-    accepts two vertices and returns the weight of the connecting edge. See
-    :func:`get_weight_function`.
-
     Note:
         This implementation is based on BELLMAN-FORD [CLRS2009_3]_.
 
@@ -281,16 +274,15 @@ def bellman_ford(
             False.
         weight: Optional; If callable, then ``weight`` must be a function accepting two vertex
             objects (edge endpoints) that returns an edge weight (or length). If a string is
-            specified, it is the key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``Edge.weight``.
+            specified, it is the key to use to retrieve the weight from the ``E.attr``
+            dictionary. The default value (``Edge__weight``) uses the property ``E.weight``.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     Raises:
-        NegativeWeightCycle: If the graph contains a negative weight cycle. **Note that for
-            undirected graphs, any negative weight edge is a negative weight cycle.**
+        NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
         * :func:`get_weight_function`
@@ -309,10 +301,7 @@ def bellman_ford(
     try:
         s: V = graph[source]
     except KeyError as error:
-        raise exception.VertexNotFound("source vertex was not found in the graph") from error
-
-    if not graph.is_directed() and graph.has_negative_edge_weights():
-        raise exception.NegativeWeightCycle("found a negative weight cycle")
+        raise exception.VertexNotFound(f"source '{source}' not in graph") from error
 
     weight_function = get_weight_function(weight)
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
@@ -428,10 +417,10 @@ def dijkstra(
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices in a graph with positive edge weights using Dijkstra's algorithm.
 
-    Running time: :math:`O((m + n)log(n))` where :math:`m = |E|` and :math:`n = |V|`. Running time
+    Running time: :math:`O((m + n)\\log{n})` where :math:`m = |E|` and :math:`n = |V|`. Running time
     is due to implementation using a minimum priority queue based on a binary heap. For an
     implementation built using a Fibonacci heap and corresponding running time of
-    :math:`O(n(log(n)) + m)`, see :func:`dijkstra_fibonacci`.
+    :math:`O(n(\\log{n}) + m)`, see :func:`dijkstra_fibonacci`.
 
     This algorithm is not guaranteed to work if edge weights are negative or are floating point
     numbers (overflows and roundoff errors can cause problems). To handle negative edge weights,
@@ -464,8 +453,8 @@ def dijkstra(
         weight: Optional; If callable, then `weight` must be a function
             accepting two Vertex objects (edge endpoints) that returns an edge weight (or length).
             If a string is specified, it is the key to use to retrieve the weight from the
-            ``Edge.attr`` dictionary. The default value (``Edge__weight``) uses the property
-            ``Edge.weight``.
+            ``E.attr`` dictionary. The default value (``Edge__weight``) uses the property
+            ``E.weight``.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -489,7 +478,7 @@ def dijkstra(
     try:
         s: V = graph[source]
     except KeyError as error:
-        raise exception.VertexNotFound("source vertex was not found in the graph") from error
+        raise exception.VertexNotFound(f"source '{source}' not in graph") from error
     weight_function = get_weight_function(weight)
 
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
@@ -531,9 +520,9 @@ def dijkstra_fibonacci(
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices in a graph with positive edge weights using Dijkstra's algorithm.
 
-    Running time: :math:`O(n(log(n)) + m)` where :math:`m = |E|` and :math:`n = |V|`. Running time
+    Running time: :math:`O(n(\\log{n}) + m)` where :math:`m = |E|` and :math:`n = |V|`. Running time
     is due to implementation using a minimum priority queue based on a Fibonacci heap. For an
-    implementation using a binary heap and corresponding running time of math:`O((m + n)log(n))`,
+    implementation using a binary heap and corresponding running time of math:`O((m + n)\\log{n})`,
     see :func:`dijkstra`.
 
     This algorithm is *not* guaranteed to work if edge weights are negative or are floating point
@@ -566,8 +555,8 @@ def dijkstra_fibonacci(
         weight: Optional; If callable, then `weight` must be a function
             accepting two Vertex objects (edge endpoints) that returns an edge weight (or length).
             If a string is specified, it is the key to use to retrieve the weight from the
-            ``Edge.attr`` dictionary. The default value (``Edge__weight``) uses the property
-            ``Edge.weight``.
+            ``E.attr`` dictionary. The default value (``Edge__weight``) uses the property
+            ``E.weight``.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -590,7 +579,7 @@ def dijkstra_fibonacci(
     try:
         s: V = graph[source]
     except KeyError as error:
-        raise exception.VertexNotFound("source vertex was not found in the graph") from error
+        raise exception.VertexNotFound(f"source '{source}' not in graph") from error
     weight_function = get_weight_function(weight)
 
     vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()

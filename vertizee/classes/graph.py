@@ -14,6 +14,11 @@
 
 """Data types supporting directed and undirected graphs, including multigraph variants.
 
+A graph :math:`G` is defined as :math:`G = (V, E)`, where :math:`V` is a set of points called
+:term:`vertices <vertex>` (plural of *vertex*) and :math:`E` is a set of :term:`edges <edge>`. An
+unordered pair of vertices defines an **undirected edge** and an ordered pair of vertices defines a
+**directed edge**.
+
 * :class:`Graph` - Undirected graph without parallel edges.
 * :class:`DiGraph` - Directed graph without parallel edges.
 * :class:`MultiGraph` - Undirected graph that allows parallel edges.
@@ -260,7 +265,7 @@ class G(ABC, Generic[V, E]):
         if data.vertices:
             return data.vertices[0].label in self._vertices
 
-        raise ValueError("expected GraphPrimitive (EdgeType or VertexType); found "
+        raise exception.VertizeeException("expected GraphPrimitive (EdgeType or VertexType); found "
             f"{type(edge_or_vertex).__name__}")
 
     def __deepcopy__(self, memo) -> "G":
@@ -296,13 +301,12 @@ class G(ABC, Generic[V, E]):
                 However, any valid ``VertexType`` or ``EdgeType`` may be used.
 
         Returns:
-            Union[EdgeClass, VertexClass, None]: The vertex specified by the vertex label or the
-                edge specified by two vertices. If no matching vertex or edge found, returns None.
+            Union[V, E]: The specified vertex or edge.
 
         Raises:
-            IndexError: If ``keys`` is not a valid ``GraphPrimitive`` (that is a ``VertexType`` or
-                an ``EdgeType``).
             KeyError: If the graph does not contain a vertex or an edge matching ``keys``.
+            VertizeeException: If ``keys`` is not a valid ``GraphPrimitive`` (that is a
+                ``VertexType`` or an ``EdgeType``).
 
         Example:
             >>> import vertizee as vz
@@ -322,11 +326,11 @@ class G(ABC, Generic[V, E]):
         if data.vertices:
             return self._vertices[data.vertices[0].label]
 
-        raise ValueError("expected GraphPrimitive (EdgeType or VertexType); "
+        raise exception.VertizeeException("expected GraphPrimitive (EdgeType or VertexType); "
             f"found {type(keys).__name__}")
 
     def __iter__(self) -> Iterator[Vertex]:
-        return iter(self._vertices.values())
+        yield from self._vertices.values()
 
     def __len__(self) -> int:
         """Returns the number of vertices in the graph when the built-in Python function ``len`` is
@@ -462,8 +466,8 @@ class G(ABC, Generic[V, E]):
             >>> if edge_st in graph:
 
         Args:
-            vertex1: The first vertex of the edge.
-            vertex2: The second vertex of the edge.
+            vertex1: The first endpoint of the edge.
+            vertex2: The second endpoint of the edge.
 
         Returns:
             bool: True if there is a matching edge in the graph, otherwise False.
@@ -497,15 +501,16 @@ class G(ABC, Generic[V, E]):
         return self._is_weighted_graph
 
     def remove_edge(
-        self, vertex1: "VertexType", vertex2: "VertexType", remove_isolated_vertices: bool = False
+        self, vertex1: "VertexType", vertex2: "VertexType",
+        remove_self_isolated_vertices: bool = False,
     ) -> E:
         """Removes an edge from the graph.
 
         Args:
-            vertex1: The first vertex of the edge.
-            vertex2: The second vertex of the edge.
-            remove_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                isolated after the edge removal are also removed. Defaults to False.
+            vertex1: The first endpoint of the edge.
+            vertex2: The second endpoint of the edge.
+            remove_self_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+                :term:`self-isolated` after the edge removal are also removed. Defaults to False.
 
         Returns:
             E: The edge that was removed.
@@ -521,10 +526,10 @@ class G(ABC, Generic[V, E]):
         self._edges.pop(edge.label)
         edge.vertex1._remove_edge(edge)
         edge.vertex2._remove_edge(edge)
-        if remove_isolated_vertices:
-            if edge.vertex1.is_isolated():
+        if remove_self_isolated_vertices:
+            if edge.vertex1.is_isolated(ignore_self_loops=True):
                 edge.vertex1.remove()
-            if edge.vertex2.is_isolated():
+            if edge.vertex2.is_isolated(ignore_self_loops=True):
                 edge.vertex2.remove()
         return edge
 
@@ -557,14 +562,17 @@ class G(ABC, Generic[V, E]):
 
         return deletion_count
 
-    def remove_isolated_vertices(self) -> int:
-        """Removes all isolated vertices in the graph and returns the deletion count.
+    def remove_isolated_vertices(self, ignore_self_loops: bool = False) -> int:
+        """Removes all :term:`isolated` vertices from the graph and returns the deletion count.
 
-        Isolated vertices are vertices that either have zero incident edges or only self-loops.
+        Args:
+            ignore_self_loops: If True, then self-loops are ignored, meaning that a vertex whose
+                only incident edges are self-loops will be considered isolated, and therefore
+                removed. Defaults to False.
         """
         vertex_labels_to_remove = []
         for label, vertex in self._vertices.items():
-            if vertex.is_isolated():
+            if vertex.is_isolated(ignore_self_loops):
                 vertex_labels_to_remove.append(label)
 
         for label in vertex_labels_to_remove:
@@ -576,8 +584,9 @@ class G(ABC, Generic[V, E]):
     def remove_vertex(self, vertex: VertexType) -> None:
         """Removes the indicated vertex.
 
-        For a vertex to be removed, it must be isolated. That means that the vertex has no incident
-        edges (except self loops). Any incident edges must be deleted prior to vertex removal.
+        For a vertex to be removed, it must be :term:`self-isolated`. That means that the vertex
+        has no incident edges except for self loops. Any non-loop incident edges must be deleted
+        prior to vertex removal.
 
         Args:
             vertex: The vertex to remove.
@@ -592,9 +601,9 @@ class G(ABC, Generic[V, E]):
             raise exception.VertexNotFound(f"vertex '{label}' not found")
 
         vertex_obj = self._vertices[label]
-        if not vertex_obj.is_isolated():
+        if not vertex_obj.is_isolated(ignore_self_loops=True):
             raise exception.VertizeeException(f"cannot remove vertex '{vertex_obj}' due to "
-                "adjacent non-loop edges; adjacent edges must be deleted first")
+                "adjacent edges; adjacent edges must be deleted first")
 
         if vertex_obj.loop_edge:
             vertex_obj.loop_edge.remove()
@@ -780,7 +789,7 @@ class Graph(G[Vertex, Edge]):
 
 
 class DiGraph(G[DiVertex, DiEdge]):
-    """A directed graph without parallel edges.
+    """A *digraph* is a graph with directed edges; parallel edges are not allowed.
 
     Args:
         edges_or_graph: An iterable container of directed edges or a graph object. If a multigraph
@@ -888,8 +897,8 @@ class DiGraph(G[DiVertex, DiEdge]):
 
 
 class MultiGraph(G[MultiVertex, MultiEdge]):
-    """An undirected graph that supports multiple parallel connections between each pair of
-    vertices.
+    """An undirected :term:`graph` that supports parallel connections between each pair of vertices,
+    as well as multiple :term:`self-loops <loop>` on a single vertex.
 
     Args:
         edges_or_graph: An iterable container of edges or a graph object.
@@ -1024,8 +1033,7 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
 
 
 class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
-    """A directed graph that supports multiple parallel connections between each pair of
-    vertices.
+    """A directed graph that supports parallel connections between each pair of vertices.
 
     Args:
         edges_or_graph: An iterable container of edges or a graph object.

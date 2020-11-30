@@ -12,7 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for depth-first search."""
+"""Algorithms for depth-first search.
+
+Note:
+    * :math:`G = (V, E)` is a :term:`graph` consisting of a set of :term:`vertices <vertex>`
+      :math:`V` and a set of :term:`edges <edge>` :math:`E`.
+    * :math:`m = |E|` (the number of edges)
+    * :math:`n = |V|` (the number of vertices)
+
+Functions:
+
+* :func:`dfs` - Performs a depth-first-search and provides detailed results (e.g. a :term:`forest`
+  of depth-first-search :term:`trees <rooted tree>`, :term:`cycle` detection, and edge
+  classification). Running time: :math:`O(m + n)`
+* :func:`dfs_labeled_edge_traversal` - Iterates over the labeled edges of a depth-first search
+  traversal. Running time: :math:`O(m + n)`
+* :func:`dfs_postorder_traversal` - Iterates over vertices of a depth-first search in
+  :term:`postorder`. Running time: :math:`O(m + n)`
+* :func:`dfs_preorder_traversal` - Iterates over vertices of depth-first search in :term:`preorder`.
+  Running time: :math:`O(m + n)`
+"""
 
 from __future__ import annotations
 from typing import Final, Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
@@ -22,10 +41,10 @@ from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
     SearchResults,
-    SearchTree,
     VertexSearchState
 )
 from vertizee.classes import edge as edge_module
+from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 if TYPE_CHECKING:
@@ -46,7 +65,7 @@ def dfs(
     """Performs a depth-first-search and provides detailed results (e.g. a forest of
     depth-first-search trees, cycle detection, and edge classification).
 
-    Running time: :math:`O(|V| + |E|)`
+    Running time: :math:`O(m + n)`
 
     If a ``source`` is not specified, then vertices are repeatedly selected until all components in
     the graph have been searched.
@@ -78,8 +97,7 @@ def dfs(
     See Also:
         * :class:`SearchResults
           <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
-        * :class:`SearchTree
-          <vertizee.algorithms.algo_utils.search_utils.SearchTree>`
+        * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
         * :func:`dfs_labeled_edge_traversal`
         * :func:`dfs_postorder_traversal`
         * :func:`dfs_preorder_traversal`
@@ -101,7 +119,7 @@ def dfs(
                 dfs_results._is_acyclic = False
 
             if label == Label.TREE_ROOT:
-                dfs_tree = SearchTree(root=vertex)
+                dfs_tree = Tree(root=vertex)
                 dfs_results._search_tree_forest.add(dfs_tree)
                 dfs_results._vertices_preorder.append(vertex)
         elif direction == Direction.POSTORDER:
@@ -110,7 +128,7 @@ def dfs(
         if label == Label.TREE_EDGE and direction == Direction.PREORDER:
             edge = graph[parent, child]
             dfs_results._tree_edges.add(edge)
-            dfs_tree._add_edge(edge)
+            dfs_tree.add_edge(edge)
             dfs_results._edges_in_discovery_order.append(edge)
             dfs_results._vertices_preorder.append(vertex)
             if dfs_results._is_acyclic:
@@ -134,7 +152,7 @@ def dfs_labeled_edge_traversal(
 ) -> Iterator[Tuple[V, V, str, str]]:
     """Iterates over the labeled edges of a depth-first search traversal.
 
-    Running time: :math:`O(|V| + |E|)`
+    Running time: :math:`O(m + n)`
 
     Note:
         If ``source`` is specified, then the traversal only includes the graph component containing
@@ -322,14 +340,13 @@ def dfs_postorder_traversal(
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
 ) -> Iterator[V]:
-    """Iterates over vertices in depth-first search postorder, meaning the order in which vertices
-    were last visited.
+    """Iterates over vertices of a depth-first search in :term:`postorder`.
 
     Postorder is the order in which a depth-first search last visited the vertices. A vertex
     visit is finished when all of the vertex's adjacent vertices have been recursively visited. If
     the graph is directed and acyclic (a.k.a. a DAG), then the reverse postorder forms a
-    topological sort of the vertices (i.e. the first vertex returned from next() will be the last
-    vertex in the topological sort).
+    topological ordering of the vertices (i.e. the first vertex returned from next() will be the
+    last vertex in the topological sort).
 
     For directed graphs, setting `reverse_graph` to True will generate vertices as if the graph
     were reversed (i.e. all directed edges pointing in the opposite direction).
@@ -371,7 +388,7 @@ def dfs_preorder_traversal(
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
 ) -> Iterator[V]:
-    """Iterates over vertices in depth-first search preorder (time of first discovery).
+    """Iterates over vertices in depth-first search in :term:`preorder`.
 
     For directed graphs, setting ``reverse_graph`` to True will generate vertices as if the graph
     were reversed (i.e. all directed edges pointing in the opposite direction).

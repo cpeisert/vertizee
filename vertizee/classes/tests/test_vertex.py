@@ -158,7 +158,10 @@ class TestVertexBase:
 
         g.add_edge(v1, v1)
         assert v1.loop_edge, "v1 should have a self loop"
-        assert v1.is_isolated(), "vertex with self loop should be considered isolated"
+        assert not v1.is_isolated(), "vertex with self-loop should not be considered isolated"
+        assert (
+            v1.is_isolated(ignore_self_loops=True)
+        ), "vertex with self-loop should be considered self-isolated"
 
         g.add_edge(v1, 2)
         assert not v1.is_isolated(), "vertex connected to a different vertex should not be isolated"

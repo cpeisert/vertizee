@@ -143,6 +143,22 @@ class UnionFind(Generic[T]):
     def __len__(self) -> int:
         return len(self._parents)
 
+    def get_set(self, item: T) -> Set[T]:
+        """Returns the set containing ``item``.
+
+        Note:
+            This is a computationally expensive operation that involves path compression of the
+            entire UnionFind data structure. However, this price is paid the first time it is called
+            and subsequent calls are relatively cheap, unless new sets are subsequently added or
+            merged.
+        """
+        # Compress all tree paths, so that every item's parent is the root of its tree.
+        for i in self._parents:
+            _ = self[i]  # Evaluate for path-compression side-effect.
+
+        root = self[item]
+        return set(i for i, parent in self._parents.items() if parent == root)
+
     def in_same_set(self, item1: T, item2: T) -> bool:
         """Returns True if the items are elements of the same set."""
         return self[item1] == self[item2]
@@ -160,8 +176,14 @@ class UnionFind(Generic[T]):
         return self._set_count
 
     def to_sets(self) -> Iterator[Set[T]]:
-        """Returns an iterator over all the sets contained in the data structure. Warning: This
-        is the most computationally expensive operation of UnionFind."""
+        """Returns an iterator over all the sets contained in the data structure.
+
+        Note:
+            This is a computationally expensive operation that involves path compression of the
+            entire UnionFind data structure. However, this price is paid the first time it is called
+            and subsequent calls are relatively cheap, unless new sets are subsequently added or
+            merged.
+        """
         # Compress all tree paths, so that every item's parent is the root of its tree.
         for item in self._parents:
             _ = self[item]  # Evaluate for path-compression side-effect.

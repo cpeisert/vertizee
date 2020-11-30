@@ -212,11 +212,16 @@ class VertexBase(ABC, Generic[E]):
         """Returns a dynamic, set-like view of all incident edges (incoming, outgoing, and
         self-loops)."""
 
-    def is_isolated(self) -> bool:
-        """Returns True if this vertex has no incident edges other than self loops."""
+    def is_isolated(self, ignore_self_loops: bool = False) -> bool:
+        """Returns True if this vertex has degree zero, that is, no incident edges.
+
+        Args:
+            ignore_self_loops: If True, then self-loops are ignored, meaning that a vertex whose
+                only incident edges are self-loops will be considered isolated. Defaults to False.
+        """
         if self.degree == 0:
             return True
-        if self._incident_edges.loop_edge:
+        if ignore_self_loops and self._incident_edges.loop_edge:
             adjacent = self._incident_edges.adj_vertices.difference({self})
             return len(adjacent) == 0
         return False
@@ -234,8 +239,9 @@ class VertexBase(ABC, Generic[E]):
     def remove(self) -> None:
         """Removes this vertex.
 
-        For a vertex to be removed, it must be isolated. That means that the vertex has no incident
-        edges (except self loops). Any incident edges must be deleted prior to vertex removal.
+        For a vertex to be removed, it must be self-isolated, meaning that it has no incident edges
+        except for :term:`self-loops <self-loop>`. Any non-loop incident edges must be deleted
+        prior to vertex removal.
 
         Raises:
             VertizeeException: If the vertex has non-loop incident edges.
@@ -349,7 +355,7 @@ class Vertex(VertexBase["Edge"]):
 
 
 class DiVertex(VertexBase["DiEdge"]):
-    """A graph primitive representing a vertex (also called a node) in a directed graph that may be
+    """A graph primitive representing a vertex (also called a node) in a digraph that may be
     connected to other vertices via directed edges.
 
     To help ensure the integrity of graphs, the ``DiVertex`` class is abstract and cannot be

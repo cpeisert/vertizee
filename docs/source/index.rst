@@ -72,6 +72,7 @@ Documentation
    :caption: General Information
 
    installation
+   glossary
    license
    release_log
 
@@ -80,8 +81,8 @@ Documentation
    :caption: Tutorials
 
    tutorials/getting_started
+   tutorials/components
    tutorials/search
-   tutorials/connected_components
    tutorials/shortest_paths
 
 .. toctree::

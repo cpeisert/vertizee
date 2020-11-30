@@ -12,43 +12,82 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utility classes supporting graph search.
+"""Utility classes supporting :term:`graph` search.
 
+* :class:`Direction` - Container class for constants used to indicate the direction of traversal at
+  each step of a graph search.
+* :class:`Label` - Container class for constants used to label the search tree root vertices and
+  edges found during a graph search.
 * :class:`SearchResults` - Stores the results of a graph search.
-* :class:`SearchTree` - A tree comprised of vertices and edges discovered during a
-  graph search.
+* :class:`VertexSearchState` - A class to save the state of which adjacent vertices (``children``)
+  of a vertex (``parent``) still have not been visited.
 """
 
 from __future__ import annotations
 from typing import Final, Generic, List, Iterator, Optional, Set
 
 from vertizee import exception
-from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import ListView, SetView
+from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.edge import E
 from vertizee.classes.graph import G
 from vertizee.classes.vertex import V
-from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
+
+
+class Direction:
+    """Container class for constants used to indicate the direction of traversal at each step of a
+    graph search."""
+
+    ALREADY_DISCOVERED: Final = "already_discovered"
+    """The search traversal found a non-tree edge that has already been discovered."""
+
+    PREORDER: Final = "preorder"
+    """The search traversal discovered a new vertex."""
+
+    POSTORDER: Final = "postorder"
+    """The search traversal finished visiting a vertex."""
+
+
+class Label:
+    """Container class for constants used to label the search tree root vertices and edges found
+    during a graph search."""
+
+    BACK_EDGE: Final = "back_edge"
+    """Label for a back edge math:`(u, v)` that connects vertex math:`u` to ancestor math:`v` in a
+    search tree."""
+
+    CROSS_EDGE: Final = "cross_edge"
+    """Label for a cross edge math:`(u, v)`, which may connect vertices in the same search tree (as
+    long as one vertex is not an ancestor of the other), or connect vertices in different search
+    trees (within a forest of search trees)."""
+
+    FORWARD_EDGE: Final = "forward_edge"
+    """Label for a forward edge math:`(u, v)` connecting a vertex math:`u` to a descendant math:`v`
+    in a search tree."""
+
+    TREE_EDGE: Final = "tree_edge"
+    """Label for a tree edge math:`(u, v)`, where math:`v` was first discovered by exploring edge
+    math:`(u, v)`."""
+
+    TREE_ROOT: Final = "tree_root"
+    """Label for vertex pair math:`(u, u)`, where math:`u` is the root vertex of a search tree."""
 
 
 class SearchResults(Generic[V, E]):
-    """Stores the results of a graph search.
+    """Stores the results of a :term:`graph` search.
 
-    A graph search produces the following output:
+    A graph search produces the following outputs:
 
-        * A forest of search trees.
+        * A :term:`forest` of search :term:`trees <tree>`.
         * Preorder: An ordering of the vertices sorted by first to last time of discovery. The time
           of discovery is when a vertex is first found during a search.
         * Postorder: An ordering of vertices sorted by first to last finishing time. The
           finishing time is the time at which the search of the vertex's subtree (DFS) or adjacent
           neighbors (BFS) is finished.
-        * Topological ordering: If the graph is a DAG (directed, acyclic), then the a depth-first
-          search produces and a postordering, that when reversed, is a topological ordering.
-        * Cycle detection: When a depth-first search is performend, then cycles are detected in
-          both directed and undirected graphs. A cycle is a path (with at least one edge) whose
-          first and last vertices are the same. The minimal cycle is a self loop and the second
-          smallest cycle is two vertices connected by parallel edges (in the case of a directed
-          graph, the parallel edges must be facing opposite directions).
+        * :term:`Topological ordering`: If the graph is a :term:`dag`, then a depth-first search
+          produces a postordering, that when reversed, is a topological ordering.
+        * :term:`Cycle` detection: When a depth-first search is performend, cycles are detected in
+          both directed and undirected graphs.
         * Edge classification: The edges of a graph are classified into the following categories:
 
             1. Tree edges - edge :math:`(u, v)` is a tree edge if :math:`v` was first discovered by
@@ -85,14 +124,14 @@ class SearchResults(Generic[V, E]):
           <vertizee.algorithms.search.depth_first_search.dfs_postorder_traversal>`
         * :func:`dfs_labeled_edge_traversal
           <vertizee.algorithms.search.depth_first_search.dfs_labeled_edge_traversal>`
-        * :class:`SearchTree`
+        * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
     """
 
     def __init__(self, graph: G[V, E], depth_first_search: bool) -> None:
         self._depth_first_search = depth_first_search
         self._graph = graph
         self._edges_in_discovery_order: List[E] = []
-        self._search_tree_forest: Set[SearchTree[V, E]] = set()
+        self._search_tree_forest: Set[Tree[V, E]] = set()
 
         # Edge classification.
         self._back_edges: Set[E] = set()
@@ -149,18 +188,19 @@ class SearchResults(Generic[V, E]):
                 "search; use depth-first search instead")
         return self._is_acyclic
 
-    def graph_search_trees(self) -> SetView[SearchTree[V, E]]:
+    def graph_search_trees(self) -> SetView[Tree[V, E]]:
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the the
         graph search trees found during the graph search."""
         return SetView(self._search_tree_forest)
 
     def has_topological_ordering(self) -> bool:
-        """Returns True if the search results provide a valid topological ordering of the vertices.
+        """Returns True if the search results provide a valid :term:`topological ordering` of the
+        vertices.
 
         A topological ordering is only ensured if the following three conditions are met:
 
         - The graph is directed.
-        - The graph is acyclic (no cycles).
+        - The graph is :term:`acyclic`.
         - A depth-first search was used (as opposed to a breadth first search).
         """
         return self._depth_first_search and self._is_acyclic and self._graph.is_directed()
@@ -187,7 +227,7 @@ class SearchResults(Generic[V, E]):
 
     def vertices_topological_order(self) -> ListView[V]:
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
-        in a topological ordering.
+        in a :term:`topological ordering`.
 
         Note:
             The topological ordering is the reverse of the depth-first search postordering. The
@@ -206,134 +246,6 @@ class SearchResults(Generic[V, E]):
             raise exception.Unfeasible("a topological ordering is only valid for a depth-first "
                 f"search on a directed, acyclic graph; error: {error_msg}")
         return ListView(list(reversed(self._vertices_postorder)))
-
-
-class Direction:
-    """Container class for constants used to indicate the direction of traversal at each step of a
-    graph search."""
-
-    ALREADY_DISCOVERED: Final = "already_discovered"
-    """The search traversal found a non-tree edge that has already been discovered."""
-
-    PREORDER: Final = "preorder"
-    """The search traversal discovered a new vertex."""
-
-    POSTORDER: Final = "postorder"
-    """The search traversal finished visiting a vertex."""
-
-
-class Label:
-    """Container class for constants used to label the search tree root vertices and edges found
-    during a graph search."""
-
-    BACK_EDGE: Final = "back_edge"
-    """Label for a back edge math:`(u, v)` that connects vertex math:`u` to ancestor math:`v` in a
-    search tree."""
-
-    CROSS_EDGE: Final = "cross_edge"
-    """Label for a cross edge math:`(u, v)`, which may connect vertices in the same search tree (as
-    long as one vertex is not an ancestor of the other), or connect vertices in different search
-    trees (within a forest of search trees)."""
-
-    FORWARD_EDGE: Final = "forward_edge"
-    """Label for a forward edge math:`(u, v)` connecting a vertex math:`u` to a descendant math:`v`
-    in a search tree."""
-
-    TREE_EDGE: Final = "tree_edge"
-    """Label for a tree edge math:`(u, v)`, where math:`v` was first discovered by exploring edge
-    math:`(u, v)`."""
-
-    TREE_ROOT: Final = "tree_root"
-    """Label for vertex pair math:`(u, u)`, where math:`u` is the root vertex of a search tree."""
-
-
-class SearchTree(Generic[V, E]):
-    """A search tree is a tree comprised of vertices and edges discovered during a breadth-first
-    or depth-first search.
-
-    Args:
-        root: The root vertex of the search tree.
-    """
-
-    def __init__(self, root: V) -> None:
-        self._edges_in_discovery_order: List[E] = list()
-        self._vertices_in_discovery_order: List[V] = list()
-
-        self._edge_set: Set[E] = set()
-        self._vertex_set: Set[V] = set()
-
-        self._vertex_set.add(root)
-        self._vertices_in_discovery_order.append(root)
-
-    def __contains__(self, edge_or_vertex: GraphPrimitive) -> bool:
-        if not self._vertices_in_discovery_order:
-            return False
-
-        vertex = self._vertices_in_discovery_order[0]
-        graph = vertex._parent_graph
-        data: ParsedEdgeAndVertexData = primitives_parsing.parse_graph_primitive(edge_or_vertex)
-
-        if data.edges:
-            if graph.has_edge(data.edges[0].vertex1.label, data.edges[0].vertex2.label):
-                edge = graph[data.edges[0].vertex1.label, data.edges[0].vertex2.label]
-                return edge in self._edge_set
-            return False
-        if data.vertices:
-            return data.vertices[0].label in self._vertex_set
-
-        raise exception.VertizeeException("expected GraphPrimitive (EdgeType or VertexType); found "
-            f"{type(edge_or_vertex).__name__}")
-
-    def __iter__(self) -> Iterator[V]:
-        """Iterates over the vertices of the search tree in discovery order."""
-        yield from self._vertices_in_discovery_order
-
-    def __len__(self) -> int:
-        """Returns the number of vertices in the search tree when the built-in Python function
-        ``len`` is used."""
-        return len(self._vertex_set)
-
-    def edges_in_discovery_order(self) -> ListView[E]:
-        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the edges in
-        the search tree in order of discovery."""
-        return ListView(self._edges_in_discovery_order)
-
-    @property
-    def root(self) -> V:
-        """The root vertex of the search tree."""
-        return self._vertices_in_discovery_order[0]
-
-    def vertices_in_discovery_order(self) -> ListView[V]:
-        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
-        in the search tree in order of discovery."""
-        return ListView(self._vertices_in_discovery_order)
-
-    def _add_edge(self, edge: E) -> None:
-        """Adds a new edge to the search tree. Exactly one of the edge's vertices should already
-        be in the search tree, since otherwise, the edge would be unreachable from the existing
-        tree.
-
-        Args:
-            edge: The edge to add.
-
-        Raises:
-            AlgorithmError: If exactly one of the edge's vertices is not already in the search tree.
-        """
-        if edge in self._edge_set:
-            return
-        if edge.vertex1 not in self._vertex_set and edge.vertex2 not in self._vertex_set:
-            raise exception.AlgorithmError(f"neither of the edge vertices {edge} were found in the "
-                "search tree; exactly one of the vertices must already be in the tree")
-
-        self._edge_set.add(edge)
-        self._edges_in_discovery_order.append(edge)
-
-        if edge.vertex1 not in self._vertex_set:
-            self._vertex_set.add(edge.vertex1)
-            self._vertices_in_discovery_order.append(edge.vertex1)
-        else:
-            self._vertex_set.add(edge.vertex2)
-            self._vertices_in_discovery_order.append(edge.vertex2)
 
 
 class VertexSearchState:

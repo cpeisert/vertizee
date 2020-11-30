@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 import numbers
 from typing import Iterable, List, Optional, TYPE_CHECKING, Union
 
+from vertizee import exception
 from vertizee.classes import edge as edge_module
 from vertizee.classes import vertex as vertex_module
 from vertizee.classes.edge import Connection, MultiConnection
@@ -159,8 +160,8 @@ def parse_edge_type(edge: "EdgeType") -> EdgeData:
         edge_data = EdgeData.from_edge_obj(edge)
     elif isinstance(edge, tuple):
         if len(edge) < 2 or len(edge) > 4:
-            raise ValueError("an edge tuple must contain 2, 3, or 4 items, found tuple of "
-                f"length {len(edge)}; see 'EdgeType' type alias for more information")
+            raise exception.VertizeeException("an edge tuple must contain 2, 3, or 4 items, found "
+                f"tuple of length {len(edge)}; see 'EdgeType' type alias for more information")
         vertex1 = parse_vertex_type(edge[0])
         vertex2 = parse_vertex_type(edge[1])
         edge_data = EdgeData(vertex1, vertex2)
@@ -173,24 +174,24 @@ def parse_edge_type(edge: "EdgeType") -> EdgeData:
             elif isinstance(edge[2], numbers.Number):
                 edge_data._weight = float(edge[2])
             else:
-                raise ValueError("the third item in an edge 3-tuple must be an attribute "
-                    "dictionary or an edge weight (number); found "
+                raise exception.VertizeeException("the third item in an edge 3-tuple must be an "
+                    "attribute dictionary or an edge weight (number); found "
                     f"{type(edge[2]).__name__}")
         elif len(edge) == 4:
             # Tuple["VertexType", "VertexType", Weight, AttributesDict]
             if isinstance(edge[2], numbers.Number):
                 edge_data._weight = float(edge[2])
             else:
-                raise ValueError("the third item in an edge 4-tuple must be an edge weight "
-                    f"(number); found {type(edge[2]).__name__}")
+                raise exception.VertizeeException("the third item in an edge 4-tuple must be an "
+                    f" edge weight (number); found {type(edge[2]).__name__}")
 
             if isinstance(edge[3], collections.abc.Mapping):
                 edge_data._attr = copy.deepcopy(edge[3])
             else:
-                raise ValueError("the fourth item in an edge 4-tuple must be an attribute "
-                    f"dictionary; found {type(edge[3]).__name__}")
+                raise exception.VertizeeException("the fourth item in an edge 4-tuple must be an "
+                    f"attribute dictionary; found {type(edge[3]).__name__}")
     else:
-        raise ValueError("an edge must be specified as a tuple or an object;"
+        raise exception.VertizeeException("an edge must be specified as a tuple or an object;"
             f" found {type(edge).__name__}")
 
     return edge_data
@@ -234,7 +235,7 @@ def parse_graph_primitives_from(
             parsed_primitives.vertices.extend(parsed.vertices)
             parsed_primitives.edges.extend(parsed.edges)
     else:
-        raise ValueError("graph_primitives must be iterable")
+        raise exception.VertizeeException("graph_primitives must be iterable")
 
     return parsed_primitives
 
@@ -257,19 +258,19 @@ def parse_vertex_type(vertex_type: "VertexType") -> VertexData:
             vertex_data._attr = copy.deepcopy(vertex_type.attr)
     elif isinstance(vertex_type, tuple):
         if len(vertex_type) != 2:
-            raise ValueError("a vertex specified as a tuple must be a 2-tuple of the form "
-                "Tuple[VertexLabel, AttributesDict]")
+            raise exception.VertizeeException("a vertex specified as a tuple must be a 2-tuple of "
+                "the form Tuple[VertexLabel, AttributesDict]")
         if not isinstance(vertex_type[0], int) and not isinstance(vertex_type[0], str):
-            raise ValueError("a vertex label must be a string or integer; "
+            raise exception.VertizeeException("a vertex label must be a string or integer; "
                 f"found {type(vertex_type[0]).__name__}")
         if not isinstance(vertex_type[1], collections.abc.Mapping):
-            raise ValueError("a vertex attr dictionary must be a mapping (usually a dict); "
-                f"found {type(vertex_type[1]).__name__}")
+            raise exception.VertizeeException("a vertex attr dictionary must be a mapping "
+                f"(usually a dict); found {type(vertex_type[1]).__name__}")
         vertex_data = VertexData(str(vertex_type[0]))
         vertex_data._attr = copy.deepcopy(vertex_type[1])
     else:
         if not isinstance(vertex_type, (str, int)):
-            raise ValueError("a vertex label must be a string or integer; found "
+            raise exception.VertizeeException("a vertex label must be a string or integer; found "
                 f"{type(vertex_type).__name__}")
         vertex_data = VertexData(str(vertex_type))
 

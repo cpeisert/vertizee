@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for undirected graphs: Graph, MultiGraph, SimpleGraph."""
+"""Tests for graph classes."""
 # pylint: disable=no-self-use
 # pylint: disable=missing-function-docstring
 
@@ -23,22 +23,11 @@ from typing import Type
 
 import pytest
 
-from vertizee import (
-    Graph,
-    G,
-    Edge,
-    EdgeNotFound,
-    DiGraph,
-    DiEdge,
-    MultiGraph,
-    MultiEdge,
-    MultiDiGraph,
-    MultiDiEdge,
-    SelfLoopsNotAllowed,
-    Vertex,
-    VertizeeException
-)
+from vertizee import exception
 from vertizee.classes import edge as edge_module
+from vertizee.classes.edge import DiEdge, Edge, MultiDiEdge, MultiEdge
+from vertizee.classes.graph import DiGraph, G, Graph, MultiDiGraph, MultiGraph
+from vertizee.classes.vertex import Vertex
 
 
 def _check_for_memory_leak(cls_graph: Type[G]):
@@ -73,7 +62,7 @@ def _check_for_memory_leak(cls_graph: Type[G]):
 
 
 class TestG:
-    """Tests for G features shared by all graph classes."""
+    """Tests for graph features shared by all graph classes."""
 
     def test__contains__(self):
         g = Graph()
@@ -88,11 +77,11 @@ class TestG:
         assert ("1", "2") in g, "edge specified as tuple should be in graph"
         assert (1, 3) not in g, "edge (1, 3) should not be in graph"
 
-        with pytest.raises(ValueError):
+        with pytest.raises(exception.VertizeeException):
             _ = 4.5 not in g
-        with pytest.raises(ValueError):
+        with pytest.raises(exception.VertizeeException):
             _ = (1, 2, 3, 4) not in g
-        with pytest.raises(ValueError):
+        with pytest.raises(exception.VertizeeException):
             _ = [1, 2] not in g
 
     def test__getitem__(self):
@@ -104,7 +93,7 @@ class TestG:
         assert isinstance(g[1, {}], Vertex), "graph should have vertex 1"
         v1 = g[1]
         assert isinstance(g[v1], Vertex), "graph should have vertex 1"
-        with pytest.raises(ValueError):
+        with pytest.raises(exception.VertizeeException):
             _ = g[2.0]
         with pytest.raises(KeyError):
             _ = g[3]
@@ -119,7 +108,7 @@ class TestG:
         assert isinstance(g[1, 2, 1.0, {}], Edge), "graph should have edge (1, 2)"
         edge = g[1, 2]
         assert isinstance(g[edge], Edge), "graph should have edge (1, 2)"
-        with pytest.raises(ValueError):
+        with pytest.raises(exception.VertizeeException):
             _ = g[1.0, 2.0]
         with pytest.raises(KeyError):
             _ = g[1, 3]
@@ -161,7 +150,7 @@ class TestG:
 
         g2 = Graph(allow_self_loops=False)
         assert not g2.allows_self_loops(), "graph 2 should not allow self loops"
-        with pytest.raises(SelfLoopsNotAllowed):
+        with pytest.raises(exception.SelfLoopsNotAllowed):
             g2.add_edge(1, 1)
 
     def test_attr(self):
@@ -226,13 +215,13 @@ class TestG:
         assert g.edge_count == 2, "after edge removal, graph should have 2 edges"
         assert g.has_vertex(1), "isolated vertex 1 should not have been removed"
 
-        g.remove_edge(2, 3, remove_isolated_vertices=True)
+        g.remove_edge(2, 3, remove_self_isolated_vertices=True)
         assert g.edge_count == 1, "after edge removal, graph should have 1 edge"
         assert (
             not g.has_vertex(2)
-        ), "with flag `remove_isolated_vertices` set to True, vertex 2 should have been removed"
+        ), "with `remove_self_isolated_vertices` set to True, vertex 2 should have been removed"
 
-        with pytest.raises(EdgeNotFound):
+        with pytest.raises(exception.EdgeNotFound):
             g.remove_edge(8, 9)
 
     def test_remove_edges_from(self):
@@ -243,14 +232,20 @@ class TestG:
         assert g.has_edge(3, 4)
 
     def test_remove_isolated_vertices(self):
-        g = Graph([(1, 2), (2, 3)])
-        g.remove_edge(1, 2, remove_isolated_vertices=False)
+        g = Graph([(1, 2), (2, 3), (5, 5)])
+        g.remove_edge(1, 2, remove_self_isolated_vertices=False)
         g.add_vertex(4)
-        assert set(g.vertices()) == {g[1], g[2], g[3], g[4]}
-        g.remove_isolated_vertices()
+        assert set(g.vertices()) == {g[1], g[2], g[3], g[4], g[5]}
+
+        g.remove_isolated_vertices(ignore_self_loops=False)
+        assert (
+            set(g.vertices()) == {g[2], g[3], g[5]}
+        ), "isolated vertices 1 and 4 should have been removed"
+
+        g.remove_isolated_vertices(ignore_self_loops=True)
         assert (
             set(g.vertices()) == {g[2], g[3]}
-        ), "isolated vertices 1 and 4 should have been removed"
+        ), "self-isolated vertex 5 should have been removed"
 
     def test_remove_vertex(self):
         g = Graph([(1, 2), (3, 3)])
@@ -260,11 +255,11 @@ class TestG:
         g.remove_vertex(4)
         assert not g.has_vertex(4), "graph should not have vertex 4 after removal"
 
-        assert g.has_vertex(3), "graph should have isolated vertex 3"
+        assert g.has_vertex(3), "graph should have self-isolated vertex 3"
         g.remove_vertex(3)
         assert not g.has_vertex(3), "graph should not have vertex 3 after removal"
 
-        with pytest.raises(VertizeeException):
+        with pytest.raises(exception.VertizeeException):
             g.remove_vertex(1)
 
     def test_vertex_count(self):

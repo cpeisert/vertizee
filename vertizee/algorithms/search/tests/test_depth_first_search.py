@@ -21,8 +21,7 @@ import pytest
 from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
-    SearchResults,
-    SearchTree
+    SearchResults
 )
 from vertizee.algorithms.search.depth_first_search import (
     dfs,
@@ -30,6 +29,7 @@ from vertizee.algorithms.search.depth_first_search import (
     dfs_postorder_traversal,
     dfs_preorder_traversal
 )
+from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.edge import Edge
 from vertizee.classes.graph import DiGraph, Graph, MultiDiGraph
 
@@ -41,7 +41,7 @@ class TestDepthFirstSearch:
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         results: SearchResults = dfs(g, 0)
-        tree: SearchTree = next(iter(results.graph_search_trees()))
+        tree: Tree = next(iter(results.graph_search_trees()))
 
         assert tree.root == 0, "DFS tree should be rooted at vertex 0"
         assert (
@@ -131,7 +131,7 @@ class TestDepthFirstSearch:
         assert len(results.graph_search_trees()) == 1, (
             "DFS search should find 1 DFS tree, since source vertex 's' was specified"
         )
-        tree: SearchTree = next(iter(results.graph_search_trees()))
+        tree: Tree = next(iter(results.graph_search_trees()))
 
         assert len(tree.edges_in_discovery_order()) == 4, (
             "DFS tree rooted at vertex 's' should have 4 edges"

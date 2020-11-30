@@ -86,7 +86,7 @@ class Component(Generic[V, E]):
     def vertices(self) -> SetView[V]:
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
         vertices."""
-        yield from self._vertex_set
+        return SetView(self._vertex_set)
 
 
 def connected_components(graph: G[V, E]) -> Iterator[Component[V, E]]:

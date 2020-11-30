@@ -22,8 +22,7 @@ from vertizee import exception
 from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
-    SearchResults,
-    SearchTree
+    SearchResults
 )
 from vertizee.algorithms.search.breadth_first_search import (
     bfs,
@@ -31,6 +30,7 @@ from vertizee.algorithms.search.breadth_first_search import (
     bfs_preorder_traversal,
     INFINITY
 )
+from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.edge import Edge
 from vertizee.classes.graph import DiGraph, Graph, MultiDiGraph
 
@@ -42,7 +42,7 @@ class TestBreadthFirstSearch:
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         results: SearchResults = bfs(g, 0)
-        tree: SearchTree = next(iter(results.graph_search_trees()))
+        tree: Tree = next(iter(results.graph_search_trees()))
 
         assert tree.root == 0, "BFS tree should be rooted at vertex 0"
         assert (
@@ -104,7 +104,7 @@ class TestBreadthFirstSearch:
         assert len(results1.graph_search_trees()) == 1, (
             "BFS search should find 1 BFS tree, since source vertex was specified"
         )
-        tree: SearchTree = next(iter(results1.graph_search_trees()))
+        tree: Tree = next(iter(results1.graph_search_trees()))
 
         assert len(tree.edges_in_discovery_order()) == 2, (
             "BFS tree rooted at vertex 1 should have 2 tree edges"

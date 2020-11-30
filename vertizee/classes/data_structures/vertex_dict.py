@@ -32,9 +32,12 @@ class VertexDict(MutableMapping["VertexType", VT]):
     """A dictionary mapping vertices to values.
 
     The dictionary keys are of type :mod:`VertexType <vertizee.classes.vertex>`, which is an
-    alias for ``int``, ``str``, or :class:`Vertex <vertizee.classes.vertex.Vertex>`. Internally,
-    all dictionary vertex keys are coverted to ``str``. The dictionary values may be of any type,
-    and can be explicitly specified using type hints, such as::
+    alias for ``Union[VertexClass, VertexLabel, VertexTupleAttr]``. This means that vertex keys may
+    be specified as integers, strings, vertex tuples, or vertex objects. Internally, all vertex keys
+    are coverted to ``str``. The dictionary values may be of any type, and can be explicitly
+    specified using type hints as shown below.
+
+    .. code-block:: python
 
         vertex_to_path: VertexDict[ShortestPath] = VertexDict()
 

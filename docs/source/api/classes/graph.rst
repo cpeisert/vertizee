@@ -6,8 +6,8 @@ All Vertizee graph classes inherit from :class:`GraphBase <vertizee.classes.grap
 Only *subclasses* of :class:`GraphBase <vertizee.classes.graph_base.GraphBase>` should be used in
 code.
 
-The most flexible classes are prefixed ``Multi``, since they allow multiple parallel edges
-between vertices. The ``DiGraph`` classes are for graphs with directed edges.
+The most flexible classes are prefixed ``Multi``, since they allow parallel edges between vertices.
+The ``DiGraph`` and ``MultiDiGraph`` classes are for graphs with directed edges.
 
 Which graph class should I use?
 ===============================
