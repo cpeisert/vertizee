@@ -70,13 +70,17 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
 from typing import (
-    Any, Dict, Final, Generic, Hashable, Iterable, List, Optional, Tuple, TypeVar, Union
+    Any, Dict, Final, Generic, Hashable, Iterable, List, Optional, Tuple, TYPE_CHECKING, TypeVar,
+    Union
 )
 
 from vertizee.classes import vertex as vertex_module
 from vertizee.classes.collection_views import ItemsView, ListView
 from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
 from vertizee.utils import abc_utils
+
+if TYPE_CHECKING:
+    from vertizee.classes.graph import G
 
 # Type aliases
 AttributesDict = dict
@@ -722,14 +726,14 @@ class EdgeBase(Connection[V], Generic[V]):
         """
         return self._label
 
-    def remove(self, remove_self_isolated_vertices: bool = False) -> None:
+    def remove(self, remove_semi_isolated_vertices: bool = False) -> None:
         """Removes this edge from the graph.
 
         Args:
-            remove_self_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                :term:`self-isolated` after the edge removal are also removed. Defaults to False.
+            remove_semi_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+                :term:`semi-isolated` after the edge removal are also removed. Defaults to False.
         """
-        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_self_isolated_vertices)
+        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_semi_isolated_vertices)
 
     @property
     def vertex1(self) -> V:
@@ -915,14 +919,14 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         """
         return len(self._connections)
 
-    def remove(self, remove_self_isolated_vertices: bool = False) -> None:
+    def remove(self, remove_semi_isolated_vertices: bool = False) -> None:
         """Removes this edge from the graph.
 
         Args:
-            remove_self_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                :term:`self-isolated` after the edge removal are also removed. Defaults to False.
+            remove_semi_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+                :term:`semi-isolated` after the edge removal are also removed. Defaults to False.
         """
-        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_self_isolated_vertices)
+        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_semi_isolated_vertices)
 
     def remove_connection(self, key: ConnectionKey) -> None:
         """Removes an edge connection from this multiedge based on its key. If the multiedge only

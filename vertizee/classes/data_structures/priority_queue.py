@@ -29,6 +29,8 @@ T = TypeVar("T")
 class _PriorityQueueItem(Generic[T]):
     """Generic wrapper for items stored in a priority queue."""
 
+    __slots__ = ("priority", "insertion_count", "item")
+
     def __init__(self, priority: Union[float, int], insertion_count: int, item: T) -> None:
         self.priority = priority
         self.insertion_count = insertion_count
@@ -122,6 +124,9 @@ class PriorityQueue(Generic[T]):
         >>> pq.pop()
         1
     """
+
+    __slots__ = ("_heap_item_finder", "_insertion_counter", "_length", "_priority_function",
+        "_priority_queue")
 
     def __init__(
         self, priority_function: Callable[[T], Union[float, int]], minimum: bool = True

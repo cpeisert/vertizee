@@ -215,11 +215,11 @@ class TestG:
         assert g.edge_count == 2, "after edge removal, graph should have 2 edges"
         assert g.has_vertex(1), "isolated vertex 1 should not have been removed"
 
-        g.remove_edge(2, 3, remove_self_isolated_vertices=True)
+        g.remove_edge(2, 3, remove_semi_isolated_vertices=True)
         assert g.edge_count == 1, "after edge removal, graph should have 1 edge"
         assert (
             not g.has_vertex(2)
-        ), "with `remove_self_isolated_vertices` set to True, vertex 2 should have been removed"
+        ), "with `remove_semi_isolated_vertices` set to True, vertex 2 should have been removed"
 
         with pytest.raises(exception.EdgeNotFound):
             g.remove_edge(8, 9)
@@ -233,7 +233,7 @@ class TestG:
 
     def test_remove_isolated_vertices(self):
         g = Graph([(1, 2), (2, 3), (5, 5)])
-        g.remove_edge(1, 2, remove_self_isolated_vertices=False)
+        g.remove_edge(1, 2, remove_semi_isolated_vertices=False)
         g.add_vertex(4)
         assert set(g.vertices()) == {g[1], g[2], g[3], g[4], g[5]}
 
@@ -245,7 +245,7 @@ class TestG:
         g.remove_isolated_vertices(ignore_self_loops=True)
         assert (
             set(g.vertices()) == {g[2], g[3]}
-        ), "self-isolated vertex 5 should have been removed"
+        ), "semi-isolated vertex 5 should have been removed"
 
     def test_remove_vertex(self):
         g = Graph([(1, 2), (3, 3)])
@@ -255,7 +255,7 @@ class TestG:
         g.remove_vertex(4)
         assert not g.has_vertex(4), "graph should not have vertex 4 after removal"
 
-        assert g.has_vertex(3), "graph should have self-isolated vertex 3"
+        assert g.has_vertex(3), "graph should have semi-isolated vertex 3"
         g.remove_vertex(3)
         assert not g.has_vertex(3), "graph should not have vertex 3 after removal"
 

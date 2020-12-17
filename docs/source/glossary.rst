@@ -30,8 +30,9 @@ Glossary
 
   arborescence
     An *arborescence* (also called an *out-tree*) is a :term:`directed rooted tree` in which all
-    :term:`edges <edge>` point away from the root. The path from the root to any other vertex is
-    unique. :cite:`1967:edmonds` :cite:`1974:deo`
+    :term:`edges <edge>` point away from the root. Each edge is directed toward a different vertex,
+    that is, there is no vertex with more than a single incoming edge. The path from the root to
+    any other vertex is unique. :cite:`1967:edmonds` :cite:`1974:deo`
     See :func:`optimum_directed_forest <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
 
   binary relation
@@ -187,8 +188,8 @@ Glossary
 
   directed rooted tree
     A *directed rooted tree* is a :term:`rooted tree` that has been assigned an orientation, with
-    :term:`edges <edge>` that are either directed *away from* the root (see :term:`arborescence`) or
-    *towards* the root (see :term:`anti-arborescence`). :cite:`1967:edmonds` :cite:`1974:deo`
+    :term:`edges <edge>` that are either directed *away from* the root (see :term:`arborescence`)
+    or *towards* the root (see :term:`anti-arborescence`). :cite:`1967:edmonds` :cite:`1974:deo`
     See :class:`Tree <vertex.classes.data_structures.tree.Tree>`.
 
   directed spanning forest
@@ -298,7 +299,7 @@ Glossary
 
   isolated
     A :term:`vertex` is said to be *isolated* if it has :term:`degree` zero, that is, no
-    :term:`incident edges <incident>`. :cite:`1974:deo` See also :term:`self-isolated`.
+    :term:`incident edges <incident>`. :cite:`1974:deo` See also :term:`semi-isolated`.
 
   isomorphic
     A graph :math:`G` is isomorphic to graph :math:`G'` if the vertices of :math:`G'` can be
@@ -386,15 +387,32 @@ Glossary
   null graph
     A synonym for :term:`empty graph`.
 
+  optimum spanning arborescence
+    An *optimum spanning arborescence* is a :term:`spanning arborescence` that has either maximum
+    or minimum total :term:`weight`. For a :term:`digraph` :math:`G(V, E)`, let :math:`c_j` be the
+    cost (or :term:`weight`) of :term:`edge` :math:`e_j \\in E`. The maximum spanning arborescence
+    can be found as an :term:`optimum spanning branching` where the :term:`edges <edge>` carry new
+    weights: :math:`c'_j = c_j + h, h \\gt \\sum |c_j|, e_j \\in G`. Constant :math:`h` is larger
+    than the difference in total weights (relative to weights :math:`c_j, e_j \\in G) of any two
+    branchings in :math:`G`. A minimum spanning arborescence is the same as a maximum spanning
+    arborescence, except that it is relative to weights :math:`c'_j = -c_j`. :cite:`1967:edmonds`
+    See :func:`optimum_directed_forest
+    <vertizee.algorithms.trees.spanning.optimum_directed_forest>`.
+
+  optimum spanning branching
+    An *optimum spanning branching* is equivalent to an *optimum spanning forest*, except that
+    the edges are directed, and instead of being comprised of :term:`trees <tree>`, a
+    :term:`branching` is comprised of :term:`arborescences <arborescence>`. :cite:`1967:edmonds`
+
   optimum spanning forest
     An *optimum spanning forest* is a :term:`spanning forest` that has either maximum or minimum
-    :term:`weight` given the requirement that it contains the maximum number of edges. This
-    requirement is due to the fact that a :term:`forest` may be comprised of :term:`trees <tree>`,
-    where each tree is a single :term:`vertex`. Hence, the *minimum* spanning forest (rather than
-    the *optimum*) is always the set of vertices :math:`V`, with no edges. Note that a spanning
-    forest can never have more than :math:`n - 1` edges, where :math:`n = |V|`. :cite:`1967:edmonds`
-    See :func:`optimum_forest <vertizee.algorithms.trees.spanning.optimum_forest>` and
-    :func:`optimum_directed_forest <vertizee.algorithms.trees.spanning.optimum_directed_forest>`.
+    total :term:`weight`. Every graph :math:`G(V, E)` has a *trivial spanning forest*
+    :math:`G'(V', E')` where :math:`V' = V` and :math:`E' = \\emptyset`, since a single vertex
+    defines a *trivial tree*. A trivial spanning forest always has weight zero. Hence, a *minimum
+    spanning forest* does not contain any positive edges and a *maximum spanning forest* does not
+    contain any negative edges. Note that a spanning forest can never have more than :math:`n - 1`
+    edges, where :math:`n = |V|`. :cite:`1967:edmonds`
+    See :func:`optimum_forest <vertizee.algorithms.trees.spanning.optimum_forest>`.
 
   oriented graph
     A synonym for :term:`digraph`.
@@ -477,8 +495,8 @@ Glossary
   self-loop
     A synonym for :term:`loop`.
 
-  self-isolated
-    A :term:`vertex` is said to be *self-isolated* if it has no :term:`incident edges <incident>`
+  semi-isolated
+    A :term:`vertex` is said to be *semi-isolated* if it has no :term:`incident edges <incident>`
     except for term:`self-loops <self-loop>`. See also :term:`isolated`.
 
   simple circuit
@@ -502,9 +520,10 @@ Glossary
     is, with :term:`in-degree` zero.
 
   spanning arborescence
-    A *spanning arborescence* is an :term:`arborescence` that contains :math:`|V| - 1`
-    :term:`edges <edge>` as well as :term:`paths <path>` from :math:`r` to every :term:`vertex` of
-    a :term:`digraph`. :cite:`1967:edmonds` See :func:`optimum_directed_forest
+    The *spanning arborescence* of a :term:`digraph` :math:`G(V, E)` is an :term:`arborescence`
+    that contains :math:`|V| - 1` :term:`edges <edge>`. There are :term:`paths <path>` from the
+    arborescence root :term:`vertex` :math:`r` to every other vertex :math:`v \\in V`.
+    :cite:`1967:edmonds` See :func:`optimum_directed_forest
     <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
 
   spanning forest

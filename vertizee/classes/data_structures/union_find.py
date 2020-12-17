@@ -19,7 +19,7 @@ disjoint, dynamic sets."""
 import collections.abc
 
 from collections import defaultdict
-from typing import Dict, Generic, Iterator, Set, TypeVar
+from typing import Dict, Generic, Iterator, Optional, Set, TypeVar
 
 #:Type variable for values in a generic UnionFind data structure.
 T = TypeVar("T", bound=collections.abc.Hashable)
@@ -97,6 +97,7 @@ class UnionFind(Generic[T]):
      .. [N2020_2] NetworkX module: networkx.utils.union_find.py
                   https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
     """
+    __slots__ = ("_parents", "_paths_compressed", "_ranks", "_set_count", "_sets_dict")
 
     def __init__(self, *args: T) -> None:
         self._parents: Dict[T, T] = dict()
@@ -111,6 +112,10 @@ class UnionFind(Generic[T]):
         """
 
         self._set_count: int = 0
+
+        # _paths_compressed and _sets_dict support the methods get_set() and get_sets().
+        self._paths_compressed = False
+        self._sets_dict: Optional[Dict[T, Set[T]]] = None
 
         for arg in args:
             self.make_set(arg)
@@ -150,14 +155,10 @@ class UnionFind(Generic[T]):
             This is a computationally expensive operation that involves path compression of the
             entire UnionFind data structure. However, this price is paid the first time it is called
             and subsequent calls are relatively cheap, unless new sets are subsequently added or
-            merged.
+            merged. To get the representative item of a set, use :meth:``__getitem__``.
         """
-        # Compress all tree paths, so that every item's parent is the root of its tree.
-        for i in self._parents:
-            _ = self[i]  # Evaluate for path-compression side-effect.
-
-        root = self[item]
-        return set(i for i, parent in self._parents.items() if parent == root)
+        self.get_sets()  # Called for side effects.
+        return self._sets_dict[self[item]]
 
     def in_same_set(self, item1: T, item2: T) -> bool:
         """Returns True if the items are elements of the same set."""
@@ -165,6 +166,7 @@ class UnionFind(Generic[T]):
 
     def make_set(self, item: T) -> None:
         """Creates a new set containing the item."""
+        self._paths_compressed = False
         self._set_count += 1
         self._parents[item] = item
         self._ranks[item] = 0
@@ -175,8 +177,8 @@ class UnionFind(Generic[T]):
         on disjoint sets."""
         return self._set_count
 
-    def to_sets(self) -> Iterator[Set[T]]:
-        """Returns an iterator over all the sets contained in the data structure.
+    def get_sets(self) -> Iterator[Set[T]]:
+        """Returns the sets contained in the data structure.
 
         Note:
             This is a computationally expensive operation that involves path compression of the
@@ -185,16 +187,20 @@ class UnionFind(Generic[T]):
             merged.
         """
         # Compress all tree paths, so that every item's parent is the root of its tree.
-        for item in self._parents:
-            _ = self[item]  # Evaluate for path-compression side-effect.
+        if not self._paths_compressed:
+            for item in self._parents:
+                _ = self[item]  # Evaluate for path-compression side-effect.
+            self._paths_compressed = True
 
-        dict_of_sets: Dict[T, Set[T]] = defaultdict(set)
-        for k, root in self._parents.items():
-            dict_of_sets[root].add(k)
-        return iter(dict_of_sets.values())
+            self._sets_dict = defaultdict(set)
+            for k, root in self._parents.items():
+                self._sets_dict[root].add(k)
+
+        return iter(self._sets_dict.values())
 
     def union(self, item1: T, item2: T) -> None:
         """Unites the dynamic sets that contain ``item1`` and ``item2``."""
+        self._paths_compressed = False
         x = self[item1]
         y = self[item2]
         if x != y:

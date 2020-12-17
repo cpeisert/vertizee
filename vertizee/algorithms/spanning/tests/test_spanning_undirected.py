@@ -19,7 +19,7 @@
 import pytest
 
 from vertizee import exception
-from vertizee.algorithms.trees import spanning
+from vertizee.algorithms.spanning import undirected
 from vertizee.classes.graph import DiGraph, Graph, MultiGraph
 
 
@@ -45,7 +45,7 @@ class TestKruskal:
 
         # Kruskal algorithm does not work on directed graphs.
         with pytest.raises(exception.GraphTypeNotSupported):
-            for _ in spanning.kruskal(g):
+            for _ in undirected.kruskal_spanning_tree(g):
                 pass
 
     def test_kruskal_max_spanning_tree(self):
@@ -60,7 +60,7 @@ class TestKruskal:
             ("g", "h"),
         ]
         tree_weight = 0
-        for i, edge in enumerate(spanning.kruskal(g, minimum=False)):
+        for i, edge in enumerate(undirected.kruskal_spanning_tree(g, minimum=False)):
             tree_weight += edge.weight
             assert (
                 edge.vertex1 in kruskal_edges_max[i] and edge.vertex2 in kruskal_edges_max[i]
@@ -79,7 +79,7 @@ class TestKruskal:
             ("e", "g"),
         ]
         tree_weight = 0
-        for i, edge in enumerate(spanning.kruskal(g)):
+        for i, edge in enumerate(undirected.kruskal_spanning_tree(g)):
             tree_weight += edge.weight
             assert (
                 edge.vertex1 in kruskal_edges_min[i] and edge.vertex2 in kruskal_edges_min[i]
@@ -89,17 +89,42 @@ class TestKruskal:
     def test_kruskal_multigraph(self):
         g = MultiGraph([("a", "b", 5), ("a", "c", 3), ("b", "d", 6), ("c", "d", 4), ("c", "d", 7)])
 
-        min_tree = list(spanning.kruskal(g, minimum=True))
+        min_tree = list(undirected.kruskal_spanning_tree(g, minimum=True))
         assert len(min_tree) == 3
         assert min_tree[0] == g["a", "c"]
         assert min_tree[1] == g["c", "d"]
         assert min_tree[2] == g["a", "b"]
 
-        max_tree = list(spanning.kruskal(g, minimum=False))
+        max_tree = list(undirected.kruskal_spanning_tree(g, minimum=False))
         assert len(max_tree) == 3
         assert max_tree[0] == g["c", "d"]
         assert max_tree[1] == g["b", "d"]
         assert max_tree[2] == g["a", "b"]
+
+    def test_kruskal_optimum_forest_single_tree(self):
+        g = Graph(test_edges)
+
+        spanning_edges = set(undirected.kruskal_spanning_tree(g))
+        spanning_tree = next(undirected.kruskal_optimum_forest(g))
+
+        assert spanning_edges == set(spanning_tree.edges())
+        assert spanning_tree.weight == 28, "Min spanning tree weight should be 28."
+
+    def test_kruskal_optimum_forest_multiple_trees(self):
+        g = Graph(test_edges)
+        g.add_edge("x", "y", weight=22)
+        g.add_edge("y", "z", weight=20)
+        g.add_vertex("isolated")
+
+        count = 0
+        total_weight = 0
+        for tree in undirected.kruskal_optimum_forest(g):
+            count += 1
+            total_weight += tree.weight
+
+        assert count == 3, "there should be 3 trees in the spanning forest"
+        assert total_weight == 70, "total weight of trees should be 70"
+
 
 class TestPrim:
     """Tests for Prim's algorithm to find spanning trees."""
@@ -115,7 +140,7 @@ class TestPrim:
             ("d", "f"),
         ]
         tree_weight = 0
-        for i, edge in enumerate(spanning.prim(g, root="a", minimum=False)):
+        for i, edge in enumerate(undirected.prim_spanning_tree(g, root="a", minimum=False)):
             tree_weight += edge.weight
             assert (
                 edge.vertex1 in prim_edges_max[i] and edge.vertex2 in prim_edges_max[i]
@@ -134,7 +159,7 @@ class TestPrim:
             ("b", "c"),
         ]
         tree_weight = 0
-        for i, edge in enumerate(spanning.prim(g, root="a")):
+        for i, edge in enumerate(undirected.prim_spanning_tree(g, root="a")):
             tree_weight += edge.weight
             assert (
                 edge.vertex1 in prim_edges_min[i] and edge.vertex2 in prim_edges_min[i]
@@ -144,13 +169,13 @@ class TestPrim:
     def test_prim_multigraph(self):
         g = MultiGraph([("a", "b", 5), ("a", "c", 3), ("b", "d", 6), ("c", "d", 4), ("c", "d", 7)])
 
-        min_tree = list(spanning.prim(g, root="a", minimum=True))
+        min_tree = list(undirected.prim_spanning_tree(g, root="a", minimum=True))
         assert len(min_tree) == 3
         assert min_tree[0] == g["a", "c"]
         assert min_tree[1] == g["c", "d"]
         assert min_tree[2] == g["a", "b"]
 
-        max_tree = list(spanning.prim(g, root="a", minimum=False))
+        max_tree = list(undirected.prim_spanning_tree(g, root="a", minimum=False))
         assert len(max_tree) == 3
         assert max_tree[0] == g["a", "b"]
         assert max_tree[1] == g["b", "d"]
@@ -168,7 +193,7 @@ class TestPrim:
             ("d", "f"),
         ]
         tree_weight = 0
-        for i, edge in enumerate(spanning.prim_fibonacci(g, root="a", minimum=False)):
+        for i, edge in enumerate(undirected.prim_fibonacci(g, root="a", minimum=False)):
             tree_weight += edge.weight
             # print(f'DEBUG Prim found edge {edge} with weight {edge.weight}')
             assert (
@@ -188,7 +213,7 @@ class TestPrim:
             ("b", "c"),
         ]
         tree_weight = 0
-        for i, edge in enumerate(spanning.prim_fibonacci(g, root="a")):
+        for i, edge in enumerate(undirected.prim_fibonacci(g, root="a")):
             tree_weight += edge.weight
             # print(f'DEBUG Prim found edge {edge} with weight {edge.weight}')
             assert (

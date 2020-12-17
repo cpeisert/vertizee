@@ -115,17 +115,6 @@ class TestTree:
             # Raises exception due to cycle.
             tree.add_edge(g[1, 4])
 
-    def test_discovery_order(self):
-        g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
-        tree = Tree(g[1])
-        tree.add_edge(g[1, 2])
-        tree.add_edge(g[2, 3])
-        tree.add_edge(g[3, 4])
-        tree.add_edge(g[4, 5])
-
-        assert tree.edges_in_discovery_order() == [tree[1, 2], tree[2, 3], tree[3, 4], tree[4, 5]]
-        assert tree.vertices_in_discovery_order() == [1, 2, 3, 4, 5]
-
     def test_merge(self):
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
         tree1 = Tree(g[1])
@@ -136,4 +125,3 @@ class TestTree:
         tree5.add_edge(g[5, 4])
         tree1.merge(tree5)
         assert tree1._vertex_set == {tree1[1], tree1[3], tree1[4], tree1[5]}
-        assert tree1.edges_in_discovery_order() == [tree1[1, 4], tree1[3, 4], tree1[4, 5]]

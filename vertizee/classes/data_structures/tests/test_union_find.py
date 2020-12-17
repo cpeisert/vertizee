@@ -64,7 +64,7 @@ class TestUnionFind:
         assert uf.in_same_set(1, 10), "Items 1 and 10 should be in the same set."
         assert not uf.in_same_set(1, 15), "Items 1 and 15 should not be in the same set."
 
-    def test_to_sets(self):
+    def test_get_set_and_get_sets(self):
         uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
         uf.union(1, 2)
@@ -82,15 +82,17 @@ class TestUnionFind:
         uf.union(12, 15)
         assert len(uf) == 15, "Union-find should contain 15 items."
         assert uf.set_count == 5, "Union-find should contain 5 sets."
+        assert uf.get_set(1) == {1, 2, 3, 4, 5, 6}
+        assert uf.get_set(12) == {12, 13, 14, 15}
 
-        set_iter = uf.to_sets()
+        sets_iter = uf.get_sets()
 
         item_count = 0
         set_count = 0
-        for s in set_iter:
+        for s in sets_iter:
             item_count += len(s)
             set_count += 1
         assert item_count == len(uf), "Length of sets in UnionFind should equal len(UnionFind)."
         assert (
             set_count == uf.set_count
-        ), "Number of sets in UnionFind should equal number of sets returned by to_sets()."
+        ), "Number of sets in UnionFind should equal number of sets returned by get_sets()."

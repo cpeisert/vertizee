@@ -68,7 +68,7 @@ from vertizee.classes.edge import (
     ConnectionKey, DiEdge, E, Edge, EdgeClass, EdgeType, MultiConnection, MultiDiEdge, MultiEdge
 )
 from vertizee.classes.primitives_parsing import (
-    EdgeData, VertexData, GraphPrimitive, ParsedEdgeAndVertexData
+    EdgeData, GraphPrimitive, ParsedEdgeAndVertexData, VertexData
 )
 from vertizee.classes.vertex import (
     DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
@@ -471,9 +471,6 @@ class G(ABC, Generic[V, E]):
 
         Returns:
             bool: True if there is a matching edge in the graph, otherwise False.
-
-        See Also:
-            :mod:`EdgeType <vertizee.classes.edge>`
         """
         label = edge_module.create_edge_label(vertex1, vertex2, self.__is_directed)
         return label in self._edges
@@ -502,15 +499,15 @@ class G(ABC, Generic[V, E]):
 
     def remove_edge(
         self, vertex1: "VertexType", vertex2: "VertexType",
-        remove_self_isolated_vertices: bool = False,
+        remove_semi_isolated_vertices: bool = False,
     ) -> E:
         """Removes an edge from the graph.
 
         Args:
             vertex1: The first endpoint of the edge.
             vertex2: The second endpoint of the edge.
-            remove_self_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                :term:`self-isolated` after the edge removal are also removed. Defaults to False.
+            remove_semi_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+                :term:`semi-isolated` after the edge removal are also removed. Defaults to False.
 
         Returns:
             E: The edge that was removed.
@@ -526,7 +523,7 @@ class G(ABC, Generic[V, E]):
         self._edges.pop(edge.label)
         edge.vertex1._remove_edge(edge)
         edge.vertex2._remove_edge(edge)
-        if remove_self_isolated_vertices:
+        if remove_semi_isolated_vertices:
             if edge.vertex1.is_isolated(ignore_self_loops=True):
                 edge.vertex1.remove()
             if edge.vertex2.is_isolated(ignore_self_loops=True):
@@ -584,7 +581,7 @@ class G(ABC, Generic[V, E]):
     def remove_vertex(self, vertex: VertexType) -> None:
         """Removes the indicated vertex.
 
-        For a vertex to be removed, it must be :term:`self-isolated`. That means that the vertex
+        For a vertex to be removed, it must be :term:`semi-isolated`. That means that the vertex
         has no incident edges except for self loops. Any non-loop incident edges must be deleted
         prior to vertex removal.
 

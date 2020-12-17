@@ -99,15 +99,14 @@ Alternatively, the same graph could be represented with the following adjacency 
 from __future__ import annotations
 from collections import Counter
 import re
-from typing import Dict, List, Set, TYPE_CHECKING, Tuple
+from typing import Dict, List, Set, TYPE_CHECKING
 
-from vertizee.classes.edge import create_label
-from vertizee.exception import GraphTypeNotSupported
+from vertizee.classes.collection_views import SetView
+from vertizee.classes import edge as edge_module
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import Edge
+    from vertizee.classes.edge import Edge, EdgeTuple
     from vertizee.classes.graph import G
-    from vertizee.classes.primitives_parsing import EdgeTuple
     from vertizee.classes.vertex import Vertex
 
 
@@ -223,7 +222,7 @@ def write_adj_list_to_file(
     """
     lines = []
 
-    vertices = graph.vertices
+    vertices = graph.vertices()
     if all([x.label.isdecimal() for x in vertices]):
         sorted_vertices = sorted(vertices, key=lambda v: int(v.label))
     else:
@@ -232,8 +231,8 @@ def write_adj_list_to_file(
     for vertex in sorted_vertices:
         source_vertex_label = vertex.label
         line = f"{source_vertex_label}"
-        if vertex.loops is not None:
-            loop_edge: "Edge" = vertex.loops
+        if vertex.loop_edge is not None:
+            loop_edge: "Edge" = vertex.loop_edge
             line = _add_loop_edges_to_line(
                 line, loop_edge, delimiter, include_weights, weights_are_integers
             )
@@ -287,7 +286,7 @@ def _add_edge_to_line(
             line += f"{delimiter}{destination_label},{weight}"
     else:  # Exclude edge weights.
         line += f"{delimiter}{destination_label}"
-        for i in range(0, edge.parallel_edge_count):
+        for i in range(1, edge.multiplicity):
             line += f"{delimiter}{destination_label}"
     return line
 
@@ -320,14 +319,14 @@ def _add_loop_edges_to_line(
             line += f"{delimiter}{source_vertex_label},{weight}"
     else:
         line += f"{delimiter}{source_vertex_label}"
-        for i in range(0, loop_edge.parallel_edge_count):
+        for i in range(1, loop_edge.multiplicity):
             line += f"{delimiter}{source_vertex_label}"
     return line
 
 
 def _get_incident_edges_excluding_loops(
     graph: "G", vertex: "Vertex", reverse_graph: bool = False
-) -> Set["Edge"]:
+) -> SetView["Edge"]:
     """Helper function to retrieve the incident edges of a vertex, excluding self loops.
 
     If `reverse_graph` is True and it is a directed graph, then the child's incoming adjacency
@@ -344,15 +343,13 @@ def _get_incident_edges_excluding_loops(
     if graph.is_directed():
         if reverse_graph:
             return vertex.incident_edges_incoming
-        return vertex.incident_edges_outgoing
+        return vertex.incident_edges_outgoing()
 
     # undirected graph
-    if vertex.loops is not None:
-        loop_edges = vertex.loops
-        edges = vertex.incident_edges
-        edges.remove(loop_edges)
-        return edges
-    return vertex.incident_edges
+    if vertex.loop_edge is not None:
+        edges = vertex.incident_edges()
+        return edges - {vertex.loop_edge}
+    return vertex.incident_edges()
 
 
 def _remove_duplicate_undirected_edges(
@@ -376,7 +373,7 @@ def _remove_duplicate_undirected_edges(
 
     unique_edge_tuples = []
     for t in cnt:
-        edge_label = create_edge_label(t[0], t[1], is_directed=False)
+        edge_label = edge_module.create_edge_label(t[0], t[1], is_directed=False)
         if edge_label not in edge_label_to_source:
             edge_label_to_source[edge_label] = source_vertex_label
 

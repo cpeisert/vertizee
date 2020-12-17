@@ -15,6 +15,8 @@
 # limitations under the License.
 
 """Test the graph input/output routines for adjency lists."""
+# pylint: disable=no-self-use
+# pylint: disable=missing-function-docstring
 
 import os
 
@@ -34,25 +36,29 @@ TEST_DIR = "vertizee/io/tests"
 
 
 class TestGraphIOAdjList:
+    """Tests for reading and writing files containing graph adjacency list."""
+
     def test_digraph_read_adj_list(self):
         g = MultiDiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, DIGRAPH_FILE01), g)
 
         assert g.vertex_count == 5, "graph should have 5 vertices"
-        assert g[1].loops is not None, "v1 should have a loop"
+        assert g[1].loop_edge is not None, "v1 should have a loop"
         assert (
-            len(g[1].incident_edges_incoming) == 2
+            len(g[1].incident_edges_incoming()) == 2
         ), "v1 should have 2 incoming edges (including its loop)"
-        assert len(g[1].incident_edges_outgoing) == 3, "v1 edges_outgoing should have length 3"
+        assert len(g[1].incident_edges_outgoing()) == 3, "v1 edges_outgoing should have length 3"
         assert g[1].degree == 6, "deg(v1) should be 6"
         assert g[2].degree == 4, "deg(v2) should be 4"
-        assert len(g[2].incident_edges_outgoing) == 2, "v2 should have 2 outgoing edges"
-        assert len(g[3].incident_edges_incoming) == 2, "v3 should have 2 incoming edges"
-        assert len(g[3].incident_edges_outgoing) == 1, "v3 should have 1 outgoing edge"
-        assert len(g[4].incident_edges_outgoing) == 0, "v4 should have 0 outgoing edges"
-        v5_loop_edge = g[5].loops
-        assert v5_loop_edge.parallel_edge_count == 1, "v5 should have 2 loops"
-        assert len(g[5].incident_edges_incoming) == 1, "v5 should have 1 incoming edge (self-loop)"
+        assert len(g[2].incident_edges_outgoing()) == 2, "v2 should have 2 outgoing edges"
+        assert len(g[3].incident_edges_incoming()) == 2, "v3 should have 2 incoming edges"
+        assert len(g[3].incident_edges_outgoing()) == 1, "v3 should have 1 outgoing edge"
+        assert len(g[4].incident_edges_outgoing()) == 0, "v4 should have 0 outgoing edges"
+        v5_loop_edge = g[5].loop_edge
+        assert v5_loop_edge.multiplicity == 2, "v5 should have 2 loops"
+        assert (
+            len(g[5].incident_edges_incoming()) == 1
+        ), "v5 should have 1 incoming edge (self-loop)"
 
         with pytest.raises(KeyError):
             assert g[4, 3] is None, "graph should not have edge (4, 3)"
@@ -68,20 +74,20 @@ class TestGraphIOAdjList:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE01), g)
 
-        v1_loop_edge = g[1].loops
+        v1_loop_edge = g[1].loop_edge
         assert v1_loop_edge.multiplicity == 2, "v1 should have 2 loops"
         assert g[1].degree == 6, "deg(v1) should be 6"
-        assert len(g[2].incident_edges) == 2, (
+        assert len(g[2].incident_edges()) == 2, (
             "v2 should have 4 incident edges, 3 of which are parallel and stored in one "
             " Edge object."
         )
         assert g[2].degree == 4, "v2 should have degree 4"
         assert g[3].degree == 3, "v3 should have degree 3"
         assert (
-            g[3, 2].parallel_edge_count == 2
+            g[3, 2].multiplicity == 3
         ), "there should be 2 parallel edges between (2, 3) [3 edges total]"
         assert (
-            g[2, 3].parallel_edge_count == 2
+            g[2, 3].multiplicity == 3
         ), "there should be 2 parallel edges between (2, 3) [3 edges total]"
         assert g[4].degree == 1, "v4 should have degree 1"
         assert g[5].degree == 0, "v5 should have degree 0 (i.e. isolated vertex)"
@@ -97,7 +103,7 @@ class TestGraphIOAdjList:
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE02), g)
 
         assert (
-            g.edge_count == g.edge_count_ignoring_parallel_edges()
+            g.edge_count == len(g.edges())
         ), "g should have no parallel edges"
         assert g.edge_count == 6, "graph should have 6 edges"
         assert g.vertex_count == 4, "graph should have 4 vertices"
@@ -111,7 +117,7 @@ class TestGraphIOAdjList:
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE03), g)
 
         assert (
-            g.edge_count == g.edge_count_ignoring_parallel_edges()
+            g.edge_count == len(g.edges())
         ), "g should have no parallel edges"
         assert g.edge_count == 14, "graph should have 14 edges"
         assert g.vertex_count == 8, "graph should have 8 vertices"

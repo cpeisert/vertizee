@@ -199,17 +199,17 @@ class TestEdgeBase:
         assert g.has_edge(1, 2), "prior to removal, graph should have edge (1, 2)"
         assert not g[1].is_isolated(), "vertex 1 should not be isolated prior to edge removal"
 
-        g[1, 2].remove(remove_self_isolated_vertices=False)
+        g[1, 2].remove(remove_semi_isolated_vertices=False)
 
         assert not g.has_edge(1, 2), "after removal, graph should not have edge (1, 2)"
         assert g.has_vertex(1), "after edge removal, isolated vertex 1 should still be in graph"
         assert g[1].is_isolated(), "vertex 1 should be isolated after edge removal"
 
         g2 = Graph([(1, 2), (1, 1), (2, 3)])
-        g2[1, 2].remove(remove_self_isolated_vertices=True)
+        g2[1, 2].remove(remove_semi_isolated_vertices=True)
         assert (
             not g2.has_vertex(1)
-        ), "after edge removal, self-isolated vertex 1 should have been removed"
+        ), "after edge removal, semi-isolated vertex 1 should have been removed"
 
     def test_weight(self):
         g = Graph([(1, 2), (3, 4, 9.5)])
@@ -302,17 +302,17 @@ class TestMultiEdgeBase:
         assert g.has_edge(1, 2), "prior to removal, graph should have edge (1, 2)"
         assert not g[1].is_isolated(), "vertex 1 should not be isolated prior to edge removal"
 
-        g[1, 2].remove(remove_self_isolated_vertices=False)
+        g[1, 2].remove(remove_semi_isolated_vertices=False)
 
         assert not g.has_edge(1, 2), "after removal, graph should not have edge (1, 2)"
         assert g.has_vertex(1), "after edge removal, isolated vertex 1 should still be in graph"
         assert g[1].is_isolated(), "vertex 1 should be isolated after edge removal"
 
         g2 = MultiGraph([(1, 2), (1, 2), (1, 1), (1, 1), (2, 3)])
-        g2[1, 2].remove(remove_self_isolated_vertices=True)
+        g2[1, 2].remove(remove_semi_isolated_vertices=True)
         assert (
             not g2.has_vertex(1)
-        ), "after edge removal, self-isolated vertex 1 should have been removed"
+        ), "after edge removal, semi-isolated vertex 1 should have been removed"
 
     def test_weight(self):
         g = MultiGraph([(1, 2), (1, 2), (3, 4, 9.5), (3, 4, 0.5)])

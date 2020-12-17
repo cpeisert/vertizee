@@ -47,25 +47,21 @@ class TestDepthFirstSearch:
         assert (
             len(results.graph_search_trees()) == 1
         ), "DFS search with source vertex should yield one DFS tree"
-        assert (
-            len(tree.vertices_in_discovery_order()) == 6
-        ), "DFS tree should have 6 vertices (excluding vertices 6 & 7)"
-        assert len(tree.edges_in_discovery_order()) == 5, (
+        assert len(tree) == 6, "DFS tree should have 6 vertices (excluding vertices 6 & 7)"
+        assert len(tree.edges()) == 5, (
             "DFS tree should have 5 edges, since for all trees |E| = |V| - 1"
         )
         assert g[6] not in tree, "DFS tree should not contain vertex 6"
         assert not results.is_acyclic(), "graph should not be acyclic, since it contains 2 cycles"
 
-        tree_vertices = tree.vertices_in_discovery_order()
         dfs_vertices = results.vertices_preorder()
-        assert len(tree_vertices) == len(dfs_vertices), (
+        assert len(tree) == len(dfs_vertices), (
             "DFS vertices should match the DFS tree, since only one tree was searched"
         )
 
-        tree_edges = tree.edges_in_discovery_order()
         dfs_edges = results.edges_in_discovery_order()
         assert (
-            len(tree_edges) == len(dfs_edges)
+            tree.edge_count == len(dfs_edges)
         ), "DFS edges should match the DFS tree, since only one tree was searched"
         assert (
             len(results.back_edges()) > 0
@@ -102,7 +98,7 @@ class TestDepthFirstSearch:
         assert len(results.forward_edges()) == 0, (
             "graph should have zero forward edges (true for all undirected graphs)"
         )
-        assert not results.is_acyclic(), "graph should not be acyclic, since it contains a self loop"
+        assert not results.is_acyclic(), "should not be acyclic, since it contains a self loop"
 
     def test_dfs_directed_cyclic_graph(self):
         g = MultiDiGraph()
@@ -133,12 +129,10 @@ class TestDepthFirstSearch:
         )
         tree: Tree = next(iter(results.graph_search_trees()))
 
-        assert len(tree.edges_in_discovery_order()) == 4, (
+        assert len(tree.edges()) == 4, (
             "DFS tree rooted at vertex 's' should have 4 edges"
         )
-        assert (
-            len(tree.vertices_in_discovery_order()) == 5
-        ), "DFS tree rooted at vertex 's' should have 5 vertices"
+        assert len(tree) == 5, "DFS tree rooted at vertex 's' should have 5 vertices"
 
         assert results.vertices_preorder()[0] == "s", "first vertex should be s"
         assert not results.is_acyclic(), "graph should not be acyclic, since it contains cycles"

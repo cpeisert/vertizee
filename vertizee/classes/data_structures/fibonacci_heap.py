@@ -28,6 +28,9 @@ T = TypeVar("T")
 
 
 class _FibonacciNode(Generic[T]):
+
+    __slots__ = ("children", "item", "marked", "parent", "priority")
+
     def __init__(self, priority: Union[float, int], item: T) -> None:
         self.children: Set[_FibonacciNode] = set()
         self.item: T = item
@@ -106,6 +109,8 @@ class FibonacciHeap(Generic[T]):
                  their uses in improved network optimization algorithms."
                  </references/Fibonacci-Heap-Tarjan.pdf>` Journal of the ACM, 34(3):596-615, 1987.
     """
+
+    __slots__ = ("_item_to_node", "_length", "_min", "_priority_function", "_roots")
 
     def __init__(
         self, priority_function: Optional[Callable[[T], Union[float, int]]] = None

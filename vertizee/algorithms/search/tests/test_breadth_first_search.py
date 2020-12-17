@@ -48,10 +48,8 @@ class TestBreadthFirstSearch:
         assert (
             len(results.graph_search_trees()) == 1
         ), "BFS search with source vertex should yield one BFS tree"
-        assert (
-            len(tree.vertices_in_discovery_order()) == 6
-        ), "BFS tree should have 6 vertices (excluding vertices 6 & 7)"
-        assert len(tree.edges_in_discovery_order()) == 5, (
+        assert len(tree) == 6, "BFS tree should have 6 vertices (excluding vertices 6 & 7)"
+        assert len(tree.edges()) == 5, (
             "BFS tree should have 5 edges, since for all trees |E| = |V| - 1"
         )
         assert g[6] not in tree, "BFS tree should not contain vertex 6"
@@ -60,19 +58,15 @@ class TestBreadthFirstSearch:
         with pytest.raises(exception.VertizeeException):
             results.is_acyclic()
 
-        assert not results.has_topological_ordering(), "no topological ordering for undirected graphs"
+        assert (
+            not results.has_topological_ordering()
+        ), "no topological ordering for undirected graphs"
         with pytest.raises(exception.Unfeasible):
             results.vertices_topological_order()
 
-        assert results.vertices_preorder() == tree.vertices_in_discovery_order(), (
-            "BFS vertices should match the BFS tree, since only one tree was searched"
-        )
         assert (
             results.vertices_preorder() == results.vertices_postorder()
         ), "a BFS should yield vertices in same order for both preorder and postorder"
-        assert (
-            results.edges_in_discovery_order() == tree.edges_in_discovery_order()
-        ), "BFS edges should match the BFS tree, since only one tree was searched"
         assert not results.back_edges(), "BFS on undirected graph cannot have back edges"
         assert not results.forward_edges(), "BFS on undirected graph cannot have forward edges"
         assert len(results.cross_edges()) == 2, "tree should have 2 cross edges"
@@ -106,12 +100,10 @@ class TestBreadthFirstSearch:
         )
         tree: Tree = next(iter(results1.graph_search_trees()))
 
-        assert len(tree.edges_in_discovery_order()) == 2, (
+        assert len(tree.edges()) == 2, (
             "BFS tree rooted at vertex 1 should have 2 tree edges"
         )
-        assert (
-            len(tree.vertices_in_discovery_order()) == 3
-        ), "BFS tree rooted at vertex 1 should have 3 vertices"
+        assert len(tree) == 3, "BFS tree rooted at vertex 1 should have 3 vertices"
 
         assert results1.vertices_preorder()[0] == 1, "first vertex should be 1"
         assert len(results1.tree_edges()) == 2

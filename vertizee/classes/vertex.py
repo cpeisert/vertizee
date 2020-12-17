@@ -239,7 +239,7 @@ class VertexBase(ABC, Generic[E]):
     def remove(self) -> None:
         """Removes this vertex.
 
-        For a vertex to be removed, it must be self-isolated, meaning that it has no incident edges
+        For a vertex to be removed, it must be semi-isolated, meaning that it has no incident edges
         except for :term:`self-loops <self-loop>`. Any non-loop incident edges must be deleted
         prior to vertex removal.
 
@@ -661,6 +661,24 @@ class _MultiDiVertex(MultiDiVertex, VertexBase["MultiDiEdge"]):
         return sum(e.multiplicity for e in self._incident_edges.outgoing)
 
 
+def _create_edge_label(v1_label: str, v2_label: str, is_directed: bool) -> str:
+    """Creates a consistent string representation of an edge.
+
+    This function is used instead of `edge.create_edge_label` to avoid circular dependencies.
+
+    Args:
+        v1_label: The first vertex label of the edge.
+        v2_label: The second vertex label of the edge.
+        is_directed (bool): True indicates a directed edge, False an undirected edge.
+
+    Returns:
+        str: The edge label.
+    """
+    if not is_directed and v1_label > v2_label:
+        return f"({v2_label}, {v1_label})"
+    return f"({v1_label}, {v2_label})"
+
+
 class _IncidentEdges(Generic[E]):
     """Collection of edges that are incident on a shared vertex.
 
@@ -802,7 +820,7 @@ class _IncidentEdges(Generic[E]):
 
         if self.has_loop:
             shared = self.shared_vertex_label
-            edges.add(__create_edge_label(shared, shared, self.parent_graph.is_directed()))
+            edges.add(_create_edge_label(shared, shared, self.parent_graph.is_directed()))
         return set(self.parent_graph._edges[e] for e in edges)
 
     @property
@@ -829,7 +847,7 @@ class _IncidentEdges(Generic[E]):
 
         if self.has_loop:
             shared = self.shared_vertex_label
-            edges.add(__create_edge_label(shared, shared, self.parent_graph.is_directed()))
+            edges.add(_create_edge_label(shared, shared, self.parent_graph.is_directed()))
         return set(self.parent_graph._edges[e] for e in edges)
 
     def remove_edge(self, edge: E) -> None:
@@ -838,21 +856,3 @@ class _IncidentEdges(Generic[E]):
             self.incident_edge_labels.remove(edge.label)
             if edge.is_loop():
                 self.has_loop = False
-
-
-def __create_edge_label(v1_label: str, v2_label: str, is_directed: bool) -> str:
-    """Creates a consistent string representation of an edge.
-
-    This function is used instead of `edge.create_edge_label` to avoid circular dependencies.
-
-    Args:
-        v1_label: The first vertex label of the edge.
-        v2_label: The second vertex label of the edge.
-        is_directed (bool): True indicates a directed edge, False an undirected edge.
-
-    Returns:
-        str: The edge label.
-    """
-    if not is_directed and v1_label > v2_label:
-        return f"({v2_label}, {v1_label})"
-    return f"({v1_label}, {v2_label})"
