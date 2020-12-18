@@ -87,8 +87,8 @@ class TestTree:
         tree.add_edge(g[3, 4])
         count = sum(1 for _ in tree)
         assert count == 4, "tree should iterate over its 4 vertices"
-        assert (
-            set([tree[1], tree[2], tree[3], tree[4]]) == set(tree)
+        assert set([tree[1], tree[2], tree[3], tree[4]]) == set(
+            tree
         ), "tree should iterate over its 4 vertices"
 
     def test__len__(self):

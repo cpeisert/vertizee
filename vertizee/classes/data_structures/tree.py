@@ -23,9 +23,7 @@ from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import SetView
 from vertizee.classes import edge as edge_module
 from vertizee.classes.edge import E, EdgeType
-from vertizee.classes.primitives_parsing import (
-    GraphPrimitive, ParsedEdgeAndVertexData, VertexData
-)
+from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData, VertexData
 from vertizee.classes.vertex import V, VertexType
 
 
@@ -67,8 +65,10 @@ class Tree(Generic[V, E]):
         if data.vertices:
             return data.vertices[0].label in self._vertex_set
 
-        raise exception.VertizeeException("expected GraphPrimitive (EdgeType or VertexType); found "
-            f"{type(edge_or_vertex).__name__}")
+        raise exception.VertizeeException(
+            "expected GraphPrimitive (EdgeType or VertexType); found "
+            f"{type(edge_or_vertex).__name__}"
+        )
 
     @overload
     def __getitem__(self, vertex: VertexType) -> V:
@@ -98,7 +98,8 @@ class Tree(Generic[V, E]):
         data: ParsedEdgeAndVertexData = primitives_parsing.parse_graph_primitive(keys)
         if data.edges:
             edge_label = edge_module.create_edge_label(
-                data.edges[0].vertex1.label, data.edges[0].vertex2.label, self.is_directed())
+                data.edges[0].vertex1.label, data.edges[0].vertex2.label, self.is_directed()
+            )
             return self._edges[edge_label]
         if data.vertices:
             vertex = graph._vertices[data.vertices[0].label]
@@ -106,8 +107,9 @@ class Tree(Generic[V, E]):
                 return vertex
             raise KeyError(keys)
 
-        raise exception.VertizeeException("expected GraphPrimitive (EdgeType or VertexType); "
-            f"found {type(keys).__name__}")
+        raise exception.VertizeeException(
+            "expected GraphPrimitive (EdgeType or VertexType); " f"found {type(keys).__name__}"
+        )
 
     def __iter__(self) -> Iterator[V]:
         """Iterates over the vertices of the tree."""
@@ -137,11 +139,15 @@ class Tree(Generic[V, E]):
         if edge.label in self._edges:
             return
         if edge.vertex1 not in self._vertex_set and edge.vertex2 not in self._vertex_set:
-            raise exception.Unfeasible(f"neither of the edge endpoints {edge} were found in the "
-                "tree; exactly one of the endpoints must already be in the tree")
+            raise exception.Unfeasible(
+                f"neither of the edge endpoints {edge} were found in the "
+                "tree; exactly one of the endpoints must already be in the tree"
+            )
         if edge.vertex1 in self._vertex_set and edge.vertex2 in self._vertex_set:
-            raise exception.Unfeasible(f"both of the edge endpoints {edge} were found in the "
-                "tree, which would create a cycle; trees are acyclic")
+            raise exception.Unfeasible(
+                f"both of the edge endpoints {edge} were found in the "
+                "tree, which would create a cycle; trees are acyclic"
+            )
 
         self._edges[edge.label] = edge
         self._vertex_set.add(edge.vertex1)

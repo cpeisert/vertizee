@@ -165,7 +165,7 @@ class SearchResults(Generic[V, E]):
 
     def forward_edges(self) -> SetView[E]:
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the forward
-        edges found during a graph search. """
+        edges found during a graph search."""
         return SetView(self._forward_edges)
 
     def is_acyclic(self) -> bool:
@@ -184,8 +184,10 @@ class SearchResults(Generic[V, E]):
             VertizeeException: Raises exception if the search was not depth-first.
         """
         if not self._depth_first_search:
-            raise exception.VertizeeException("cycle detection not supported using breadth-first "
-                "search; use depth-first search instead")
+            raise exception.VertizeeException(
+                "cycle detection not supported using breadth-first "
+                "search; use depth-first search instead"
+            )
         return self._is_acyclic
 
     def graph_search_trees(self) -> SetView[Tree[V, E]]:
@@ -243,8 +245,10 @@ class SearchResults(Generic[V, E]):
             cycle_error = "graph has cycle" if not self._is_acyclic else ""
             errors = [bfs_error, dir_error, cycle_error]
             error_msg = "; ".join(e for e in errors if e)
-            raise exception.Unfeasible("a topological ordering is only valid for a depth-first "
-                f"search on a directed, acyclic graph; error: {error_msg}")
+            raise exception.Unfeasible(
+                "a topological ordering is only valid for a depth-first "
+                f"search on a directed, acyclic graph; error: {error_msg}"
+            )
         return ListView(list(reversed(self._vertices_postorder)))
 
 
@@ -263,9 +267,8 @@ class VertexSearchState:
             child vertices are adjacent to ``parent``.
         depth: The depth of ``parent`` relative to the root of the search tree.
     """
-    def __init__(
-        self, parent: V, children: Iterator[V], depth: Optional[int] = None
-    ) -> None:
+
+    def __init__(self, parent: V, children: Iterator[V], depth: Optional[int] = None) -> None:
         self.parent = parent
         self.children = children
         self.depth = depth

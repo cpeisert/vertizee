@@ -125,8 +125,13 @@ class PriorityQueue(Generic[T]):
         1
     """
 
-    __slots__ = ("_heap_item_finder", "_insertion_counter", "_length", "_priority_function",
-        "_priority_queue")
+    __slots__ = (
+        "_heap_item_finder",
+        "_insertion_counter",
+        "_length",
+        "_priority_function",
+        "_priority_queue",
+    )
 
     def __init__(
         self, priority_function: Callable[[T], Union[float, int]], minimum: bool = True

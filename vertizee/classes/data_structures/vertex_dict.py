@@ -64,6 +64,7 @@ class VertexDict(MutableMapping["VertexType", VT]):
         >>> print(d[3])
         three
     """
+
     __slots__ = ("data",)
 
     def __init__(self, dictionary=None, /, **kwargs) -> None:

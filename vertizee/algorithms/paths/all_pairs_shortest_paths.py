@@ -75,6 +75,7 @@ def get_weight_function(weight: str = "Edge__weight") -> Callable[[E], float]:
         return default_weight_function
     return attr_weight_function
 
+
 #
 # TODO(cpeisert): run benchmarks to determine under which real-world circumstances Floyd-Warshall is
 # faster than Johnson's algorithm.
@@ -332,7 +333,8 @@ def johnson(
         g_prime.add_edge(G_PRIME_SOURCE, v, weight=0)
 
     bellman_paths: VertexDict[ShortestPath] = single_source_shortest_paths.bellman_ford(
-        g_prime, G_PRIME_SOURCE)
+        g_prime, G_PRIME_SOURCE
+    )
 
     # pylint: disable=unused-argument
     def new_weight(v1: VertexType, v2: VertexType, reverse_graph: bool = False) -> float:
@@ -401,7 +403,8 @@ def johnson_fibonacci(
         g_prime.add_edge(G_PRIME_SOURCE, v, weight=0)
 
     bellman_paths: VertexDict[ShortestPath] = single_source_shortest_paths.bellman_ford(
-        g_prime, G_PRIME_SOURCE)
+        g_prime, G_PRIME_SOURCE
+    )
 
     # pylint: disable=unused-argument
     def new_weight(v1: VertexType, v2: VertexType, reverse_graph: bool = False) -> float:

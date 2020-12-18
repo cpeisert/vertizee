@@ -9,57 +9,54 @@ See https://<TODO> for complete documentation.
 # Make certain classes available to the user as direct imports from the `vertizee` namespace.
 # pylint: disable=wrong-import-position
 
-from vertizee.algorithms.algo_utils.path_utils import (
-    reconstruct_path,
-    ShortestPath
-)
+from vertizee.algorithms.algo_utils.path_utils import reconstruct_path, ShortestPath
 
 from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
     SearchResults,
-    VertexSearchState
+    VertexSearchState,
 )
 
 from vertizee.algorithms.algo_utils.spanning_utils import (
     Cycle,
     PseudoEdge,
     PseudoGraph,
-    PseudoVertex
+    PseudoVertex,
 )
 
 from vertizee.algorithms.connectivity.components import (
     Component,
     connected_components,
     strongly_connected_components,
-    weakly_connected_components
+    weakly_connected_components,
 )
 
 from vertizee.algorithms.paths.all_pairs_shortest_paths import (
     all_shortest_paths,
     floyd_warshall,
     johnson,
-    johnson_fibonacci
+    johnson_fibonacci,
 )
 from vertizee.algorithms.paths.single_source_shortest_paths import (
     bellman_ford,
     breadth_first_search_shortest_paths,
     dijkstra,
     dijkstra_fibonacci,
-    shortest_paths
+    shortest_paths,
 )
 
 from vertizee.algorithms.search.breadth_first_search import (
     bfs,
     bfs_preorder_traversal,
-    bfs_labeled_edge_traversal
+    bfs_labeled_edge_traversal,
 )
 
 from vertizee.algorithms.search.depth_first_search import (
     dfs,
     dfs_labeled_edge_traversal,
     dfs_preorder_traversal,
-    dfs_postorder_traversal
+    dfs_postorder_traversal,
 )
 
 from vertizee.algorithms.spanning.undirected import (
@@ -68,7 +65,7 @@ from vertizee.algorithms.spanning.undirected import (
     optimum_forest,
     prim_spanning_tree,
     prim_fibonacci,
-    spanning_tree
+    spanning_tree,
 )
 
 from vertizee.classes.collection_views import ItemsView, ListView, SetView
@@ -82,15 +79,9 @@ from vertizee.classes.edge import (
     ConnectionView,
     MultiConnection,
     MultiDiEdge,
-    MultiEdge
+    MultiEdge,
 )
-from vertizee.classes.graph import (
-    DiGraph,
-    G,
-    Graph,
-    MultiDiGraph,
-    MultiGraph
-)
+from vertizee.classes.graph import DiGraph, G, Graph, MultiDiGraph, MultiGraph
 from vertizee.classes.primitives_parsing import GraphPrimitive
 from vertizee.classes.vertex import (
     DiVertex,
@@ -100,7 +91,7 @@ from vertizee.classes.vertex import (
     Vertex,
     VertexBase,
     VertexLabel,
-    VertexType
+    VertexType,
 )
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue

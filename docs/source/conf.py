@@ -11,21 +11,22 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+
+sys.path.insert(0, os.path.abspath("../.."))
 
 import vertizee.version
 
 # -- Project information -----------------------------------------------------
-project = 'Vertizee'
-copyright = '2020, The Vertizee Authors'
-author = 'The Vertizee Authors'
+project = "Vertizee"
+copyright = "2020, The Vertizee Authors"
+author = "The Vertizee Authors"
 
 # The short X.Y.Z version.
 version = vertizee.version.__version__
 
-_release_candidate = ''  # RC format: -rc.#   Example: '-rc.0'
+_release_candidate = ""  # RC format: -rc.#   Example: '-rc.0'
 # The full version, including alpha/beta/rc tags.
-release = f'{version}{_release_candidate}'
+release = f"{version}{_release_candidate}"
 
 # -- General configuration ---------------------------------------------------
 
@@ -33,41 +34,39 @@ release = f'{version}{_release_candidate}'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'nbsphinx',  # Jupyter Notebook Tools for Sphinx
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosectionlabel',
-    'sphinx.ext.doctest',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.imgconverter',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',  # Converts Google-style docstrings to reStructuredText
-    'sphinx.ext.viewcode',
-    'recommonmark',  # Markdown support
+    "nbsphinx",  # Jupyter Notebook Tools for Sphinx
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.doctest",
+    "sphinx.ext.githubpages",
+    "sphinx.ext.imgconverter",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",  # Converts Google-style docstrings to reStructuredText
+    "sphinx.ext.viewcode",
+    "recommonmark",  # Markdown support
 ]
 
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
 autosectionlabel_prefix_document = True
 
 # autodoc options
-autodoc_typehints = 'signature'
+autodoc_typehints = "signature"
 
 autodoc_default_options = {
-    'autoclass_content': 'class',
-    'member-order': 'bysource',
-    'members': True,
-    'show-inheritance': True,
-    'special-members': '__call__, __getitem__, __len__',
-    'undoc-members': True,
+    "autoclass_content": "class",
+    "member-order": "bysource",
+    "members": True,
+    "show-inheritance": True,
+    "special-members": "__call__, __getitem__, __len__",
+    "undoc-members": True,
 }
 
 mathjax_config = {
-    'extensions': ['tex2jax.js'],
-    'jax': ['input/TeX', 'output/HTML-CSS'],
+    "extensions": ["tex2jax.js"],
+    "jax": ["input/TeX", "output/HTML-CSS"],
 }
 
-latex_elements = {
-    'extrapackages': r'\usepackage{ latexsym }'
-}
+latex_elements = {"extrapackages": r"\usepackage{ latexsym }"}
 
 # Napoleon settings
 napoleon_google_docstring = True
@@ -75,32 +74,32 @@ napoleon_use_admonition_for_examples = False
 napoleon_use_admonition_for_notes = False
 napoleon_use_admonition_for_references = False
 napoleon_use_param = False  # Show the Parameter Types in separate line.
-napoleon_use_rtype = True   # Show the Return Type in separate line.
+napoleon_use_rtype = True  # Show the Return Type in separate line.
 
 # nbsphinx options
-html_sourcelink_suffix = ''
-nbsphinx_kernel_name = 'python3'
+html_sourcelink_suffix = ""
+nbsphinx_kernel_name = "python3"
 # nbsphinx_input_prompt = 'In [%s]:'
 # nbsphinx_output_prompt = 'Out [%s]:'
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build']
+exclude_patterns = ["_build"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.ipynb', '.md']
+source_suffix = [".rst", ".ipynb", ".md"]
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -108,7 +107,7 @@ master_doc = 'index'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 # html_theme = 'alabaster'
 
 html_theme_options = {
@@ -122,7 +121,8 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
+
 
 def setup(app) -> None:
-    app.add_css_file('css/code-snippets.css')
+    app.add_css_file("css/code-snippets.css")

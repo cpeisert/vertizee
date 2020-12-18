@@ -128,6 +128,10 @@ Format and Test your contribution
 
       pylint vertizee
 
+   * Run mypy::
+
+      mypy --strict vertizee
+
    * Run the test suite locally (see `Testing`_ for details)::
 
       PYTHONPATH=. pytest vertizee

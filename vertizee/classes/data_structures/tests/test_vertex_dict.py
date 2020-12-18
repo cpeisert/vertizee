@@ -37,7 +37,7 @@ class TestVertexDict:
         assert len(d3) == 2, "Dict d3 should have 2 items"
 
     def test_contains(self):
-        d = VertexDict(**{"1":"one", "2":"two"})
+        d = VertexDict(**{"1": "one", "2": "two"})
         assert 1 in d
         assert "1" in d
         assert d.__contains__(2)

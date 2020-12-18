@@ -41,7 +41,7 @@ from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
     SearchResults,
-    VertexSearchState
+    VertexSearchState,
 )
 from vertizee.classes import edge as edge_module
 from vertizee.classes.data_structures.tree import Tree
@@ -148,7 +148,7 @@ def dfs_labeled_edge_traversal(
     graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
-    reverse_graph: bool = False
+    reverse_graph: bool = False,
 ) -> Iterator[Tuple[V, V, str, str]]:
     """Iterates over the labeled edges of a depth-first search traversal.
 
@@ -315,7 +315,8 @@ def dfs_labeled_edge_traversal(
                 yield parent, child, Label.TREE_EDGE, Direction.PREORDER
 
                 grandchildren = _get_adjacent_to_child(
-                    child=child, parent=parent, reverse_graph=reverse_graph)
+                    child=child, parent=parent, reverse_graph=reverse_graph
+                )
                 if depth_now > 1:
                     stack.append(VertexSearchState(child, grandchildren, depth_now - 1))
             elif vertex_color[child] == GRAY:  # In the process of being visited?
@@ -331,7 +332,8 @@ def dfs_labeled_edge_traversal(
                         yield parent, child, Label.CROSS_EDGE, Direction.ALREADY_DISCOVERED
             else:
                 raise exception.AlgorithmError(
-                    f"vertex color '{vertex_color[child]}' of vertex '{child}' not recognized")
+                    f"vertex color '{vertex_color[child]}' of vertex '{child}' not recognized"
+                )
 
 
 def dfs_postorder_traversal(
@@ -437,9 +439,7 @@ def _check_for_parallel_edge_cycle(
             dfs_results._is_acyclic = False
 
 
-def _get_adjacent_to_child(
-    child: V, parent: Optional[V], reverse_graph: bool
-) -> Iterator[V]:
+def _get_adjacent_to_child(child: V, parent: Optional[V], reverse_graph: bool) -> Iterator[V]:
     if child._parent_graph.is_directed():
         if reverse_graph:
             return iter(child.adj_vertices_incoming())

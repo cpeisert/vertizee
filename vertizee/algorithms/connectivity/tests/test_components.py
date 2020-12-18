@@ -38,9 +38,7 @@ class TestConnectedComponents:
         ), "without accessing edges, `_edge_set` should not be initialized"
 
         c_12_23.edges()
-        assert (
-            c_12_23._edge_set
-        ), "after accessing edges, `_edge_set` should be initialized"
+        assert c_12_23._edge_set, "after accessing edges, `_edge_set` should be initialized"
 
         c_45 = None
         for component in component_list:
@@ -49,12 +47,8 @@ class TestConnectedComponents:
             elif (7, 7) in component:
                 c_77 = component
 
-        assert (
-            c_45._edge_set
-        ), "calling __contains__ should result in _edge_set initialization"
-        assert (
-            c_77._edge_set
-        ), "calling __contains__ should result in _edge_set initialization"
+        assert c_45._edge_set, "calling __contains__ should result in _edge_set initialization"
+        assert c_77._edge_set, "calling __contains__ should result in _edge_set initialization"
         assert 7 in c_77, "vertex 7 should be in component containing edge (7, 7)"
 
     def test_connected_components(self):
@@ -67,9 +61,7 @@ class TestConnectedComponents:
 
         mg: MultiDiGraph = get_example_multidigraph()
         scc_list: List[Component] = list(components.connected_components(mg))
-        assert (
-            len(scc_list) == 4
-        ), "multidigraph should have 4 strongly-connected components"
+        assert len(scc_list) == 4, "multidigraph should have 4 strongly-connected components"
 
     def test_exceptions(self):
         empty_g = Graph()

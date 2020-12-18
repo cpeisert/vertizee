@@ -102,9 +102,7 @@ class TestGraphIOAdjList:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE02), g)
 
-        assert (
-            g.edge_count == len(g.edges())
-        ), "g should have no parallel edges"
+        assert g.edge_count == len(g.edges()), "g should have no parallel edges"
         assert g.edge_count == 6, "graph should have 6 edges"
         assert g.vertex_count == 4, "graph should have 4 vertices"
         assert g[1].degree == g[2].degree, "v1 and v2 should have same degree"
@@ -116,9 +114,7 @@ class TestGraphIOAdjList:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE03), g)
 
-        assert (
-            g.edge_count == len(g.edges())
-        ), "g should have no parallel edges"
+        assert g.edge_count == len(g.edges()), "g should have no parallel edges"
         assert g.edge_count == 14, "graph should have 14 edges"
         assert g.vertex_count == 8, "graph should have 8 vertices"
         assert g[1].degree < g[2].degree, "v1 and v2 should have same degree"

@@ -28,7 +28,7 @@ from vertizee import (
     MultiGraph,
     MultiEdge,
     MultiDiGraph,
-    MultiDiEdge
+    MultiDiEdge,
 )
 
 from vertizee.classes import edge as edge_module
@@ -170,15 +170,18 @@ class TestEdgeBase:
 
     def test_contract(self):
         g = Graph([(1, 2), (1, 3), (2, 3), (2, 4), (2, 2)])
-        assert (
-            g[1].adj_vertices() == {g[2], g[3]}
-        ), "vertex 1 should be adjacent to vertices 2 and 3"
+        assert g[1].adj_vertices() == {
+            g[2],
+            g[3],
+        }, "vertex 1 should be adjacent to vertices 2 and 3"
 
         g[1, 2].contract(remove_loops=False)
 
-        assert (
-            g[1].adj_vertices() == {g[1], g[3], g[4]}
-        ), "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
+        assert g[1].adj_vertices() == {
+            g[1],
+            g[3],
+            g[4],
+        }, "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
         assert (
             g[1].loop_edge.label == "(1, 1)"
         ), "vertex 1 should have loop edge (1, 1), due to loop that was on vertex 2"
@@ -207,8 +210,8 @@ class TestEdgeBase:
 
         g2 = Graph([(1, 2), (1, 1), (2, 3)])
         g2[1, 2].remove(remove_semi_isolated_vertices=True)
-        assert (
-            not g2.has_vertex(1)
+        assert not g2.has_vertex(
+            1
         ), "after edge removal, semi-isolated vertex 1 should have been removed"
 
     def test_weight(self):
@@ -261,9 +264,10 @@ class TestMultiEdgeBase:
 
     def test_contract(self):
         g = MultiGraph([(1, 2), (1, 3), (2, 3), (2, 4), (2, 2), (2, 2)])
-        assert (
-            g[1].adj_vertices() == {g[2], g[3]}
-        ), "vertex 1 should be adjacent to vertices 2 and 3"
+        assert g[1].adj_vertices() == {
+            g[2],
+            g[3],
+        }, "vertex 1 should be adjacent to vertices 2 and 3"
         assert (
             g[1, 3].multiplicity == 1
         ), "before edge contraction, edge (1, 3) should have multiplicity 1"
@@ -271,15 +275,15 @@ class TestMultiEdgeBase:
 
         g[1, 2].contract(remove_loops=False)
 
-        assert (
-            g[1].adj_vertices() == {g[1], g[3], g[4]}
-        ), "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
+        assert g[1].adj_vertices() == {
+            g[1],
+            g[3],
+            g[4],
+        }, "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
         assert (
             g[1, 3].multiplicity == 2
         ), "after edge contraction, edge (1, 3) should have multiplicity 2"
-        assert (
-            g[1].loop_edge
-        ), "vertex 1 should have loop edge (1, 1)"
+        assert g[1].loop_edge, "vertex 1 should have loop edge (1, 1)"
         print(f"\nDEBUG: g[1].loop_edge => {g[1].loop_edge}\n")
         assert g[1].loop_edge.multiplicity == 3, "loop edge should have multiplicity 3"
         assert not g.has_vertex(2), "after edge contraction, vertex 2 should be removed"
@@ -310,8 +314,8 @@ class TestMultiEdgeBase:
 
         g2 = MultiGraph([(1, 2), (1, 2), (1, 1), (1, 1), (2, 3)])
         g2[1, 2].remove(remove_semi_isolated_vertices=True)
-        assert (
-            not g2.has_vertex(1)
+        assert not g2.has_vertex(
+            1
         ), "after edge removal, semi-isolated vertex 1 should have been removed"
 
     def test_weight(self):
@@ -337,11 +341,11 @@ class TestEdge:
     def test_issubclass_and_isinstance(self):
         g = Graph()
         edge: Edge = g.add_edge(1, 2)
-        assert (
-            isinstance(edge, edge_module.Connection)
+        assert isinstance(
+            edge, edge_module.Connection
         ), "edge should be an instance of superclass Connection"
-        assert (
-            isinstance(edge, edge_module.EdgeBase)
+        assert isinstance(
+            edge, edge_module.EdgeBase
         ), "edge should be an instance of superclass EdgeBase"
         assert isinstance(edge, Edge), "edge should be an Edge instance"
         assert issubclass(Edge, edge_module.Connection), "Edge should be Connection subclass"
@@ -374,11 +378,11 @@ class TestDiEdge:
     def test_issubclass_and_isinstance(self):
         g = DiGraph()
         edge: DiEdge = g.add_edge(1, 2)
-        assert (
-            isinstance(edge, edge_module.Connection)
+        assert isinstance(
+            edge, edge_module.Connection
         ), "edge should be an instance of superclass Connection"
-        assert (
-            isinstance(edge, edge_module.EdgeBase)
+        assert isinstance(
+            edge, edge_module.EdgeBase
         ), "edge should be an instance of superclass EdgeBase"
         assert isinstance(edge, DiEdge), "edge should be an DiEdge instance"
         assert issubclass(DiEdge, edge_module.Connection), "DiEdge should be Connection subclass"
@@ -411,18 +415,18 @@ class TestMultiEdge:
     def test_issubclass_and_isinstance(self):
         g = MultiGraph()
         edge: MultiEdge = g.add_edge(1, 2)
-        assert (
-            isinstance(edge, edge_module.MultiConnection)
+        assert isinstance(
+            edge, edge_module.MultiConnection
         ), "edge should be an instance of superclass MultiConnection"
-        assert (
-            isinstance(edge, edge_module.MultiEdgeBase)
+        assert isinstance(
+            edge, edge_module.MultiEdgeBase
         ), "edge should be an instance of superclass MultiEdgeBase"
         assert isinstance(edge, MultiEdge), "edge should be an MultiEdge instance"
-        assert (
-            issubclass(MultiEdge, edge_module.MultiConnection)
+        assert issubclass(
+            MultiEdge, edge_module.MultiConnection
         ), "MultiEdge should be MultiConnection subclass"
-        assert (
-            issubclass(MultiEdge, edge_module.MultiEdgeBase)
+        assert issubclass(
+            MultiEdge, edge_module.MultiEdgeBase
         ), "MultiEdge should be MultiEdgeBase subclass"
 
     def test_equality_operator(self):
@@ -454,18 +458,18 @@ class TestMultiDiEdge:
     def test_issubclass_and_isinstance(self):
         g = MultiDiGraph()
         edge: MultiDiEdge = g.add_edge(1, 2)
-        assert (
-            isinstance(edge, edge_module.MultiConnection)
+        assert isinstance(
+            edge, edge_module.MultiConnection
         ), "edge should be an instance of superclass MultiConnection"
-        assert (
-            isinstance(edge, edge_module.MultiEdgeBase)
+        assert isinstance(
+            edge, edge_module.MultiEdgeBase
         ), "edge should be an instance of superclass MultiEdgeBase"
         assert isinstance(edge, MultiDiEdge), "edge should be an MultiDiEdge instance"
-        assert (
-            issubclass(MultiDiEdge, edge_module.MultiConnection)
+        assert issubclass(
+            MultiDiEdge, edge_module.MultiConnection
         ), "MultiDiEdge should be MultiConnection subclass"
-        assert (
-            issubclass(MultiDiEdge, edge_module.MultiEdgeBase)
+        assert issubclass(
+            MultiDiEdge, edge_module.MultiEdgeBase
         ), "MultiDiEdge should be MultiEdgeBase subclass"
 
     def test_equality_operator(self):

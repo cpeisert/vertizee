@@ -16,22 +16,61 @@
 :term:`spanning arborescenses <spanning arborescence>`, :term:`spanning forests <spanning forest>`,
 and spanning :term:`branchings <branching>`.
 
+* :func:`get_weight_function` - Returns a function that accepts an edge and returns the
+  corresponding edge weight.
 * :class:`Cycle` - A :term:`cycle` in a graph.
 * :class:`PseudoEdge` - A :term:`directed edge` that has :class:`PseudoVertex` endpoints.
 * :class:`PseudoGraph` - A :term:`digraph` that is comprised of :class:`pseudovertices
   <PseudoVertex>` and :class:`pseudoedges <PseudoEdge>`.
 * :class:`PseudoVertex` - A :term:`vertex` that may either represent a regular vertex or be a new
   vertex formed by contracting a :term:`cycle`.
-* :class:`UndirectedPseudoVertex` - A :term:`vertex` in an term:`undirected graph` that supports
-  additional properties for spanning algorithms.
 """
 
 from __future__ import annotations
-from typing import Dict, Final, Generic, List, Optional, Set
+from typing import Callable, Dict, Final, Generic, List, Optional, Set
 
 from vertizee.classes.graph import DiGraph
 from vertizee.classes.edge import _DiEdge, E
 from vertizee.classes.vertex import _DiVertex, V
+
+
+def get_weight_function(weight: str = "Edge__weight", minimum: bool = True) -> Callable[[E], float]:
+    """Returns a function that accepts an edge and returns the corresponding edge weight.
+
+    If there is no edge weight, then the edge weight is assumed to be one.
+
+    Note:
+        For multigraphs, the minimum (or maximum) edge weight among the parallel edge connections
+        is returned.
+
+    Args:
+        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
+            dictionary. The default value (``Edge_weight``) uses the ``Edge.weight`` property.
+        minimum: Optional; For multigraphs, if True, then the minimum weight from the parallel edge
+            connections is returned, otherwise the maximum weight. Defaults to True.
+
+    Returns:
+        Callable[[E], float]: A function that accepts an edge and returns the
+        corresponding edge weight.
+    """
+
+    def default_weight_function(edge: E) -> float:
+        if edge._parent_graph.is_multigraph():
+            if minimum:
+                return min(c.weight for c in edge.connections())
+            return max(c.weight for c in edge.connections())
+        return edge.weight
+
+    def attr_weight_function(edge: E) -> float:
+        if edge._parent_graph.is_multigraph():
+            if minimum:
+                return min(c.attr.get(weight, 1.0) for c in edge.connections())
+            return max(c.attr.get(weight, 1.0) for c in edge.connections())
+        return edge.attr.get(weight, 1.0)
+
+    if weight == "Edge__weight":
+        return default_weight_function
+    return attr_weight_function
 
 
 class Cycle(Generic[V, E]):
@@ -161,6 +200,7 @@ class PseudoGraph(DiGraph):
     """PseudoGraph is a graph that supports algorithms that may :term:`contract` vertices and edges,
     where the vertices and edges to be contracted comprise a :term:`cycle`.
     """
+
     def __init__(self):
         super().__init__()
         self.cycle_stack: List[Cycle[PseudoVertex, PseudoEdge]] = list()

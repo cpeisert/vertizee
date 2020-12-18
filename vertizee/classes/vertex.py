@@ -48,7 +48,13 @@ from vertizee.classes.collection_views import SetView
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
     from vertizee.classes.edge import (
-        Connection, DiEdge, Edge, EdgeClass, MultiConnection, MultiDiEdge, MultiEdge
+        Connection,
+        DiEdge,
+        Edge,
+        EdgeClass,
+        MultiConnection,
+        MultiDiEdge,
+        MultiEdge,
     )
     from vertizee.classes.graph import G
     from vertizee.classes.primitives_parsing import GraphPrimitive
@@ -114,7 +120,7 @@ class VertexBase(ABC, Generic[E]):
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
     """
 
-    __slots__ = ('_attr', '_incident_edges', '_label', '_parent_graph')
+    __slots__ = ("_attr", "_incident_edges", "_label", "_parent_graph")
 
     def __init__(self, label: VertexLabel, parent_graph: G, **attr) -> None:
         self._label = str(label)
@@ -123,8 +129,7 @@ class VertexBase(ABC, Generic[E]):
         for k, v in attr.items():
             self.attr[k] = v
 
-        self._incident_edges: _IncidentEdges[E] = \
-            _IncidentEdges(self.label, parent_graph)
+        self._incident_edges: _IncidentEdges[E] = _IncidentEdges(self.label, parent_graph)
         self._parent_graph = parent_graph
 
     def __compare(self, other: VertexType, operator: str) -> bool:
@@ -714,9 +719,9 @@ class _IncidentEdges(Generic[E]):
     def __eq__(self, other) -> bool:
         if not isinstance(other, _IncidentEdges):
             return False
-        if self.shared_vertex_label != other.shared_vertex_label or len(
-            self.incident_edges
-        ) != len(other.incident_edges):
+        if self.shared_vertex_label != other.shared_vertex_label or len(self.incident_edges) != len(
+            other.incident_edges
+        ):
             return False
         if self.incident_edges != other.incident_edges:
             return False
@@ -737,8 +742,9 @@ class _IncidentEdges(Generic[E]):
         """
         shared = self.shared_vertex_label
         if shared not in (edge.vertex1.label, edge.vertex2.label):
-            raise ValueError(f"cannot add edge {edge} since it is not incident on vertex "
-                f"'{shared}'")
+            raise ValueError(
+                f"cannot add edge {edge} since it is not incident on vertex " f"'{shared}'"
+            )
 
         self.incident_edge_labels.add(edge.label)
         if edge.is_loop():
@@ -749,9 +755,9 @@ class _IncidentEdges(Generic[E]):
         """The set of all vertices adjacent to the shared vertex."""
         vertices = set()
         for label in self.incident_edge_labels:
-            comma_pos = label.find(',')
+            comma_pos = label.find(",")
             v1_label = label[1:comma_pos]
-            v2_label = label[comma_pos + 1:-1].strip()
+            v2_label = label[comma_pos + 1 : -1].strip()
             vertices.add(v1_label)
             vertices.add(v2_label)
 
@@ -768,7 +774,7 @@ class _IncidentEdges(Generic[E]):
 
         vertices = set()
         for label in self.incident_edge_labels:
-            comma_pos = label.find(',')
+            comma_pos = label.find(",")
             v1_label = label[1:comma_pos]
             if v1_label != self.shared_vertex_label:
                 vertices.add(v1_label)
@@ -783,8 +789,8 @@ class _IncidentEdges(Generic[E]):
         graphs, this is an empty set."""
         vertices = set()
         for label in self.incident_edge_labels:
-            comma_pos = label.find(',')
-            v2_label = label[comma_pos + 1:-1].strip()
+            comma_pos = label.find(",")
+            v2_label = label[comma_pos + 1 : -1].strip()
             if v2_label != self.shared_vertex_label:
                 vertices.add(v2_label)
 
@@ -813,7 +819,7 @@ class _IncidentEdges(Generic[E]):
 
         edges = set()
         for label in self.incident_edge_labels:
-            comma_pos = label.find(',')
+            comma_pos = label.find(",")
             v1_label = label[1:comma_pos]
             if v1_label != self.shared_vertex_label:
                 edges.add(label)
@@ -840,8 +846,8 @@ class _IncidentEdges(Generic[E]):
         empty set."""
         edges = set()
         for label in self.incident_edge_labels:
-            comma_pos = label.find(',')
-            v2_label = label[comma_pos + 1:-1].strip()
+            comma_pos = label.find(",")
+            v2_label = label[comma_pos + 1 : -1].strip()
             if v2_label != self.shared_vertex_label:
                 edges.add(label)
 

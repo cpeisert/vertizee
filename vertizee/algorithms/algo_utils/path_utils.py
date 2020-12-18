@@ -256,7 +256,9 @@ class ShortestPath(Generic[V]):
         self._add_s_d_edge_if_exists()
 
     def relax_edge(
-        self, predecessor_path: ShortestPath, weight_function: Callable[[V, V, bool], float],
+        self,
+        predecessor_path: ShortestPath,
+        weight_function: Callable[[V, V, bool], float],
         reverse_graph: bool = False,
     ) -> bool:
         """Tests whether there is a shorter path from the source vertex through ``predecessor_path``

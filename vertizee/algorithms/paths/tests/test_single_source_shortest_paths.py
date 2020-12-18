@@ -27,7 +27,7 @@ from vertizee.algorithms.paths.single_source_shortest_paths import (
     dijkstra,
     dijkstra_fibonacci,
     shortest_paths,
-    breadth_first_search_shortest_paths
+    breadth_first_search_shortest_paths,
 )
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.edge import E
@@ -37,6 +37,7 @@ from vertizee.classes.vertex import V
 
 class TestBellmanFord:
     """Tests for Bellman-Ford algorithm."""
+
     def test_bellman_ford_default_edge_weight(self):
         g = DiGraph(
             [
@@ -106,9 +107,13 @@ class TestBellmanFord:
         path_dict: VertexDict[ShortestPath] = bellman_ford(g, "s", save_paths=True)
 
         assert path_dict["t"].path() == ["s", "t"], "Path s ~> t should be [s, t]."
-        assert (
-            path_dict["x"].path() == ["s", "t", "y", "z", "x"]
-        ), "Path s ~> x should be [s, t, y, z, x]."
+        assert path_dict["x"].path() == [
+            "s",
+            "t",
+            "y",
+            "z",
+            "x",
+        ], "Path s ~> x should be [s, t, y, z, x]."
         assert path_dict["z"].path() == ["s", "t", "y", "z"], "Path s ~> z should be [s, t, y, z]."
 
         path_s_t = reconstruct_path("s", "t", path_dict)
@@ -209,6 +214,7 @@ class TestBellmanFord:
 
 class TestBreadthFirstSearchShortestPaths:
     """Tests for shortest-paths unweighted using breadth-first search."""
+
     def test_breadth_first_search_shortest_paths(self):
         g = DiGraph(
             [
@@ -237,6 +243,7 @@ class TestBreadthFirstSearchShortestPaths:
 
 class TestDijkstra:
     """Tests for Dijkstra's algorithm."""
+
     def test_dijkstra_default_edge_weight(self):
         g = DiGraph(
             [
@@ -452,6 +459,7 @@ class TestDijkstra:
 
 class TestShortestPaths:
     """Tests for shortest-paths function."""
+
     g = DiGraph()
     for i in range(100):
         g.add_edge(i, i + 1)
@@ -460,14 +468,16 @@ class TestShortestPaths:
         g.add_edge(i + 6, i)
 
     # shortest_paths(g, source=0)
-    bfs_time = timeit.timeit("shortest_paths(g, source=0)",
-        globals={"shortest_paths": shortest_paths, "g": g}, number=10)
+    bfs_time = timeit.timeit(
+        "shortest_paths(g, source=0)", globals={"shortest_paths": shortest_paths, "g": g}, number=10
+    )
 
     for index, edge in enumerate(g.edges()):
         if index % 3 == 0:
             edge._weight = -2
     g._is_weighted_graph = True
 
-    bellman_ford_time = timeit.timeit("shortest_paths(g, source=0)",
-        globals={"shortest_paths": shortest_paths, "g": g}, number=10)
+    bellman_ford_time = timeit.timeit(
+        "shortest_paths(g, source=0)", globals={"shortest_paths": shortest_paths, "g": g}, number=10
+    )
     assert bfs_time < bellman_ford_time

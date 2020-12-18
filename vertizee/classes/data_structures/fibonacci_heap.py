@@ -153,8 +153,7 @@ class FibonacciHeap(Generic[T]):
             else:
                 self._consolidate()
             return z.item
-        else:
-            return None
+        return None
 
     def insert(self, item: T) -> None:
         """Inserts a new item into the heap."""
@@ -172,8 +171,7 @@ class FibonacciHeap(Generic[T]):
         """Returns the minimum item from the heap, or ``None`` if the heap is empty."""
         if self._min is not None:
             return self._min.item
-        else:
-            return None
+        return None
 
     def union(self, other: "FibonacciHeap") -> None:
         """Merge ``other`` Fibonacci heap into this heap."""

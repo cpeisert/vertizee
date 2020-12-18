@@ -23,6 +23,7 @@ from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 
 class Item:
     """Wrapper for items in a Fibonacci heap."""
+
     def __init__(self, name: str, priority: int):
         self.name = name
         self.priority = priority

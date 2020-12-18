@@ -97,6 +97,7 @@ class UnionFind(Generic[T]):
      .. [N2020_2] NetworkX module: networkx.utils.union_find.py
                   https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
     """
+
     __slots__ = ("_parents", "_paths_compressed", "_ranks", "_set_count", "_sets_dict")
 
     def __init__(self, *args: T) -> None:

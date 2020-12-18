@@ -17,20 +17,26 @@
 
 Functions:
 
-* :func:`optimum_directed_forest` - Iterates over the minimum (or maximum) :term:`arborescences
-  <arborescence>` comprising a directed :term:`spanning forest` of a weighted,
-  :term:`directed graph <digraph>`.
+* :func:`optimum_directed_forest` - Iterates over a minimum (or maximum) :term:`directed forest` of
+  a weighted, :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds` A directed
+  forest is also called a :term:`branching`.
+* :func:`spanning_arborescence` - Returns a minimum (or maximum) :term:`spanning arborescence` of
+  a weighted, :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds`
 * :func:`edmonds` - Iterates over the maximum (or minimum) :term:`arborescences <arborescence>` of
   a :term:`digraph` comprising an :term:`optimum spanning branching` using Edmonds' algorithm.
 """
 
 from __future__ import annotations
-from typing import Callable, Dict, Final, Iterator, Union
+from typing import Dict, Final, Iterator, Union
 
 from vertizee import exception
 
 from vertizee.algorithms.algo_utils.spanning_utils import (
-    Cycle, PseudoEdge, PseudoGraph, PseudoVertex
+    Cycle,
+    get_weight_function,
+    PseudoEdge,
+    PseudoGraph,
+    PseudoVertex
 )
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.data_structures.tree import Tree
@@ -42,91 +48,11 @@ from vertizee.classes.vertex import V
 INFINITY: Final = float("inf")
 
 
-class ReverseSearchState:
-    """A class to save the state of which adjacent vertices (``parents``) of a vertex (``child``)
-    still have not been visited in a reverse depth-first search.
-
-    Args:
-        child: The child vertex relative to ``parents`` in a reverse depth-first search tree.
-        parents: An iterator over the unvisited parents of ``child`` in a search tree.
-    """
-    def __init__(self, child: V, parents: Iterator[V]) -> None:
-        self.child = child
-        self.parents = parents
-
-
-def get_weight_function(weight: str = "Edge__weight", minimum: bool = True) -> Callable[[E], float]:
-    """Returns a function that accepts an edge and returns the corresponding edge weight.
-
-    If there is no edge weight, then the edge weight is assumed to be one.
-
-    Note:
-        For multigraphs, the minimum (or maximum) edge weight among the parallel edge connections
-        is returned.
-
-    Args:
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge_weight``) uses the ``Edge.weight`` property.
-        minimum: Optional; For multigraphs, if True, then the minimum weight from the parallel edge
-            connections is returned, otherwise the maximum weight. Defaults to True.
-
-    Returns:
-        Callable[[E], float]: A function that accepts an edge and returns the
-        corresponding edge weight.
-    """
-
-    def default_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            if minimum:
-                return min(c.weight for c in edge.connections())
-            return max(c.weight for c in edge.connections())
-        return edge.weight
-
-    def attr_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            if minimum:
-                return min(c.attr.get(weight, 1.0) for c in edge.connections())
-            return max(c.attr.get(weight, 1.0) for c in edge.connections())
-        return edge.attr.get(weight, 1.0)
-
-    if weight == "Edge__weight":
-        return default_weight_function
-    return attr_weight_function
-
-
-def get_total_weight_function(weight: str = "Edge__weight") -> Callable[[E], float]:
-    """Returns a function that accepts an edge and returns the total weight of the edge, which
-    in the case of multiedges, includes the weights of all parallel edge connections.
-
-    If there is no edge weight, then the edge weight is assumed to be one.
-
-    Args:
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge_weight``) uses the ``Edge.weight`` property.
-
-    Returns:
-        Callable[[E], float]: A function that accepts an edge and returns the total weight of the
-        edge, including parallel connections.
-    """
-
-    def default_total_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            return sum(c.weight for c in edge.connections())
-        return edge.weight
-
-    def attr_total_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            return sum(c.attr.get(weight, 1.0) for c in edge.connections())
-        return edge.attr.get(weight, 1.0)
-
-    if weight == "Edge__weight":
-        return default_total_weight_function
-    return attr_total_weight_function
-
-
 def edmonds(
-    digraph: Union[DiGraph, MultiDiGraph], minimum: bool = True,
-    find_spanning_arborescence: bool = False, weight: str = "Edge__weight"
+    digraph: Union[DiGraph, MultiDiGraph],
+    minimum: bool = True,
+    find_spanning_arborescence: bool = False,
+    weight: str = "Edge__weight",
 ) -> Iterator[Tree[V, E]]:
     """Iterates over the maximum (or minimum) :term:`arborescences <arborescence>` of a
     :term:`digraph` comprising an :term:`optimum spanning branching` using Edmonds' algorithm.
@@ -142,7 +68,7 @@ def edmonds(
         the max or min weight connection. The ``digraph`` object is not modified.
 
     Args:
-        graph: The directed graph to iterate.
+        graph: The directed graph to explore.
         minimum: Optional;  True to return the minimum arborescences, or False to return
             the maximum arborescences. Defaults to True.
         find_spanning_arborescence: If True, then attempts to find an
@@ -156,17 +82,20 @@ def edmonds(
         arborescence is yielded prior to ``StopIteration``, then it is a
         :term:`spanning arborescence`.
 
+    Raises:
+        Unfeasible: If ``find_spanning_arborescence`` is set to True and the graph does not contain
+            a spanning arborescence, an Unfeasible exception is raised.
+
     See Also:
-        * :func:`spanning_tree`
-        * :func:`kruskal`
-        * :func:`prim`
-        * :func:`prim_fibonacci`
+        * :func:`spanning_arborescence`
+        * :func:`optimum_directed_forest`
     """
     if len(digraph) == 0:
         raise exception.Unfeasible("directed forests are undefined for empty graphs")
     if not digraph.is_directed():
         raise exception.GraphTypeNotSupported(
-            "graph must be directed; for undirected graphs see spanning_tree and optimum_forest")
+            "graph must be directed; for undirected graphs see spanning_tree and optimum_forest"
+        )
 
     weight_function = get_weight_function(weight, minimum=minimum)
     sign = -1 if minimum else 1
@@ -183,7 +112,8 @@ def edmonds(
         pv = PseudoVertex(
             label=v.label,
             parent_graph=pseudograph,
-            incident_edge_labels=v._incident_edges._incident_edge_labels)
+            incident_edge_labels=v._incident_edges._incident_edge_labels,
+        )
         pseudograph.add_vertex_object(pv)
         arborescence_vertex_sets.make_set(pv)
         representative_vertex_to_arborescence[pv] = Tree(pv)
@@ -236,16 +166,21 @@ def edmonds(
             # a new graph by "shrinking" to a single new vertex v_1^{i + 1} the cycle Q_i and
             # every edge of Q_i.
             new_vertex = _contract_cycle(
-                pseudograph, cycle_edge=optimum_edge, union_find=arborescence_vertex_sets,
-                vertex_to_arborescence=representative_vertex_to_arborescence)
+                pseudograph,
+                cycle_edge=optimum_edge,
+                union_find=arborescence_vertex_sets,
+                vertex_to_arborescence=representative_vertex_to_arborescence,
+            )
             vertices.discard(new_vertex.cycle.vertices)
             vertices.add(new_vertex)
             continue
 
         if vertex.parent_vertex:
-            raise exception.AlgorithmError(f"vertex {vertex} already has a parent vertex "
+            raise exception.AlgorithmError(
+                f"vertex {vertex} already has a parent vertex "
                 f"{vertex.parent_vertex} (i.e., a vertex connected by an incoming edge) in "
-                "addition to a second incoming edge, which violates the definition of arborescence")
+                "addition to a second incoming edge, which violates the definition of arborescence"
+            )
         vertex.parent_vertex = parent_candidate
 
         # parent_representative = arborescence_vertex_sets[
@@ -290,13 +225,16 @@ def edmonds(
         vertex_cycle: PseudoVertex = pseudograph[cycle.label]
         edge_to_delete = None
 
-        if (vertex_cycle.parent_vertex and
-            pseudograph.has_edge(vertex_cycle.parent_vertex, vertex_cycle)):
+        if vertex_cycle.parent_vertex and pseudograph.has_edge(
+            vertex_cycle.parent_vertex, vertex_cycle
+        ):
             # vertex_cycle_i+1 is _not_ the root of an arborescence
             incoming_edge: PseudoEdge = pseudograph[vertex_cycle.parent_vertex, vertex_cycle]
             if not incoming_edge.previous_version:
-                raise exception.AlgorithmError(f"edge {incoming_edge} directed toward cycle "
-                    f"{cycle.label} does not have a previous version; this should not be possible")
+                raise exception.AlgorithmError(
+                    f"edge {incoming_edge} directed toward cycle "
+                    f"{cycle.label} does not have a previous version; this should not be possible"
+                )
             head_i = incoming_edge.previous_version.head
 
             edge_i_2 = None
@@ -306,7 +244,8 @@ def edmonds(
                     break
             if not edge_i_2:
                 raise exception.AlgorithmError(
-                    f"no incoming cycle edge found for cycle vertex {head_i}")
+                    f"no incoming cycle edge found for cycle vertex {head_i}"
+                )
             edge_to_delete = edge_i_2
 
         if not edge_to_delete:
@@ -315,10 +254,19 @@ def edmonds(
 
         representative_vertex = arborescence_vertex_sets[vertex_cycle]
         arborescence = representative_vertex_to_arborescence[representative_vertex]
-        _undo_cycle_contraction(pseudograph, cycle, edge_to_delete=edge_to_delete,
-            arborescence=arborescence)
+        _undo_cycle_contraction(
+            pseudograph, cycle, edge_to_delete=edge_to_delete, arborescence=arborescence
+        )
 
     for pseudo_arborescence in representative_vertex_to_arborescence.values():
+        if (
+            find_spanning_arborescence
+            and len(pseudo_arborescence.edges()) != digraph.vertex_count - 1
+        ):
+            raise exception.Unfeasible(
+                "digraph does not contain a spanning arborescence; see " "optimum_directed_forest()"
+            )
+
         arborescence = Tree(digraph._vertices[pseudo_arborescence.root.label])
         for vertex in pseudo_arborescence.vertices():
             if vertex.contains_cycle():
@@ -332,16 +280,20 @@ def edmonds(
 def optimum_directed_forest(
     digraph: Union[DiGraph, MultiDiGraph], minimum: bool = True, weight: str = "Edge__weight"
 ) -> Iterator[Tree[V, E]]:
-    """Iterates over the minimum (or maximum) :term:`arborescences <arborescence>` comprising a
-    directed :term:`optimum spanning forest` (also called an :term:`optimum branching <branching>`)
-    of a weighted, :term:`directed graph`.
+    """Iterates over a minimum (or maximum) :term:`directed forest` of a weighted,
+    :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds` A directed forest is also
+    called a :term:`branching`.
 
-    Running time: :math:`O(m + n(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(mn)` where :math:`m = |E|` and :math:`n = |V|`
+
+    This algorithm is only defined for *directed* graphs. To find the optimum forest of an
+    undirected graph, see :func:`optimum_forest
+    <vertizee.algorithms.spanning.undirected.optimum_forest>`.
 
     Args:
-        graph: The directed graph to iterate.
-        minimum: Optional;  True to return the minimum arborescences, or False to return
-            the maximum arborescences. Defaults to True.
+        graph: The directed graph to explore.
+        minimum: Optional;  True to return the minimum directed forest, or False to return
+            the maximum directed forest. Defaults to True.
         weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
             default value (``Edge__weight``) uses the property ``E.weight``.
 
@@ -351,45 +303,50 @@ def optimum_directed_forest(
         :term:`spanning arborescence`.
 
     See Also:
-        * :func:`spanning_tree`
-        * :func:`kruskal`
-        * :func:`prim`
-        * :func:`prim_fibonacci`
-        * :class:`UnionFind <vertizee.classes.data_structures.union_find.UnionFind>`
-
-    Note:
-        This implementation is based on the treatment by Gabow, Galil, Spencer, and Tarjan in their
-        paper :download:`"Efficient algorithms for finding minimum spanning trees in undirected and
-        directed graphs."
-        </references/Efficient_algorithms_for_finding_min_spanning_trees_GGST.pdf>` [GGST1986]_ The
-        work of Gabow et al. builds upon the Chu–Liu/Edmonds' algorithm presented in the paper
-        :download:`"Optimum Branchings." </references/Optimum_Branchings_Edmonds.pdf>`. [E1986]_
-
-    References:
-     .. [E1986] Jack Edmonds. :download:`"Optimum Branchings."
-            </references/Optimum_Branchings_Edmonds.pdf>` Journal of Research of the National
-            Bureau of Standards Section B, 71B (4):233–240, 1967.
-
-     .. [GGST1986] Harold N. Gabow, Zvi Galil, Thomas Spencer, and Robert E. Tarjan.
-            :download:`"Efficient algorithms for finding minimum spanning trees in undirected and
-            directed graphs."
-            </references/Efficient_algorithms_for_finding_min_spanning_trees_GGST.pdf>`
-            Combinatorica 6:109-122. Springer, 1986.
+        * :func:`edmonds`
+        * :func:`optimum_directed_forest`
     """
-    if len(digraph) == 0:
-        raise exception.Unfeasible("directed forests are undefined for empty graphs")
-    if not digraph.is_directed():
-        raise exception.GraphTypeNotSupported(
-            "graph must be directed; for undirected graphs see spanning_tree")
+    return edmonds(digraph, minimum, find_spanning_arborescence=False, weight=weight)
 
-    # weight_function = get_weight_function(weight, minimum=minimum)
-    # total_weight_function = get_total_weight_function(weight)
-    # sign = 1 if minimum else -1
+
+def spanning_arborescence(
+    digraph: Union[DiGraph, MultiDiGraph], minimum: bool = True, weight: str = "Edge__weight"
+) -> Tree[V, E]:
+    """Returns a minimum (or maximum) :term:`spanning arborescence` of a weighted,
+    :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds`
+
+    Running time: :math:`O(mn)` where :math:`m = |E|` and :math:`n = |V|`
+
+    This algorithm is only defined for *directed* graphs. To find the spanning tree of an undirected
+    graph, see :func:`spanning_tree
+    <vertizee.algorithms.spanning.undirected.spanning_tree>`.
+
+    Args:
+        graph: The directed graph to explore.
+        minimum: Optional;  True to return the minimum arborescences, or False to return
+            the maximum arborescences. Defaults to True.
+        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
+            default value (``Edge__weight``) uses the property ``E.weight``.
+
+    Returns:
+        Tree: The minimum (or maximum) spanning arborescence discovered using Edmonds' algorithm.
+
+    Raises:
+        Unfeasible: An Unfeasible exception is raised if the graph does not contain a spanning
+            arborescence.
+
+    See Also:
+        * :func:`edmonds`
+        * :func:`optimum_directed_forest`
+    """
+    return next(edmonds(digraph, minimum, find_spanning_arborescence=True, weight=weight))
 
 
 def _contract_cycle(
-    graph: PseudoGraph, cycle_edge: PseudoEdge, union_find: UnionFind,
-    vertex_to_arborescence: Dict[PseudoVertex, Tree]
+    graph: PseudoGraph,
+    cycle_edge: PseudoEdge,
+    union_find: UnionFind,
+    vertex_to_arborescence: Dict[PseudoVertex, Tree],
 ) -> PseudoVertex:
     """Helper method to contract a cycle in a graph to a new vertex. The ``cycle_edge`` is the last
     edge that was discovered forming the cycle. The cycle may be followed by using the
@@ -404,11 +361,11 @@ def _contract_cycle(
     Edges in the graph coming into the cycle (i.e. edges whose tail vertices are outside the cycle
     and whose head vertices are on the cycle) as well as edges leaving the cycle (i.e. edges whose
     tail vertices are on the cycle and whose head vertices are outside the cycle) are removed from
-    the graph and replaced by new edges. Each new edge is formed by using the previous edge's
-    vertex that was not on the cycle and replacing the vertex on the cycle with the new vertex
-    formed by contracting the cycle. The original edges are stored within the new pseudoedge
-    objects in the property ``previous_version``, that is, each new edge stores a reference to the
-    version of itself prior to substituting either its tail or head with the new vertex.
+    the graph and replaced by new edges. Each new edge is formed by replacing the vertex that was
+    on the cycle with the new vertex formed by contracting the cycle. The original edges are stored
+    within the new pseudoedge objects in the property ``previous_version``, that is, each new edge
+    stores a reference to the version of itself prior to substituting either its tail or head with
+    the new vertex (formed by contracting the cycle).
 
     In addition, edges coming into the cycle are reweighted as follows:
 
@@ -467,7 +424,8 @@ def _contract_cycle(
                     break
             if not incoming_cycle_edge:
                 raise exception.AlgorithmError(
-                    f"no incoming cycle edge found for cycle vertex {cycle_vertex}")
+                    f"no incoming cycle edge found for cycle vertex {cycle_vertex}"
+                )
 
             new_weight = edge.weight + cycle.min_weight_edge.weight - incoming_cycle_edge.weight
             if edge.tail in cycle.vertices:
@@ -529,8 +487,9 @@ def _contract_cycle(
     return new_vertex
 
 
-def _undo_cycle_contraction(graph: PseudoGraph, cycle: Cycle, edge_to_delete: PseudoEdge,
-    arborescence: Tree) -> None:
+def _undo_cycle_contraction(
+    graph: PseudoGraph, cycle: Cycle, edge_to_delete: PseudoEdge, arborescence: Tree
+) -> None:
     """
     This is a helper function that undoes a cycle contraction by add the cycle edges back to the
     graph and removing one of the cycle edges, thus breaking the cycle. In addition, each incoming

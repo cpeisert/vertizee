@@ -19,16 +19,12 @@
 import pytest
 
 from vertizee import exception
-from vertizee.algorithms.algo_utils.search_utils import (
-    Direction,
-    Label,
-    SearchResults
-)
+from vertizee.algorithms.algo_utils.search_utils import Direction, Label, SearchResults
 from vertizee.algorithms.search.breadth_first_search import (
     bfs,
     bfs_labeled_edge_traversal,
     bfs_preorder_traversal,
-    INFINITY
+    INFINITY,
 )
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.edge import Edge
@@ -49,9 +45,9 @@ class TestBreadthFirstSearch:
             len(results.graph_search_trees()) == 1
         ), "BFS search with source vertex should yield one BFS tree"
         assert len(tree) == 6, "BFS tree should have 6 vertices (excluding vertices 6 & 7)"
-        assert len(tree.edges()) == 5, (
-            "BFS tree should have 5 edges, since for all trees |E| = |V| - 1"
-        )
+        assert (
+            len(tree.edges()) == 5
+        ), "BFS tree should have 5 edges, since for all trees |E| = |V| - 1"
         assert g[6] not in tree, "BFS tree should not contain vertex 6"
 
         # Breadth-first search does not support cycle detection.
@@ -79,9 +75,7 @@ class TestBreadthFirstSearch:
         g = Graph([(0, 0), (0, 1), (1, 2), (3, 4)])
         results: SearchResults = bfs(g)
 
-        assert (
-            len(results.graph_search_trees()) == 2
-        ), "BFS should have discovered two BFS trees"
+        assert len(results.graph_search_trees()) == 2, "BFS should have discovered two BFS trees"
         assert len(results.vertices_preorder()) == 5, "BFS tree should have 5 vertices"
         assert (
             results.vertices_preorder() == results.vertices_postorder()
@@ -90,19 +84,33 @@ class TestBreadthFirstSearch:
 
     def test_bfs_directed_cyclic_graph(self):
         g = MultiDiGraph()
-        g.add_edges_from([(1, 2), (2, 2), (2, 1), (1, 3), (4, 3), (4, 5), (4, 7), (5, 7), (5, 7),
-            (7, 5), (7,6), (6, 5), (7, 8), (5, 8)])
+        g.add_edges_from(
+            [
+                (1, 2),
+                (2, 2),
+                (2, 1),
+                (1, 3),
+                (4, 3),
+                (4, 5),
+                (4, 7),
+                (5, 7),
+                (5, 7),
+                (7, 5),
+                (7, 6),
+                (6, 5),
+                (7, 8),
+                (5, 8),
+            ]
+        )
 
         results1: SearchResults = bfs(g, 1)
 
-        assert len(results1.graph_search_trees()) == 1, (
-            "BFS search should find 1 BFS tree, since source vertex was specified"
-        )
+        assert (
+            len(results1.graph_search_trees()) == 1
+        ), "BFS search should find 1 BFS tree, since source vertex was specified"
         tree: Tree = next(iter(results1.graph_search_trees()))
 
-        assert len(tree.edges()) == 2, (
-            "BFS tree rooted at vertex 1 should have 2 tree edges"
-        )
+        assert len(tree.edges()) == 2, "BFS tree rooted at vertex 1 should have 2 tree edges"
         assert len(tree) == 3, "BFS tree rooted at vertex 1 should have 3 vertices"
 
         assert results1.vertices_preorder()[0] == 1, "first vertex should be 1"
@@ -120,18 +128,20 @@ class TestBreadthFirstSearch:
         # Test DiGraph BFS without specifying a source vertex.
         results: SearchResults = bfs(g)
 
-        assert len(results.graph_search_trees()) > 1, (
-            "BFS search should find at least 2 BFS trees"
-        )
+        assert len(results.graph_search_trees()) > 1, "BFS search should find at least 2 BFS trees"
         assert (
             results.vertices_preorder() == results.vertices_postorder()
         ), "vertices should be the same in preorder and postorder"
-        assert len(results.vertices_postorder()) == 8, (
-            "all vertices should be accounted for when a source vertex is not specified"
-        )
+        assert (
+            len(results.vertices_postorder()) == 8
+        ), "all vertices should be accounted for when a source vertex is not specified"
 
-        classified_edge_count = (len(results.back_edges()) + len(results.cross_edges())
-            + len(results.forward_edges()) + len(results.tree_edges()))
+        classified_edge_count = (
+            len(results.back_edges())
+            + len(results.cross_edges())
+            + len(results.forward_edges())
+            + len(results.tree_edges())
+        )
         assert classified_edge_count == len(g.edges()), "classified edges should equal total edges"
 
     def test_bfs_traversal_undirected_graph(self):
@@ -139,29 +149,50 @@ class TestBreadthFirstSearch:
         edge_iter = bfs_labeled_edge_traversal(g)
         bfs_edge_tuples = list(edge_iter)
 
-        tree_roots = set(child for parent, child, label, direction, depth in bfs_edge_tuples
-            if label == Label.TREE_ROOT)
+        tree_roots = set(
+            child
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if label == Label.TREE_ROOT
+        )
         assert len(tree_roots) == 2, "there should be two BFS trees"
 
         vertices = set(child for parent, child, label, direction, depth in bfs_edge_tuples)
         assert len(vertices) == 8, "BFS traversal should include all vertices"
 
-        vertices_preorder = list(child for parent, child, label, direction, depth in bfs_edge_tuples
-            if direction == Direction.PREORDER)
-        vertices_postorder = list(child for parent, child, label, direction, depth
-            in bfs_edge_tuples if direction == Direction.POSTORDER)
-        assert vertices_preorder == vertices_postorder, (
-            "preorder vertices should match the postorder vertices"
+        vertices_preorder = list(
+            child
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if direction == Direction.PREORDER
         )
+        vertices_postorder = list(
+            child
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if direction == Direction.POSTORDER
+        )
+        assert (
+            vertices_preorder == vertices_postorder
+        ), "preorder vertices should match the postorder vertices"
 
-        back_edges = set((parent, child) for parent, child, label, direction, depth
-            in bfs_edge_tuples if label == Label.BACK_EDGE)
-        cross_edges = set((parent, child) for parent, child, label, direction, depth
-            in bfs_edge_tuples if label == Label.CROSS_EDGE)
-        forward_edges = set((parent, child) for parent, child, label, direction, depth
-            in bfs_edge_tuples if label == Label.FORWARD_EDGE)
-        tree_edges = set((parent, child) for parent, child, label, direction, depth
-            in bfs_edge_tuples if label == Label.TREE_EDGE)
+        back_edges = set(
+            (parent, child)
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if label == Label.BACK_EDGE
+        )
+        cross_edges = set(
+            (parent, child)
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if label == Label.CROSS_EDGE
+        )
+        forward_edges = set(
+            (parent, child)
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if label == Label.FORWARD_EDGE
+        )
+        tree_edges = set(
+            (parent, child)
+            for parent, child, label, direction, depth in bfs_edge_tuples
+            if label == Label.TREE_EDGE
+        )
 
         assert not back_edges
         assert not forward_edges
@@ -171,17 +202,29 @@ class TestBreadthFirstSearch:
         # Test traversal when source is specified.
         edge_iter = bfs_labeled_edge_traversal(g, source=2)
         bfs_tuples2 = list(edge_iter)
-        depth0 = next(depth for parent, child, label, direction, depth
-            in bfs_tuples2 if child == 0 and label == Label.TREE_EDGE)
+        depth0 = next(
+            depth
+            for parent, child, label, direction, depth in bfs_tuples2
+            if child == 0 and label == Label.TREE_EDGE
+        )
         assert depth0 == 2, "vertex 0 should be at depth 2 in the tree relative to source vertex 2"
-        depth3 = next(depth for parent, child, label, direction, depth
-            in bfs_tuples2 if child == 3 and label == Label.TREE_EDGE)
+        depth3 = next(
+            depth
+            for parent, child, label, direction, depth in bfs_tuples2
+            if child == 3 and label == Label.TREE_EDGE
+        )
         assert depth3 == 1, "vertex 3 should be at depth 1 in the tree relative to source vertex 2"
-        depth2 = next(depth for parent, child, label, direction, depth
-            in bfs_tuples2 if child == 2 and label == Label.TREE_ROOT)
+        depth2 = next(
+            depth
+            for parent, child, label, direction, depth in bfs_tuples2
+            if child == 2 and label == Label.TREE_ROOT
+        )
         assert depth2 == 0, "vertex 2 should be at depth 0 in the BFS tree"
-        depth1_3 = next(depth for parent, child, label, direction, depth
-            in bfs_tuples2 if child in (1, 3) and label == Label.CROSS_EDGE)
+        depth1_3 = next(
+            depth
+            for parent, child, label, direction, depth in bfs_tuples2
+            if child in (1, 3) and label == Label.CROSS_EDGE
+        )
         assert depth1_3 == INFINITY, "non-tree edges should report depth as infinity"
 
     def test_bfs_traversal_directed_graph(self):

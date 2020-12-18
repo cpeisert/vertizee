@@ -70,7 +70,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
 from typing import (
-    Any, Dict, Final, Generic, Hashable, Iterable, List, Optional, Tuple, TYPE_CHECKING, TypeVar,
+    Any,
+    Dict,
+    Final,
+    Generic,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
     Union
 )
 
@@ -78,9 +87,6 @@ from vertizee.classes import vertex as vertex_module
 from vertizee.classes.collection_views import ItemsView, ListView
 from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
 from vertizee.utils import abc_utils
-
-if TYPE_CHECKING:
-    from vertizee.classes.graph import G
 
 # Type aliases
 AttributesDict = dict
@@ -337,8 +343,18 @@ class Connection(ABC, Generic[V]):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is Connection:
-            return abc_utils.check_methods(C, "__eq__", "__getitem__", "__setitem__",
-                "attr", "is_loop", "label", "vertex1", "vertex2", "weight")
+            return abc_utils.check_methods(
+                C,
+                "__eq__",
+                "__getitem__",
+                "__setitem__",
+                "attr",
+                "is_loop",
+                "label",
+                "vertex1",
+                "vertex2",
+                "weight",
+            )
         return NotImplemented
 
     @property
@@ -395,8 +411,18 @@ class MultiConnection(ABC, Generic[V]):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is MultiConnection:
-            return abc_utils.check_methods(C, "__eq__", "connections", "get_connection", "is_loop",
-                "label", "multiplicity", "vertex1", "vertex2", "weight")
+            return abc_utils.check_methods(
+                C,
+                "__eq__",
+                "connections",
+                "get_connection",
+                "is_loop",
+                "label",
+                "multiplicity",
+                "vertex1",
+                "vertex2",
+                "weight",
+            )
         return NotImplemented
 
     @abstractmethod
@@ -619,10 +645,11 @@ class EdgeBase(Connection[V], Generic[V]):
         self._vertex1 = vertex1
         self._vertex2 = vertex2
 
-        self._label = create_edge_label(vertex1, vertex2,
-            is_directed=vertex1._parent_graph.is_directed())
+        self._label = create_edge_label(
+            vertex1, vertex2, is_directed=vertex1._parent_graph.is_directed()
+        )
 
-        self._parent_graph: G[V, Connection] = vertex1._parent_graph
+        self._parent_graph = vertex1._parent_graph  # type: G[V, Connection]
         self._weight = weight
 
         self._attr: Optional[dict] = None  # Initialized lazily using property getter.
@@ -771,8 +798,12 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
     __slots__ = ("_connections", "_label", "_parent_graph", "_vertex1", "_vertex2", "_weight")
 
     def __init__(
-        self, vertex1: V, vertex2: V, weight: float = DEFAULT_WEIGHT,
-        key: ConnectionKey = DEFAULT_CONNECTION_KEY, **attr
+        self,
+        vertex1: V,
+        vertex2: V,
+        weight: float = DEFAULT_WEIGHT,
+        key: ConnectionKey = DEFAULT_CONNECTION_KEY,
+        **attr,
     ) -> None:
         self._vertex1 = vertex1
         self._vertex2 = vertex2
@@ -781,9 +812,10 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
         self._connections: Dict[ConnectionKey, _EdgeConnectionData] = dict()
         self._connections[key] = edge_connection
 
-        self._label = create_edge_label(vertex1, vertex2,
-            is_directed=vertex1._parent_graph.is_directed())
-        self._parent_graph: G[V, MultiConnection] = vertex1._parent_graph
+        self._label = create_edge_label(
+            vertex1, vertex2, is_directed=vertex1._parent_graph.is_directed()
+        )
+        self._parent_graph = vertex1._parent_graph  # type: G[V, MultiConnection]
 
     def __eq__(self, other) -> bool:
         if isinstance(other, MultiConnection):
@@ -1048,8 +1080,12 @@ class MultiEdge(MultiEdgeBase[MultiVertex]):
     __slots__ = ()
 
     def __init__(
-        self, vertex1: MultiVertex, vertex2: MultiVertex, weight: float = DEFAULT_WEIGHT,
-        key: ConnectionKey = DEFAULT_CONNECTION_KEY, **attr
+        self,
+        vertex1: MultiVertex,
+        vertex2: MultiVertex,
+        weight: float = DEFAULT_WEIGHT,
+        key: ConnectionKey = DEFAULT_CONNECTION_KEY,
+        **attr,
     ) -> None:
         super().__init__(vertex1, vertex2, weight=weight, key=key, **attr)
 
@@ -1095,8 +1131,12 @@ class MultiDiEdge(MultiEdgeBase[MultiDiVertex]):
     __slots__ = ("_connections",)
 
     def __init__(
-        self, tail: MultiDiVertex, head: MultiDiVertex, weight: float = DEFAULT_WEIGHT,
-        key: ConnectionKey = DEFAULT_CONNECTION_KEY, **attr
+        self,
+        tail: MultiDiVertex,
+        head: MultiDiVertex,
+        weight: float = DEFAULT_WEIGHT,
+        key: ConnectionKey = DEFAULT_CONNECTION_KEY,
+        **attr,
     ):
         super().__init__(vertex1=tail, vertex2=head, weight=weight, key=key, **attr)
 

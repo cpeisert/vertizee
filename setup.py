@@ -18,7 +18,7 @@ Setup script for Vertizee.
 You can install Vertizee with:
 python setup.py install
 """
-#pylint: disable=exec-used, undefined-variable
+# pylint: disable=exec-used, undefined-variable
 
 #
 # TODO(cpeisert): Prior to public release, run all Example code to ensure it works.
@@ -27,31 +27,27 @@ python setup.py install
 import sys
 from setuptools import find_packages, setup
 
-DISTNAME = 'vertizee'
-DESCRIPTION = 'An object-oriented, typed, graph library for the analysis and study of graphs.'
-with open('README.md', 'r') as f:
+DISTNAME = "vertizee"
+DESCRIPTION = "An object-oriented, typed, graph library for the analysis and study of graphs."
+with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
-LONG_DESCRIPTION_CONTENT_TYPE = 'text/markdown'
-AUTHOR = f'The {DISTNAME.title()} Authors'
-AUTHOR_EMAIL = 'cpeisert@gmail.com'
-MAIN_PACKAGE = 'vertizee'
-LICENSE = 'Apache 2.0'
-ORG_OR_USER = 'cpeisert'
-PYTHON_REQUIRES = '>=3.7'
-REQUIREMENTS = [
-    requirement.strip() for requirement in open('requirements/default.txt').readlines()
-]
+LONG_DESCRIPTION_CONTENT_TYPE = "text/markdown"
+AUTHOR = f"The {DISTNAME.title()} Authors"
+AUTHOR_EMAIL = "cpeisert@gmail.com"
+MAIN_PACKAGE = "vertizee"
+LICENSE = "Apache 2.0"
+ORG_OR_USER = "cpeisert"
+PYTHON_REQUIRES = ">=3.7"
+REQUIREMENTS = [requirement.strip() for requirement in open("requirements/default.txt").readlines()]
 
 DOCS_REQUIREMENTS = [
-    requirement.strip() for requirement in open('requirements/docs.txt').readlines()
+    requirement.strip() for requirement in open("requirements/docs.txt").readlines()
 ]
 TEST_REQUIREMENTS = [
-    requirement.strip() for requirement in open('requirements/test.txt').readlines()
+    requirement.strip() for requirement in open("requirements/test.txt").readlines()
 ]
-EXTRA_REQUIREMENTS = {
-    'all': DOCS_REQUIREMENTS + TEST_REQUIREMENTS
-}
-URL = f'https://github.io/{ORG_OR_USER}/{DISTNAME}'
+EXTRA_REQUIREMENTS = {"all": DOCS_REQUIREMENTS + TEST_REQUIREMENTS}
+URL = f"https://github.io/{ORG_OR_USER}/{DISTNAME}"
 
 
 if sys.argv[-1] == "setup.py":
@@ -60,12 +56,12 @@ if sys.argv[-1] == "setup.py":
 
 if sys.version_info[:2] < (3, 6):
     ver: tuple = sys.version_info[:2]
-    error = f'{DISTNAME.title()} requires Python 3.6 or later ({ver[0]}.{ver[1]} detected).'
+    error = f"{DISTNAME.title()} requires Python 3.6 or later ({ver[0]}.{ver[1]} detected)."
     sys.stderr.write(error + "\n")
     sys.exit(1)
 
 # Read the __version__ variable.
-with open(f'{DISTNAME}/version.py') as f:
+with open(f"{DISTNAME}/version.py") as f:
     exec(f.read(), globals())
 
 if __name__ == "__main__":

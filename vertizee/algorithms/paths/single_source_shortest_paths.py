@@ -140,7 +140,7 @@ def shortest_paths(
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight"
+    weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices.
@@ -246,7 +246,7 @@ def bellman_ford(
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight"
+    weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices in a weighted graph using the Bellman-Ford algorithm.
@@ -397,9 +397,13 @@ def breadth_first_search_shortest_paths(
     vertex_to_path_map[s].reinitialize(initial_length=0)
 
     tuple_generator = breadth_first_search.bfs_labeled_edge_traversal(
-        graph, source, reverse_graph=reverse_graph)
-    bfs_tree = ((parent, child) for parent, child, label, direction, depth
-        in tuple_generator if direction == search_utils.Direction.PREORDER)
+        graph, source, reverse_graph=reverse_graph
+    )
+    bfs_tree = (
+        (parent, child)
+        for parent, child, label, direction, depth in tuple_generator
+        if direction == search_utils.Direction.PREORDER
+    )
 
     for parent, child in bfs_tree:
         vertex_to_path_map[child].relax_edge(vertex_to_path_map[parent], lambda j, k, rev: 1)
@@ -412,7 +416,7 @@ def dijkstra(
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight"
+    weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices in a graph with positive edge weights using Dijkstra's algorithm.
@@ -497,8 +501,9 @@ def dijkstra(
         u_path = priority_queue.pop()
         u: V = u_path.destination
         set_of_min_path_vertices.add(u)
-        u_adj_iter = _get_adjacent_to_child(
-            child=u, parent=u_path.predecessor, reverse_graph=reverse_graph)
+        u_adj_iter = __get_adjacent_to_child(
+            child=u, parent=u_path.predecessor, reverse_graph=reverse_graph
+        )
         for w in u_adj_iter:
             if w in set_of_min_path_vertices:
                 continue
@@ -515,7 +520,7 @@ def dijkstra_fibonacci(
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight"
+    weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
     """Finds the shortest paths and associated lengths from the source vertex to all reachable
     vertices in a graph with positive edge weights using Dijkstra's algorithm.
@@ -599,8 +604,9 @@ def dijkstra_fibonacci(
         assert u_path is not None  # For mypy static type checker.
         u: V = u_path.destination
         set_of_min_path_vertices.add(u)
-        u_adj_iter = _get_adjacent_to_child(
-            child=u, parent=u_path.predecessor, reverse_graph=reverse_graph)
+        u_adj_iter = __get_adjacent_to_child(
+            child=u, parent=u_path.predecessor, reverse_graph=reverse_graph
+        )
         for w in u_adj_iter:
             if w in set_of_min_path_vertices:
                 continue
@@ -612,9 +618,9 @@ def dijkstra_fibonacci(
     return vertex_to_path_map
 
 
-def _get_adjacent_to_child(
-    child: V, parent: Optional[V], reverse_graph: bool
-) -> Iterator[V]:
+# Double underscore used due to pylint "disable=duplicate-code" not working. This method is also
+# found in the module depth_first_search.py.
+def __get_adjacent_to_child(child: V, parent: Optional[V], reverse_graph: bool) -> Iterator[V]:
     if child._parent_graph.is_directed():
         if reverse_graph:
             return iter(child.adj_vertices_incoming())

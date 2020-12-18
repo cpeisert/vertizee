@@ -40,7 +40,7 @@ from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
     Label,
     SearchResults,
-    VertexSearchState
+    VertexSearchState,
 )
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
@@ -57,49 +57,50 @@ def bfs(
     graph: G[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
 ) -> SearchResults[V, E]:
     """Performs a breadth-first-search and provides detailed results (e.g. a forest of
-    breadth-first-search trees and edge classification).
+        breadth-first-search trees and edge classification).
 
-    Running time: :math:`O(m + n)`
+        Running time: :math:`O(m + n)`
 
-    If a ``source`` is not specified, then vertices are repeatedly selected until all components in
-    the graph have been searched.
+        If a ``source`` is not specified, then vertices are repeatedly selected until all
+        components in the graph have been searched.
 
-    Note:
-        Breadth-first search does not support cycle detection. For cycle detection, use
-        :func:`depth_first_search
-        <vertizee.algorithms.search.depth_first_search.depth_first_search>`.
+        Note:
+            Breadth-first search does not support cycle detection. For cycle detection, use
+            :func:`depth_first_search
+            <vertizee.algorithms.search.depth_first_search.depth_first_search>`.
 
-    Args:
-        graph: The graph to search.
-        source: Optional; The source vertex from which to begin the search. When ``source`` is
-            specified, only the component reachable from the source is searched. Defaults to None.
-        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
-            False.
+        Args:
+            graph: The graph to search.
+            source: Optional; The source vertex from which to begin the search. When ``source`` is
+                specified, only the component reachable from the source is searched. Defaults to
+                None.
+            reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
+                as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults
+                to False.
 
-    Returns:
-        SearchResults: The results of the depth-first search.
+        Returns:
+            SearchResults: The results of the depth-first search.
 
-#### TODO(cpeisert): Update example below
+    #### TODO(cpeisert): Update example below
 
-    Example:
-        >>> import vertizee as vz
-        >>> from vertizee.algorithms import search
-        >>> g = vz.Graph()
-        >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        >>> results = search.breadth_first_search(g)
-        >>> results.vertices_preorder
-        [3, 1, 0, 2, 5, 4, 7, 6]
-        >>> [str(edge) for edge in results.edges_in_discovery_order]
-        ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
+        Example:
+            >>> import vertizee as vz
+            >>> from vertizee.algorithms import search
+            >>> g = vz.Graph()
+            >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
+            >>> results = search.breadth_first_search(g)
+            >>> results.vertices_preorder
+            [3, 1, 0, 2, 5, 4, 7, 6]
+            >>> [str(edge) for edge in results.edges_in_discovery_order]
+            ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
 
-    See Also:
-        * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
-        * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
-        * :func:`bfs_labeled_edge_traversal`
+        See Also:
+            * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
+            * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
+            * :func:`bfs_labeled_edge_traversal`
 
-    Note:
-        The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.
+        Note:
+            The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.
     """
     results = SearchResults(graph, depth_first_search=False)
 
@@ -138,7 +139,7 @@ def bfs_labeled_edge_traversal(
     graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
-    reverse_graph: bool = False
+    reverse_graph: bool = False,
 ) -> Iterator[Tuple[V, V, str]]:
     """Iterates over the labeled edges of a breadth-first search traversal.
 
@@ -174,9 +175,9 @@ def bfs_labeled_edge_traversal(
                are considered back edges.
             4. "forward_edge": non-tree edges math:`(u, v)` connecting a vertex math:`u` to a
                descendant math:`v` in a depth-first tree.
-            5. "cross_edge" - All other edges, which may go between vertices in the same depth-first
-               tree as long as one vertex is not an ancestor of the other, or they go between
-               vertices in different depth-first trees.
+            5. "cross_edge" - All other edges, which may go between vertices in the same
+               depth-first tree as long as one vertex is not an ancestor of the other, or they go
+               between vertices in different depth-first trees.
 
         The ``search_direction`` is the direction of traversal and is one of the strings:
 
@@ -304,30 +305,51 @@ def bfs_labeled_edge_traversal(
                     yield parent, child, Label.TREE_EDGE, Direction.PREORDER, depth_now
 
                     grandchildren = _get_adjacent_to_child(
-                        child=child, parent=parent, reverse_graph=reverse_graph)
+                        child=child, parent=parent, reverse_graph=reverse_graph
+                    )
                     if depth_now < (depth_limit - 1):
                         queue.append(VertexSearchState(child, grandchildren, depth_now))
                 elif edge_label not in classified_edges:
                     classified_edges.add(edge_label)
                     if not search_trees.in_same_set(parent, child):
                         # parent and child are in different search trees, so its a cross edge
-                        yield (parent, child, Label.CROSS_EDGE, Direction.ALREADY_DISCOVERED,
-                            INFINITY)
+                        yield (
+                            parent,
+                            child,
+                            Label.CROSS_EDGE,
+                            Direction.ALREADY_DISCOVERED,
+                            INFINITY,
+                        )
                     elif parent == child:  # self loops are considered back edges
                         yield parent, child, Label.BACK_EDGE, Direction.ALREADY_DISCOVERED, INFINITY
                     elif vertex_depth[parent] == vertex_depth[child]:
-                        yield (parent, child, Label.CROSS_EDGE, Direction.ALREADY_DISCOVERED,
-                            INFINITY)
+                        yield (
+                            parent,
+                            child,
+                            Label.CROSS_EDGE,
+                            Direction.ALREADY_DISCOVERED,
+                            INFINITY,
+                        )
                     elif vertex_depth[parent] < vertex_depth[child]:
-                        yield (parent, child, Label.FORWARD_EDGE, Direction.ALREADY_DISCOVERED,
-                            INFINITY)
+                        yield (
+                            parent,
+                            child,
+                            Label.FORWARD_EDGE,
+                            Direction.ALREADY_DISCOVERED,
+                            INFINITY,
+                        )
                     else:
                         yield parent, child, Label.BACK_EDGE, Direction.ALREADY_DISCOVERED, INFINITY
             # [END for]
 
             if predecessor[parent]:
-                yield (predecessor[parent], parent, Label.TREE_EDGE, Direction.POSTORDER,
-                    vertex_depth[parent])
+                yield (
+                    predecessor[parent],
+                    parent,
+                    Label.TREE_EDGE,
+                    Direction.POSTORDER,
+                    vertex_depth[parent],
+                )
             else:
                 yield parent, parent, Label.TREE_ROOT, Direction.POSTORDER, vertex_depth[parent]
 
@@ -372,13 +394,12 @@ def bfs_preorder_traversal(
     edges = bfs_labeled_edge_traversal(
         graph, source=source, depth_limit=depth_limit, reverse_graph=reverse_graph
     )
-    return (child for parent, child, label, direction, depth in edges
-        if direction == Direction.PREORDER)
+    return (
+        child for parent, child, label, direction, depth in edges if direction == Direction.PREORDER
+    )
 
 
-def _get_adjacent_to_child(
-    child: V, parent: Optional[V], reverse_graph: bool
-) -> Iterator[V]:
+def _get_adjacent_to_child(child: V, parent: Optional[V], reverse_graph: bool) -> Iterator[V]:
     if child._parent_graph.is_directed():
         if reverse_graph:
             return iter(child.adj_vertices_incoming())

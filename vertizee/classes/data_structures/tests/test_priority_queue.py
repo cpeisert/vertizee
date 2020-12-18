@@ -29,6 +29,7 @@ def get_priority_function(vertex_to_priority: vz.VertexDict):
     def priority_function(vertex: Vertex) -> float:
         """Returns the priority of the vertex."""
         return vertex_to_priority[vertex]
+
     return priority_function
 
 

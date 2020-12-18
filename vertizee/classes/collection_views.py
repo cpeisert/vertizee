@@ -43,12 +43,22 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import collections.abc
 from typing import (
-    Collection, Dict, Generic, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
+    Collection,
+    Dict,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
 )
 
-T = TypeVar('T')  # Any type.
-KT = TypeVar('KT')  # Key type.
-VT = TypeVar('VT')  # Value type.
+T = TypeVar("T")  # Any type.
+KT = TypeVar("KT")  # Key type.
+VT = TypeVar("VT")  # Value type.
 
 
 class CollectionView(ABC, collections.abc.Collection, Generic[T]):
@@ -145,13 +155,13 @@ class ListView(CollectionView, Generic[T]):
         super().__init__(collection=list_collection)
 
     def __getitem__(self, key: Union[int, slice]) -> T:
-        if isinstance(key, int) :
-            if key < 0 : #Handle negative indices
+        if isinstance(key, int):
+            if key < 0:  # Handle negative indices
                 key += len(self)
             if key < 0 or key >= len(self):
                 raise IndexError(f"index {key} is out of range")
             return self._collection[key]
-        if isinstance(key, slice) :
+        if isinstance(key, slice):
             start, stop, step = key.indices(len(self))
             return ListView([self[i] for i in range(start, stop, step)])
         raise TypeError(f"invalid key type '{type(key).__name__}'; expected int or slice")

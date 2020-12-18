@@ -14,6 +14,7 @@
 
 """Utilities supporting abstract base classes."""
 
+
 def check_methods(C, *methods):
     """Function to check if methods are members of a class."""
     mro = C.__mro__

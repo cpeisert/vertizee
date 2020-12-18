@@ -99,18 +99,15 @@ Alternatively, the same graph could be represented with the following adjacency 
 from __future__ import annotations
 from collections import Counter
 import re
-from typing import Dict, List, Set, TYPE_CHECKING
+from typing import Dict, List
 
-from vertizee.classes.collection_views import SetView
 from vertizee.classes import edge as edge_module
-
-if TYPE_CHECKING:
-    from vertizee.classes.edge import Edge, EdgeTuple
-    from vertizee.classes.graph import G
-    from vertizee.classes.vertex import Vertex
+from vertizee.classes.collection_views import SetView
+from vertizee.classes.edge import E, EdgeTuple
+from vertizee.classes.graph import G, V
 
 
-def read_adj_list(path: str, new_graph: "G", delimiters: str = r",\s*|\s+") -> None:
+def read_adj_list(path: str, new_graph: G, delimiters: str = r",\s*|\s+") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
@@ -156,7 +153,7 @@ def read_adj_list(path: str, new_graph: "G", delimiters: str = r",\s*|\s+") -> N
         new_graph.add_edges_from(edge_tuples)
 
 
-def read_weighted_adj_list(path: str, new_graph: "G") -> None:
+def read_weighted_adj_list(path: str, new_graph: G) -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then vertices and edges are added from the adjacency list.
@@ -200,7 +197,7 @@ def read_weighted_adj_list(path: str, new_graph: "G") -> None:
 
 def write_adj_list_to_file(
     path: str,
-    graph: "G",
+    graph: G,
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -232,7 +229,7 @@ def write_adj_list_to_file(
         source_vertex_label = vertex.label
         line = f"{source_vertex_label}"
         if vertex.loop_edge is not None:
-            loop_edge: "Edge" = vertex.loop_edge
+            loop_edge = vertex.loop_edge
             line = _add_loop_edges_to_line(
                 line, loop_edge, delimiter, include_weights, weights_are_integers
             )
@@ -257,8 +254,8 @@ def write_adj_list_to_file(
 
 def _add_edge_to_line(
     line: str,
-    edge: "Edge",
-    source_vertex: "Vertex",
+    edge: E,
+    source_vertex: V,
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -293,7 +290,7 @@ def _add_edge_to_line(
 
 def _add_loop_edges_to_line(
     line: str,
-    loop_edge: "Edge",
+    loop_edge: E,
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -325,8 +322,8 @@ def _add_loop_edges_to_line(
 
 
 def _get_incident_edges_excluding_loops(
-    graph: "G", vertex: "Vertex", reverse_graph: bool = False
-) -> SetView["Edge"]:
+    graph: G[V, E], vertex: V, reverse_graph: bool = False
+) -> SetView[E]:
     """Helper function to retrieve the incident edges of a vertex, excluding self loops.
 
     If `reverse_graph` is True and it is a directed graph, then the child's incoming adjacency

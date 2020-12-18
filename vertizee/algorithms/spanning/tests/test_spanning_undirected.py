@@ -128,6 +128,7 @@ class TestKruskal:
 
 class TestPrim:
     """Tests for Prim's algorithm to find spanning trees."""
+
     def test_prim_max_spanning_tree(self):
         g = Graph(test_edges)
         prim_edges_max = [

@@ -217,8 +217,8 @@ class TestG:
 
         g.remove_edge(2, 3, remove_semi_isolated_vertices=True)
         assert g.edge_count == 1, "after edge removal, graph should have 1 edge"
-        assert (
-            not g.has_vertex(2)
+        assert not g.has_vertex(
+            2
         ), "with `remove_semi_isolated_vertices` set to True, vertex 2 should have been removed"
 
         with pytest.raises(exception.EdgeNotFound):
@@ -238,14 +238,14 @@ class TestG:
         assert set(g.vertices()) == {g[1], g[2], g[3], g[4], g[5]}
 
         g.remove_isolated_vertices(ignore_self_loops=False)
-        assert (
-            set(g.vertices()) == {g[2], g[3], g[5]}
-        ), "isolated vertices 1 and 4 should have been removed"
+        assert set(g.vertices()) == {
+            g[2],
+            g[3],
+            g[5],
+        }, "isolated vertices 1 and 4 should have been removed"
 
         g.remove_isolated_vertices(ignore_self_loops=True)
-        assert (
-            set(g.vertices()) == {g[2], g[3]}
-        ), "semi-isolated vertex 5 should have been removed"
+        assert set(g.vertices()) == {g[2], g[3]}, "semi-isolated vertex 5 should have been removed"
 
     def test_remove_vertex(self):
         g = Graph([(1, 2), (3, 3)])
@@ -272,9 +272,12 @@ class TestG:
 
     def test_vertices(self):
         g = Graph([(1, 2), (2, 3), (3, 4)])
-        assert (
-            set(g.vertices()) == {g[1], g[2], g[3], g[4]}
-        ), "graph should have vertices 1, 2, 3, 4"
+        assert set(g.vertices()) == {
+            g[1],
+            g[2],
+            g[3],
+            g[4],
+        }, "graph should have vertices 1, 2, 3, 4"
 
 
 class TestGraph:
@@ -315,13 +318,15 @@ class TestGraph:
 
     def test_add_edges_from(self):
         g = Graph()
-        g.add_edges_from([
-            (1, 2, 4.5, {"color": "blue", "mass": 42}),
-            (4, 3, 9.5),
-            (5, 6, {"color": "red", "mass": 99}),
-            (8, 7),
-            (7, 8)
-        ])
+        g.add_edges_from(
+            [
+                (1, 2, 4.5, {"color": "blue", "mass": 42}),
+                (4, 3, 9.5),
+                (5, 6, {"color": "red", "mass": 99}),
+                (8, 7),
+                (7, 8),
+            ]
+        )
 
         assert g.edge_count == 4, "graph should have 4 edges"
         assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
@@ -333,9 +338,11 @@ class TestGraph:
 
     def test_edges_and_edge_count(self):
         g = Graph([(1, 2), (2, 1), (2, 3), (3, 4)])
-        assert (
-            set(g.edges()) == {g[1, 2], g[2, 3], g[3, 4]}
-        ), "edges should be (1, 2), (2, 3), (3, 4)"
+        assert set(g.edges()) == {
+            g[1, 2],
+            g[2, 3],
+            g[3, 4],
+        }, "edges should be (1, 2), (2, 3), (3, 4)"
         assert g.edge_count == 3, "graph should have 3 edges"
 
     def test_get_random_edge(self):
@@ -345,9 +352,9 @@ class TestGraph:
         for _ in range(1000):
             rand_edge = g.get_random_edge()
             cnt[rand_edge] += 1
-        assert cnt[g[1, 2]] > 300, r"~33% of random samples should be edge (1, 2)"
-        assert cnt[g[3, 4]] > 300, r"~33% of random samples should be edge (3, 4)"
-        assert cnt[g[5, 6]] > 300, r"~33% of random samples should be edge (5, 6)"
+        assert cnt[g[1, 2]] > 270, r"~33% of random samples should be edge (1, 2)"
+        assert cnt[g[3, 4]] > 270, r"~33% of random samples should be edge (3, 4)"
+        assert cnt[g[5, 6]] > 270, r"~33% of random samples should be edge (5, 6)"
 
 
 class TestDiGraph:
@@ -389,13 +396,15 @@ class TestDiGraph:
 
     def test_add_edges_from(self):
         g = DiGraph()
-        g.add_edges_from([
-            (1, 2, 4.5, {"color": "blue", "mass": 42}),
-            (4, 3, 9.5),
-            (5, 6, {"color": "red", "mass": 99}),
-            (8, 7),
-            (7, 8)
-        ])
+        g.add_edges_from(
+            [
+                (1, 2, 4.5, {"color": "blue", "mass": 42}),
+                (4, 3, 9.5),
+                (5, 6, {"color": "red", "mass": 99}),
+                (8, 7),
+                (7, 8),
+            ]
+        )
 
         assert g.edge_count == 5, "digraph should have 5 edges"
         assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
@@ -407,9 +416,11 @@ class TestDiGraph:
 
     def test_edges_and_edge_count(self):
         g = DiGraph([(1, 2), (2, 1), (2, 3)])
-        assert (
-            set(g.edges()) == {g[1, 2], g[2, 1], g[2, 3]}
-        ), "edges should be (1, 2), (2, 1), (2, 3)"
+        assert set(g.edges()) == {
+            g[1, 2],
+            g[2, 1],
+            g[2, 3],
+        }, "edges should be (1, 2), (2, 1), (2, 3)"
         assert g.edge_count == 3, "graph should have 3 edges"
 
     def test_get_random_edge(self):
@@ -419,9 +430,9 @@ class TestDiGraph:
         for _ in range(1000):
             rand_edge = g.get_random_edge()
             cnt[rand_edge] += 1
-        assert cnt[g[1, 2]] > 300, r"~33% of random samples should be edge (1, 2)"
-        assert cnt[g[2, 1]] > 300, r"~33% of random samples should be edge (2, 1)"
-        assert cnt[g[5, 6]] > 300, r"~33% of random samples should be edge (5, 6)"
+        assert cnt[g[1, 2]] > 270, r"~33% of random samples should be edge (1, 2)"
+        assert cnt[g[2, 1]] > 270, r"~33% of random samples should be edge (2, 1)"
+        assert cnt[g[5, 6]] > 270, r"~33% of random samples should be edge (5, 6)"
 
 
 class TestMultiGraph:
@@ -470,13 +481,15 @@ class TestMultiGraph:
 
     def test_add_edges_from(self):
         g = MultiGraph()
-        g.add_edges_from([
-            (1, 2, 4.5, {"color": "blue", "mass": 42}),
-            (4, 3, 9.5),
-            (5, 6, {"color": "red", "mass": 99}),
-            (8, 7),
-            (7, 8)
-        ])
+        g.add_edges_from(
+            [
+                (1, 2, 4.5, {"color": "blue", "mass": 42}),
+                (4, 3, 9.5),
+                (5, 6, {"color": "red", "mass": 99}),
+                (8, 7),
+                (7, 8),
+            ]
+        )
 
         connection12 = g[1, 2].connections()[0]
         connection34 = g[3, 4].connections()[0]
@@ -491,9 +504,11 @@ class TestMultiGraph:
 
     def test_edges_and_edge_count(self):
         g = MultiGraph([(1, 2), (2, 1), (2, 3), (3, 4)])
-        assert (
-            set(g.edges()) == {g[1, 2], g[2, 3], g[3, 4]}
-        ), "multiedges should be (1, 2), (2, 3), (3, 4)"
+        assert set(g.edges()) == {
+            g[1, 2],
+            g[2, 3],
+            g[3, 4],
+        }, "multiedges should be (1, 2), (2, 3), (3, 4)"
         assert g.edge_count == 4, "graph should have 4 edge connections"
         assert g[1, 2].multiplicity == 2, "multiedge (1, 2) should have two parallel connections"
 
@@ -504,15 +519,15 @@ class TestMultiGraph:
         for _ in range(1000):
             rand_edge = g.get_random_edge(ignore_multiplicity=False)
             cnt1[rand_edge] += 1
-        assert cnt1[g[1, 2]] > 630, r"~66% of random samples should be edge (1, 2)"
-        assert cnt1[g[3, 4]] < 370, r"~33% of random samples should be edge (3, 4)"
+        assert cnt1[g[1, 2]] > 600, r"~66% of random samples should be edge (1, 2)"
+        assert cnt1[g[3, 4]] < 400, r"~33% of random samples should be edge (3, 4)"
 
         cnt2 = Counter()
         for _ in range(1000):
             rand_edge = g.get_random_edge(ignore_multiplicity=True)
             cnt2[rand_edge] += 1
-        assert cnt2[g[1, 2]] > 450, r"~50% of random samples should be edge (1, 2)"
-        assert cnt2[g[3, 4]] > 450, r"~50% of random samples should be edge (3, 4)"
+        assert cnt2[g[1, 2]] > 420, r"~50% of random samples should be edge (1, 2)"
+        assert cnt2[g[3, 4]] > 420, r"~50% of random samples should be edge (3, 4)"
 
 
 class TestMultiDiGraph:
@@ -560,14 +575,16 @@ class TestMultiDiGraph:
 
     def test_add_edges_from(self):
         g = MultiDiGraph()
-        g.add_edges_from([
-            (1, 2, 4.5, {"color": "blue", "mass": 42}),
-            (4, 3, 9.5),
-            (5, 6, {"color": "red", "mass": 99}),
-            (8, 7),
-            (8, 7),
-            (7, 8)
-        ])
+        g.add_edges_from(
+            [
+                (1, 2, 4.5, {"color": "blue", "mass": 42}),
+                (4, 3, 9.5),
+                (5, 6, {"color": "red", "mass": 99}),
+                (8, 7),
+                (8, 7),
+                (7, 8),
+            ]
+        )
 
         connection12 = g[1, 2].connections()[0]
         connection43 = g[4, 3].connections()[0]
@@ -585,9 +602,12 @@ class TestMultiDiGraph:
 
     def test_edges_and_edge_count(self):
         g = MultiDiGraph([(1, 2), (2, 1), (2, 3), (3, 4)])
-        assert (
-            set(g.edges()) == {g[1, 2], g[2, 1], g[2, 3], g[3, 4]}
-        ), "multiedges should be (1, 2), (2, 1), (2, 3), (3, 4)"
+        assert set(g.edges()) == {
+            g[1, 2],
+            g[2, 1],
+            g[2, 3],
+            g[3, 4],
+        }, "multiedges should be (1, 2), (2, 1), (2, 3), (3, 4)"
         assert g.edge_count == 4, "graph should have 4 edge connections"
         assert g[1, 2].multiplicity == 1, "multiedge (1, 2) should have one edge connection"
 
@@ -598,12 +618,12 @@ class TestMultiDiGraph:
         for _ in range(1000):
             rand_edge = g.get_random_edge(ignore_multiplicity=False)
             cnt1[rand_edge] += 1
-        assert cnt1[g[1, 2]] > 630, r"~66% of random samples should be edge (1, 2)"
-        assert cnt1[g[3, 4]] < 370, r"~33% of random samples should be edge (3, 4)"
+        assert cnt1[g[1, 2]] > 600, r"~66% of random samples should be edge (1, 2)"
+        assert cnt1[g[3, 4]] < 400, r"~33% of random samples should be edge (3, 4)"
 
         cnt2 = Counter()
         for _ in range(1000):
             rand_edge = g.get_random_edge(ignore_multiplicity=True)
             cnt2[rand_edge] += 1
-        assert cnt2[g[1, 2]] > 450, r"~50% of random samples should be edge (1, 2)"
-        assert cnt2[g[3, 4]] > 450, r"~50% of random samples should be edge (3, 4)"
+        assert cnt2[g[1, 2]] > 400, r"~50% of random samples should be edge (1, 2)"
+        assert cnt2[g[3, 4]] > 400, r"~50% of random samples should be edge (3, 4)"

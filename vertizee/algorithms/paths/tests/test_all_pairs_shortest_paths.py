@@ -25,7 +25,7 @@ from vertizee.algorithms.algo_utils.path_utils import reconstruct_path, Shortest
 from vertizee.algorithms.paths.all_pairs_shortest_paths import (
     floyd_warshall,
     johnson,
-    johnson_fibonacci
+    johnson_fibonacci,
 )
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.graph import DiGraph, MultiGraph
@@ -35,6 +35,7 @@ INFINITY: Final = float("inf")
 
 class TestFloydWarshall:
     """Tests for the Floyd-Warshall algorithm."""
+
     def test_floyd_warshall_positive_edge_weights(self):
         g = DiGraph(
             [
@@ -53,9 +54,7 @@ class TestFloydWarshall:
 
         all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g)
 
-        assert (
-            len(all_paths_dict) == 5
-        ), "all_paths_dict dictionary should have length equal to |V|"
+        assert len(all_paths_dict) == 5, "all_paths_dict dictionary should have length equal to |V|"
         assert len(all_paths_dict["s"]) == 5, (
             "Each source in the shortest all_paths_dict dictionary should have "
             "a destinations dictionary of length equal to |V|."
@@ -138,9 +137,7 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(
-            g, save_paths=False
-        )
+        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g, save_paths=False)
 
         assert all_paths_dict["s"]["z"].path() == []
         assert all_paths_dict["y"]["s"].path() == []
@@ -166,9 +163,7 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(
-            g, save_paths=True
-        )
+        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g, save_paths=True)
 
         assert all_paths_dict["s"]["z"].path() == ["s", "y", "z"]
         assert all_paths_dict["y"]["s"].path() == ["y", "z", "s"]
@@ -267,6 +262,7 @@ class TestFloydWarshall:
 
 class TestJohnson:
     """Tests for Johnson's algorithm."""
+
     def test_johnson_positive_edge_weights(self):
         g = DiGraph(
             [

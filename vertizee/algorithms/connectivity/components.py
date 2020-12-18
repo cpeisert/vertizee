@@ -56,8 +56,10 @@ class Component(Generic[V, E]):
         if data.vertices:
             return data.vertices[0].label in self._vertex_set
 
-        raise ValueError("expected GraphPrimitive (EdgeType or VertexType); found "
-            f"{type(edge_or_vertex).__name__}")
+        raise ValueError(
+            "expected GraphPrimitive (EdgeType or VertexType); found "
+            f"{type(edge_or_vertex).__name__}"
+        )
 
     def __iter__(self) -> Iterator[V]:
         """Iterates over the vertices in the component."""
@@ -81,7 +83,6 @@ class Component(Generic[V, E]):
                     if edge not in self._edge_set:
                         self._edge_set.add(edge)
         return SetView(self._edge_set)
-
 
     def vertices(self) -> SetView[V]:
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
@@ -169,10 +170,12 @@ def weakly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterator
         raise exception.Unfeasible("components are undefined for an empty graph")
     if not graph.is_directed():
         raise exception.GraphTypeNotSupported(
-            "weakly-connected components are only defined for directed graphs")
+            "weakly-connected components are only defined for directed graphs"
+        )
 
     return _plain_depth_first_search(
-        graph.vertices(), adjacency_function=_get_adjacent_to_child_undirected)
+        graph.vertices(), adjacency_function=_get_adjacent_to_child_undirected
+    )
 
 
 def _get_adjacent_to_child(child: V, parent: Optional[V]) -> Iterator[V]:
@@ -191,8 +194,7 @@ def _get_adjacent_to_child_undirected(child: V, parent: Optional[V]) -> Iterator
 
 
 def _plain_depth_first_search(
-    vertices: Iterable[V],
-    adjacency_function: Callable[[V, Optional[V]], Iterator[V]]
+    vertices: Iterable[V], adjacency_function: Callable[[V, Optional[V]], Iterator[V]]
 ) -> Iterator[Component]:
     """Performs a plain depth-first search over the specified ``vertices``.
 

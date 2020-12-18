@@ -33,10 +33,10 @@ Functions:
 
 from __future__ import annotations
 import collections
-from typing import Callable, Dict, Final, Iterator, Optional, Union
+from typing import Dict, Final, Iterator, Optional, Union
 
 from vertizee import exception
-
+from vertizee.algorithms.algo_utils.spanning_utils import get_weight_function
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.tree import Tree
@@ -47,45 +47,6 @@ from vertizee.classes.vertex import MultiVertex, V, Vertex
 
 
 INFINITY: Final = float("inf")
-
-
-def get_weight_function(weight: str = "Edge__weight", minimum: bool = True) -> Callable[[E], float]:
-    """Returns a function that accepts an edge and returns the corresponding edge weight.
-
-    If there is no edge weight, then the edge weight is assumed to be one.
-
-    Note:
-        For multigraphs, the minimum (or maximum) edge weight among the parallel edge connections
-        is returned.
-
-    Args:
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge_weight``) uses the ``Edge.weight`` property.
-        minimum: Optional; For multigraphs, if True, then the minimum weight from the parallel edge
-            connections is returned, otherwise the maximum weight. Defaults to True.
-
-    Returns:
-        Callable[[E], float]: A function that accepts an edge and returns the
-        corresponding edge weight.
-    """
-
-    def default_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            if minimum:
-                return min(c.weight for c in edge.connections())
-            return max(c.weight for c in edge.connections())
-        return edge.weight
-
-    def attr_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            if minimum:
-                return min(c.attr.get(weight, 1.0) for c in edge.connections())
-            return max(c.attr.get(weight, 1.0) for c in edge.connections())
-        return edge.attr.get(weight, 1.0)
-
-    if weight == "Edge__weight":
-        return default_weight_function
-    return attr_weight_function
 
 
 #
@@ -135,7 +96,8 @@ def kruskal_optimum_forest(
         raise exception.Unfeasible("forests are undefined for empty graphs")
     if graph.is_directed():
         raise exception.GraphTypeNotSupported(
-            "graph must be undirected; for directed graphs see optimum_directed_forest")
+            "graph must be undirected; for directed graphs see optimum_directed_forest"
+        )
 
     weight_function = get_weight_function(weight, minimum=minimum)
     sign = 1 if minimum else -1
@@ -200,7 +162,8 @@ def kruskal_spanning_tree(
         raise exception.Unfeasible("spanning trees are undefined for empty graphs")
     if graph.is_directed():
         raise exception.GraphTypeNotSupported(
-            "graph must be undirected; for directed graphs see optimum_directed_forest")
+            "graph must be undirected; for directed graphs see optimum_directed_forest"
+        )
 
     weight_function = get_weight_function(weight, minimum=minimum)
     sign = 1 if minimum else -1
@@ -247,7 +210,7 @@ def prim_spanning_tree(
     graph: Union[Graph, MultiGraph],
     root: Optional["VertexType"] = None,
     minimum: bool = True,
-    weight: str = "Edge__weight"
+    weight: str = "Edge__weight",
 ) -> Iterator[Union[Edge, MultiEdge]]:
     """Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Prim's algorithm.
@@ -298,7 +261,8 @@ def prim_spanning_tree(
         raise exception.Unfeasible("spanning trees are undefined for empty graphs")
     if graph.is_directed():
         raise exception.GraphTypeNotSupported(
-            "graph must be undirected; for directed graphs see optimum_directed_forest")
+            "graph must be undirected; for directed graphs see optimum_directed_forest"
+        )
     if root is not None:
         try:
             root_vertex: V = graph[root]
@@ -354,7 +318,7 @@ def prim_fibonacci(
     graph: Union[Graph, MultiGraph],
     root: Optional["VertexType"] = None,
     minimum: bool = True,
-    weight: str = "Edge__weight"
+    weight: str = "Edge__weight",
 ) -> Iterator[Union[Edge, MultiEdge]]:
     """Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Prim's algorithm implemented using a :term:`Fibonacci heap`.
@@ -402,7 +366,8 @@ def prim_fibonacci(
         raise exception.Unfeasible("spanning trees are undefined for empty graphs")
     if graph.is_directed():
         raise exception.GraphTypeNotSupported(
-            "graph must be undirected; for directed graphs see optimum_directed_forest")
+            "graph must be undirected; for directed graphs see optimum_directed_forest"
+        )
     if root is not None:
         try:
             root_vertex: V = graph[root]
@@ -464,7 +429,8 @@ def spanning_tree(
     Running time: :math:`O(m(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
 
     This algorithm is only defined for *undirected* graphs. To find the spanning tree of a directed
-    graph, see :func:`optimum_directed_forest`.
+    graph, see :func:`spanning_arborescence
+    <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
 
     Note:
         Prim's algorithm (implemented with a binary-heap-based :term:`priority queue`) has the same

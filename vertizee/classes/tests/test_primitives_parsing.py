@@ -16,11 +16,7 @@
 # pylint: disable=no-self-use
 # pylint: disable=missing-function-docstring
 
-from vertizee import (
-    Graph,
-    DiGraph,
-    MultiGraph
-)
+from vertizee import Graph, DiGraph, MultiGraph
 
 from vertizee.classes import edge as edge_module
 from vertizee.classes import primitives_parsing as pp_module
@@ -118,7 +114,7 @@ class TestPrimitivesParsingModuleFunctions:
         assert edge_data1.vertex1.label == "1"
         assert edge_data1.vertex2.label == "2"
 
-        mg = MultiGraph([(3, 4), (3,4)])
+        mg = MultiGraph([(3, 4), (3, 4)])
         edge_data2 = pp_module.parse_edge_type(mg[3, 4])
         assert edge_data2.vertex1.label == "3"
         assert edge_data2.vertex2.label == "4"
@@ -157,7 +153,7 @@ class TestPrimitivesParsingModuleFunctions:
         assert not data1.vertices, "there should be no parsed vertices"
 
         vertex_tuple_attr = (3, {"mass": 4.5})
-        data2= pp_module.parse_graph_primitive(vertex_tuple_attr)
+        data2 = pp_module.parse_graph_primitive(vertex_tuple_attr)
         assert data2.vertices[0].label == "3"
         assert data2.vertices[0].attr["mass"] == 4.5
         assert not data2.edges, "there should be no parsed edges"
@@ -176,7 +172,7 @@ class TestPrimitivesParsingModuleFunctions:
         assert vertex_data1.label == "1"
         assert vertex_data1.attr["mass"] == 5.5
 
-        mg = MultiGraph([(3, 4), (3,4)])
+        mg = MultiGraph([(3, 4), (3, 4)])
         vertex_data2 = pp_module.parse_vertex_type(mg[4])
         assert vertex_data2.label == "4"
 
