@@ -32,13 +32,13 @@ from vertizee.algorithms.connectivity.components import (
     weakly_connected_components,
 )
 
-from vertizee.algorithms.paths.all_pairs_shortest_paths import (
-    all_shortest_paths,
+from vertizee.algorithms.paths.all_pairs import (
+    all_pairs_shortest_paths,
     floyd_warshall,
     johnson,
     johnson_fibonacci,
 )
-from vertizee.algorithms.paths.single_source_shortest_paths import (
+from vertizee.algorithms.paths.single_source import (
     bellman_ford,
     breadth_first_search_shortest_paths,
     dijkstra,
@@ -48,7 +48,7 @@ from vertizee.algorithms.paths.single_source_shortest_paths import (
 
 from vertizee.algorithms.search.breadth_first_search import (
     bfs,
-    bfs_preorder_traversal,
+    bfs_vertex_traversal,
     bfs_labeled_edge_traversal,
 )
 
@@ -72,11 +72,11 @@ from vertizee.classes.collection_views import ItemsView, ListView, SetView
 from vertizee.classes.edge import (
     Connection,
     DiEdge,
-    DiConnectionView,
+    SingleDiEdgeView,
     E,
     Edge,
     EdgeType,
-    ConnectionView,
+    EdgeConnectionView,
     MultiConnection,
     MultiDiEdge,
     MultiEdge,

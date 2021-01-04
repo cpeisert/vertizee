@@ -3,7 +3,8 @@ Algorithm Utilities
 ===================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
+   path_utils
    search_utils
-   shortest_path_utils
+   spanning_utils

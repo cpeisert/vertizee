@@ -12,13 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data types supporting directed and undirected graphs, including multigraph variants.
+# pylint: disable=line-too-long
+"""
+================
+Graph module
+================
 
-A graph :math:`G` is defined as :math:`G = (V, E)`, where :math:`V` is a set of points called
-:term:`vertices <vertex>` (plural of *vertex*) and :math:`E` is a set of :term:`edges <edge>`. An
-unordered pair of vertices defines an **undirected edge** and an ordered pair of vertices defines a
-**directed edge**.
+The graph module defines data types supporting directed and undirected :term:`graphs <graph>`
+as well as directed and undirected :term:`multigraphs <multigraph>`.
 
+**Recommended Tutorial**: :doc:`Getting Started <../../tutorials/getting_started>` - |image-colab-getting-started|
+
+.. |image-colab-getting-started| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/getting_started.ipynb
+
+
+All Vertizee :term:`graph` classes derive from abstract base class
+:class:`G[V, E] <vertizee.classes.graph.G>`.
+
+The most flexible classes are prefixed ``Multi``, since they support :term:`parallel edges
+<parallel edge>`. The :class:`DiGraph` and :class:`MultiDiGraph` classes are for graphs with
+:term:`directed edges <directed edge>`.
+
+Which graph class should I use?
+===============================
+
++-----------------------------------------+------------+------------------------+
+| Class                                   | Type       | Parallel edges allowed |
++=========================================+============+========================+
+| :class:`Graph                           | undirected | No                     |
+| <vertizee.classes.graph.Graph>`         |            |                        |
++-----------------------------------------+------------+------------------------+
+| :class:`MultiGraph                      | undirected | Yes                    |
+| <vertizee.classes.graph.MultiGraph>`    |            |                        |
++-----------------------------------------+------------+------------------------+
+| :class:`DiGraph                         | directed   | No                     |
+| <vertizee.classes.graph.DiGraph>`       |            |                        |
++-----------------------------------------+------------+------------------------+
+| :class:`MultiDiGraph                    | directed   | Yes                    |
+| <vertizee.classes.graph.MultiDiGraph>`  |            |                        |
++-----------------------------------------+------------+------------------------+
+
+Note:
+    All graph classes support :term:`self-loops <loop>`. When initializing a graph, there is an
+    option to disable self-loops by setting ``allow_self_loops`` to False.
+
+
+Class summary
+=============
+
+* :class:`V` - a generic type parameter defined as ``TypeVar("V", bound="VertexBase")``. See
+  :class:`VertexBase <vertizee.classes.vertex.VertexBase>`.
+* :class:`E` - a generic type parameter defined as
+  ``TypeVar("E", bound=Union["Connection", "MultiConnection"])``. See :class:`Connection
+  <vertizee.classes.edge.Connection>` and :class:`MultiConnection
+  <vertizee.classes.edge.MultiConnection>`.
+* :class:`G[V, E] <G>` - Generic abstract base class from which all graph classes derive.
 * :class:`Graph` - Undirected graph without parallel edges.
 * :class:`DiGraph` - Directed graph without parallel edges.
 * :class:`MultiGraph` - Undirected graph that allows parallel edges.
@@ -38,11 +87,15 @@ See Also:
 Example:
     >>> import vertizee as vz
     >>> g = vz.Graph()
-    >>> edge01 = g.add_edge(0, 1)
-    >>> edge12 = g.add_edge(1, 2)
-    >>> edge20 = g.add_edge(2, 0)
+    >>> g.add_edge(0, 1)
+    >>> g.add_edge(1, 2)
+    >>> g.add_edge(2, 0)
     >>> g[0].degree
     2
+
+
+Detailed documentation
+======================
 """
 # pylint: disable=attribute-defined-outside-init
 # Due to pylint bug. See pylint issue #2981: https://github.com/PyCQA/pylint/issues/2981
@@ -55,7 +108,10 @@ from abc import ABC, abstractmethod
 import collections.abc
 import copy
 import random
-from typing import Dict, Generic, Iterable, Iterator, Optional, overload, Type, ValuesView
+from typing import (
+    Any, cast, Dict, Generic, Iterable, Iterator, Optional, overload, Type, TYPE_CHECKING, Union,
+    ValuesView
+)
 
 from vertizee import exception
 from vertizee.classes import edge as edge_module
@@ -63,26 +119,25 @@ from vertizee.classes import primitives_parsing
 from vertizee.classes import vertex as vertex_module
 
 from vertizee.classes.edge import (
-    ConnectionKey,
-    DiEdge,
-    E,
-    Edge,
-    EdgeClass,
-    EdgeType,
-    MultiConnection,
-    MultiDiEdge,
-    MultiEdge,
+    _Edge, _DiEdge, _MultiEdge, _MultiDiEdge, Attributes,
+    ConnectionKey, DiEdge, E, Edge, EdgeBase, EdgeClass, MultiDiEdge, MultiEdge, MultiEdgeBase
 )
 from vertizee.classes.primitives_parsing import (
-    EdgeData,
-    GraphPrimitive,
-    ParsedEdgeAndVertexData,
-    VertexData,
+    EdgeData, GraphPrimitive, ParsedEdgeAndVertexData, VertexData
 )
-from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
+from vertizee.classes.vertex import (
+    _Vertex, _DiVertex, _MultiVertex, _MultiDiVertex,
+    DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexClass, VertexLabel, VertexType
+)
+
+if TYPE_CHECKING:
+    from vertizee.classes.edge import EdgeType
+
+ConcreteEdgeClass = Union[_Edge, _DiEdge, _MultiEdge, _MultiDiEdge]
+ConcreteVertexClass = Union[_Vertex, _DiVertex, _MultiVertex, _MultiDiVertex]
 
 
-def _add_edge_obj_to_graph(graph: G[V, E], edge: EdgeClass) -> E:
+def _add_edge_obj_to_graph(graph: G[VertexClass, EdgeClass], edge: EdgeClass) -> EdgeClass:
     """Adds an edge to ``graph`` by copying data from ``edge``. This function is motivated to
     simplify making graph copies.
 
@@ -102,10 +157,11 @@ def _add_edge_obj_to_graph(graph: G[V, E], edge: EdgeClass) -> E:
         return edge
 
     new_edge = None
-    if isinstance(edge, MultiConnection):
+    if isinstance(edge, MultiEdgeBase):
         for key, connection in edge.connection_items():
             attr = connection.attr if connection.has_attributes_dict() else {}
             if new_edge:
+                assert isinstance(new_edge, MultiEdgeBase)
                 new_edge.add_connection(weight=connection.weight, key=key, **copy.deepcopy(attr))
             else:
                 new_edge = graph.add_edge(
@@ -113,28 +169,32 @@ def _add_edge_obj_to_graph(graph: G[V, E], edge: EdgeClass) -> E:
                     edge.vertex2,
                     weight=connection.weight,
                     key=key,
-                    **copy.deepcopy(attr),
+                    **copy.deepcopy(attr)
                 )
                 if not graph.is_multigraph():
                     # Multiedges are not supported, so ignore additional parallel connections.
                     break
-    else:
+    elif isinstance(edge, (Edge, DiEdge)):
         attr = edge.attr if edge.has_attributes_dict() else {}
         new_edge = graph.add_edge(
             edge.vertex1, edge.vertex2, weight=edge.weight, **copy.deepcopy(attr)
         )
+    else:
+        raise TypeError("expected one of Edge, DiEdge, MultiEdge, or MultiDiEdge; "
+            f"{type(edge).__name__} found")
+    assert new_edge is not None
     return new_edge
 
 
 def _add_edge_to_graph(
-    graph: G[V, E],
-    edge_class: Type[E],
+    graph: G[VertexClass, EdgeClass],
+    edge_class: Type[ConcreteEdgeClass],
     vertex1: "VertexType",
     vertex2: "VertexType",
     weight: float,
     key: Optional[ConnectionKey] = None,
-    **attr,
-) -> E:
+    **attr: Any
+) -> EdgeClass:
     """Adds a new edge to the graph. If an existing edge matches the vertices, the existing edge is
     returned.
 
@@ -146,11 +206,11 @@ def _add_edge_to_graph(
 
     Args:
         graph: The graph to which the new edge is to be added.
-        edge_class: The class to use to instantiate a new edge object.
+        EdgeClass: The class to use to instantiate a new edge object.
         vertex1: The first vertex.
         vertex2: The second vertex.
         weight: The edge weight.
-        key: Optional; If ``edge_class`` is an instance of ``MultiConnection``, then the key is
+        key: Optional; If ``EdgeClass`` is an instance of ``MultiConnection``, then the key is
             used within the multiedge to reference the new edge connection.
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
 
@@ -174,16 +234,37 @@ def _add_edge_to_graph(
     if weight < 0:
         graph._has_negative_edge_weights = True
 
+    # Union[Vertex, DiVertex, MultiVertex, MultiDiVertex]
     v1_obj = graph._add_vertex_from_vertex_data(vertex1_data)
     v2_obj = graph._add_vertex_from_vertex_data(vertex2_data)
 
-    if isinstance(edge_class, MultiConnection):
+    new_edge: Optional[EdgeClass] = None
+    if graph.is_multigraph():
         if not key:
             key = edge_module.DEFAULT_CONNECTION_KEY
-        new_edge = edge_class(v1_obj, v2_obj, weight=weight, key=key, **attr)
+        assert key is not None
+        if issubclass(edge_class, MultiEdge):
+            new_edge = edge_class(
+                cast(MultiVertex, v1_obj), cast(MultiVertex, v2_obj), weight=weight, key=key,
+                **attr
+            )
+        elif issubclass(edge_class, MultiDiEdge):
+            new_edge = edge_class(
+                cast(MultiDiVertex, v1_obj), cast(MultiDiVertex, v2_obj), weight=weight, key=key,
+                **attr
+            )
+        else:
+            raise TypeError(f"expected MultiEdge or MultiDiEdge; {type(edge_class).__name__} found")
     else:
-        new_edge = edge_class(v1_obj, v2_obj, weight=weight, **attr)
+        if issubclass(edge_class, Edge):
+            new_edge = edge_class(cast(Vertex, v1_obj), cast(Vertex, v2_obj), weight=weight, **attr)
+        elif issubclass(edge_class, DiEdge):
+            new_edge = edge_class(
+                cast(DiVertex, v1_obj), cast(DiVertex, v2_obj), weight=weight, **attr)
+        else:
+            raise TypeError(f"expected Edge or DiEdge; {type(edge_class).__name__} found")
 
+    assert new_edge is not None
     graph._edges[edge_label] = new_edge
     # Handle vertex bookkeeping.
     new_edge.vertex1._add_edge(new_edge)
@@ -191,7 +272,12 @@ def _add_edge_to_graph(
     return new_edge
 
 
-def _add_vertex_to_graph(graph: G[V, E], vertex_class: Type[V], label: "VertexLabel", **attr) -> V:
+def _add_vertex_to_graph(
+    graph: G[VertexClass, EdgeClass],
+    vertex_class: Type[ConcreteVertexClass],
+    label: VertexLabel,
+    **attr: Any
+) -> VertexClass:
     """Adds a vertex to the graph. If an existing vertex matches the vertex label, the existing
     vertex is returned.
 
@@ -205,7 +291,7 @@ def _add_vertex_to_graph(graph: G[V, E], vertex_class: Type[V], label: "VertexLa
         V: The new vertex (or an existing vertex matching the vertex label).
     """
     if not isinstance(label, (str, int)):
-        raise TypeError(f"label must be a string or integer; found {type(label).__name__}")
+        raise TypeError(f"expected str or int instance; {type(label).__name__} found")
     vertex_label = str(label)
 
     if vertex_label in graph._vertices:
@@ -216,7 +302,9 @@ def _add_vertex_to_graph(graph: G[V, E], vertex_class: Type[V], label: "VertexLa
     return new_vertex
 
 
-def _init_graph_from_graph(new_graph: G, other: G) -> None:
+def _init_graph_from_graph(
+    new_graph: G[VertexClass, EdgeClass], other: G[VertexClass, EdgeClass]
+) -> None:
     """Initialize a graph using the data from another graph.
 
     Args:
@@ -225,13 +313,23 @@ def _init_graph_from_graph(new_graph: G, other: G) -> None:
     """
     for vertex in other._vertices.values():
         attr = vertex._attr if vertex.has_attributes_dict() else {}
+        assert isinstance(attr, collections.abc.Mapping)  # MyPy doesn't realize a dict is a mapping
         new_graph.add_vertex(vertex.label, **copy.deepcopy(attr))
     for edge in other._edges.values():
         _add_edge_obj_to_graph(new_graph, edge)
 
 
 class G(ABC, Generic[V, E]):
-    """Generic abstract base class from which all graph classes inherit.
+    """Generic abstract base class from which all :term:`graph` classes derive.
+
+    This class has generic type parameters ``V`` and ``E``, which enable the type-hint usage
+    ``G[V, E]``.
+
+    * ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
+      <vertizee.classes.vertex.VertexBase>`.
+    * ``E = TypeVar("E", bound=Union["Connection", "MultiConnection"])`` See
+      :class:`Connection <vertizee.classes.edge.Connection>` and
+      :class:`MultiConnection <vertizee.classes.edge.MultiConnection>`.
 
     Args:
         allow_self_loops: Indicates if self loops are allowed. A self loop is an edge that
@@ -261,7 +359,7 @@ class G(ABC, Generic[V, E]):
         is_directed: bool = False,
         is_multigraph: bool = False,
         is_weighted_graph: bool = False,
-        **attr,
+        **attr: Any
     ) -> None:
         self._allow_self_loops = allow_self_loops
 
@@ -292,12 +390,12 @@ class G(ABC, Generic[V, E]):
         if data.vertices:
             return data.vertices[0].label in self._vertices
 
-        raise exception.VertizeeException(
-            "expected GraphPrimitive (EdgeType or VertexType); found "
-            f"{type(edge_or_vertex).__name__}"
+        raise TypeError(
+            "expected GraphPrimitive (i.e. EdgeType or VertexType) instance; "
+            f"{type(edge_or_vertex).__name__} found"
         )
 
-    def __deepcopy__(self, memo) -> "G":
+    def __deepcopy__(self, memo: Dict[Any, Any]) -> "G[V, E]":
         new = self.__class__()
         new._allow_self_loops = self._allow_self_loops
         new.__is_directed = self.__is_directed
@@ -311,18 +409,18 @@ class G(ABC, Generic[V, E]):
             else:
                 new.add_vertex(vertex.label)
         for edge in self._edges.values():
-            _add_edge_obj_to_graph(new, edge)
+            _add_edge_obj_to_graph(new, edge)  # type: ignore
         return new
 
     @overload
-    def __getitem__(self, vertex: VertexType) -> V:
+    def __getitem__(self, vertex: "VertexType") -> V:
         ...
 
     @overload
-    def __getitem__(self, edge_tuple: EdgeType) -> E:
+    def __getitem__(self, edge: "EdgeType") -> E:
         ...
 
-    def __getitem__(self, keys):
+    def __getitem__(self, keys: Union["VertexType", "EdgeType"]) -> Union[V, E]:
         """Supports index accessor notation to retrieve vertices and edges.
 
         Args:
@@ -356,11 +454,12 @@ class G(ABC, Generic[V, E]):
         if data.vertices:
             return self._vertices[data.vertices[0].label]
 
-        raise exception.VertizeeException(
-            "expected GraphPrimitive (EdgeType or VertexType); " f"found {type(keys).__name__}"
+        raise TypeError(
+            "expected GraphPrimitive (i.e. EdgeType or VertexType) instance; "
+            f"{type(keys).__name__} found"
         )
 
-    def __iter__(self) -> Iterator[Vertex]:
+    def __iter__(self) -> Iterator[V]:
         yield from self._vertices.values()
 
     def __len__(self) -> int:
@@ -374,7 +473,7 @@ class G(ABC, Generic[V, E]):
         vertex1: "VertexType",
         vertex2: "VertexType",
         weight: float = edge_module.DEFAULT_WEIGHT,
-        **attr,
+        **attr: Any
     ) -> E:
         """Adds a new edge to the graph.
 
@@ -388,7 +487,7 @@ class G(ABC, Generic[V, E]):
             E: The newly added edge (or pre-existing edge).
         """
 
-    def add_edges_from(self, edges: Iterable["EdgeType"], **attr) -> None:
+    def add_edges_from(self, edges: Iterable["EdgeType"], **attr: Any) -> None:
         """Adds edges from a container.
 
         Args:
@@ -408,11 +507,15 @@ class G(ABC, Generic[V, E]):
         for e in edges:
             edge_data: EdgeData = primitives_parsing.parse_edge_type(e)
             new_edge = self._add_edge_from_edge_data(edge_data)
+            if isinstance(new_edge, MultiEdgeBase):
+                connection = next(iter(new_edge.connections()))
+            else:
+                connection = new_edge  # type: ignore
             for k, v in attr.items():
-                new_edge[k] = v
+                cast(Attributes, connection).attr[k] = v
 
     @abstractmethod
-    def add_vertex(self, label: "VertexLabel", **attr) -> V:
+    def add_vertex(self, label: "VertexLabel", **attr: Any) -> V:
         """Adds a vertex to the graph and returns the new vertex object.
 
         If an existing vertex matches the vertex label, the existing vertex is returned.
@@ -425,7 +528,7 @@ class G(ABC, Generic[V, E]):
             V: The new vertex (or an existing vertex).
         """
 
-    def add_vertices_from(self, vertex_container: Iterable["VertexType"], **attr) -> None:
+    def add_vertices_from(self, vertex_container: Iterable["VertexType"], **attr: Any) -> None:
         """Adds vertices from a container, where the vertices are most often specified as strings
         or integers, but may also be tuples of the form ``Tuple[VertexLabel, AttributesDict]``.
 
@@ -454,7 +557,7 @@ class G(ABC, Generic[V, E]):
         return self._allow_self_loops
 
     @property
-    def attr(self) -> dict:
+    def attr(self) -> Dict[str, Any]:
         """Attribute dictionary to store optional data associated with a graph."""
         return self._attr
 
@@ -463,13 +566,13 @@ class G(ABC, Generic[V, E]):
         """Removes all edges and vertices from the graph."""
 
     @abstractmethod
-    def deepcopy(self) -> "G":
+    def deepcopy(self) -> "G[V, E]":
         """Returns a deep copy of this graph."""
 
     @property
     @abstractmethod
     def edge_count(self) -> int:
-        """The number of edges."""
+        """The number of edges (type ``int``)."""
 
     @abstractmethod
     def edges(self) -> ValuesView[E]:
@@ -477,14 +580,14 @@ class G(ABC, Generic[V, E]):
         return self._edges.values()
 
     @abstractmethod
-    def get_random_edge(self, *args, **kwargs) -> Optional[E]:
+    def get_random_edge(self, *args: Any, **kwargs: Any) -> Optional[E]:
         """Returns a randomly selected edge from the graph, or None if there are no edges.
 
         Note that ``*args`` and ``**kwargs`` are part of the method signature in order to provide
         flexibility for subclasses such as :class:`MultiGraph` and :class:`MultiDiGraph`.
 
         Returns:
-            EdgeClass: The random edge, or None if there are no edges.
+            Optional[E]: The random edge, or None if there are no edges.
         """
 
     def has_edge(self, vertex1: "VertexType", vertex2: "VertexType") -> bool:
@@ -578,7 +681,7 @@ class G(ABC, Generic[V, E]):
             int: The number of edges deleted.
 
         See Also:
-            :mod:`GraphPrimitive <vertizee.classes.primitives_parsing>`
+            :mod:`EdgeType <vertizee.classes.edge>`
         """
         deletion_count = 0
 
@@ -586,7 +689,7 @@ class G(ABC, Generic[V, E]):
             try:
                 edge = self.__getitem__(edge_type)
                 self.remove_edge(edge.vertex1, edge.vertex2)
-                if self.__is_multigraph:
+                if isinstance(edge, MultiEdgeBase):
                     deletion_count += edge.multiplicity
                 else:
                     deletion_count += 1
@@ -641,12 +744,12 @@ class G(ABC, Generic[V, E]):
             )
 
         if vertex_obj.loop_edge:
-            vertex_obj.loop_edge.remove()
+            cast(EdgeBase[V], vertex_obj.loop_edge).remove()
         self._vertices.pop(label, None)
 
     @property
     def vertex_count(self) -> int:
-        """The count of vertices in the graph."""
+        """The count (type ``int``) of vertices in the graph."""
         return len(self._vertices)
 
     @abstractmethod
@@ -656,7 +759,7 @@ class G(ABC, Generic[V, E]):
 
     @property
     def weight(self) -> float:
-        """Returns the weight of all edges."""
+        """Returns the weight (type ``float``) of all edges."""
         return sum([edge.weight for edge in self._edges.values()])
 
     def _add_edge_from_edge_data(self, edge_data: EdgeData) -> E:
@@ -666,7 +769,7 @@ class G(ABC, Generic[V, E]):
             edge_data: The edge to add.
 
         Returns:
-            EdgeClass: The new edge.
+            E: The new edge.
         """
         self._add_vertex_from_vertex_data(edge_data.vertex1)
         self._add_vertex_from_vertex_data(edge_data.vertex2)
@@ -687,7 +790,7 @@ class G(ABC, Generic[V, E]):
             return self._vertices[vertex_data.label]
 
         if vertex_data.vertex_object:
-            return self.add_vertex(vertex_data.vertex_object)
+            return self.add_vertex(vertex_data.label, **vertex_data.attr)
         return self.add_vertex(vertex_data.label, **vertex_data.attr)
 
     def _get_edge(self, vertex1: VertexType, vertex2: VertexType) -> Optional[E]:
@@ -717,7 +820,11 @@ class G(ABC, Generic[V, E]):
 
 
 class Graph(G[Vertex, Edge]):
-    """An undirected graph without parallel edges.
+    """An :term:`undirected graph` without :term:`parallel edges <parallel edge>`.
+
+    The ``Graph`` class contains :term:`vertices <vertex>` of type :class:`Vertex
+    <vertizee.classes.vertex.Vertex>` and :term:`edges <edge>` of type :class:`Edge
+    <vertizee.classes.edge.Edge>`.
 
     Args:
         edges_or_graph: An iterable container of edges or a graph object. If a multigraph is passed,
@@ -727,6 +834,7 @@ class Graph(G[Vertex, Edge]):
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary of the graph.
 
     See also:
+        * :mod:`EdgeType <vertizee.classes.edge>`
         * :class:`DiGraph`
         * :class:`MultiGraph`
         * :class:`MultiDiGraph`
@@ -734,33 +842,48 @@ class Graph(G[Vertex, Edge]):
 
     @overload
     def __init__(
-        self, edges: Optional[Iterable[EdgeType]] = None, allow_self_loops: bool = True, **attr
+        self,
+        edges: Optional[Iterable["EdgeType"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
     ) -> None:
         ...
 
     @overload
-    def __init__(self, graph: Optional[G] = None, allow_self_loops: bool = True, **attr) -> None:
+    def __init__(
+        self,
+        graph: Optional["G[VertexClass, EdgeClass]"] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         ...
 
-    def __init__(self, edges_or_graph=None, allow_self_loops=True, **attr) -> None:
+    def __init__(  # type: ignore
+        self,
+        edges_or_graph: Optional[Union[Iterable["EdgeType"], "G[VertexClass, EdgeClass]"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         super().__init__(
             allow_self_loops=allow_self_loops,
             is_directed=False,
             is_multigraph=False,
             is_weighted_graph=False,
-            **attr,
+            **attr
         )
 
         if edges_or_graph and isinstance(edges_or_graph, G):
-            _init_graph_from_graph(self, edges_or_graph)
+            _init_graph_from_graph(
+                cast(G[VertexClass, EdgeClass], self),
+                cast(G[VertexClass, EdgeClass], edges_or_graph)
+            )
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
-            self.add_edges_from(edges_or_graph)
+            self.add_edges_from(cast(Iterable["EdgeType"], edges_or_graph))
 
         elif edges_or_graph:
             raise TypeError(
-                f"edges_or_graph must be None or an instance of G or Iterable;"
-                f" found {type(edges_or_graph).__name__}"
+                f"expected G or Iterable instance; {type(edges_or_graph).__name__} found"
             )
 
     def add_edge(
@@ -768,7 +891,7 @@ class Graph(G[Vertex, Edge]):
         vertex1: "VertexType",
         vertex2: "VertexType",
         weight: float = edge_module.DEFAULT_WEIGHT,
-        **attr,
+        **attr: Any
     ) -> Edge:
         """Adds a new edge to the graph.
 
@@ -783,11 +906,16 @@ class Graph(G[Vertex, Edge]):
         Returns:
             Edge: The newly added edge, or an existing edge with matching vertices.
         """
-        return _add_edge_to_graph(
-            self, edge_module._Edge, vertex1=vertex1, vertex2=vertex2, weight=weight, **attr
-        )
+        return cast(Edge, _add_edge_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
+            edge_module._Edge,
+            vertex1=vertex1,
+            vertex2=vertex2,
+            weight=weight,
+            **attr
+        ))
 
-    def add_vertex(self, label: "VertexLabel", **attr) -> Vertex:
+    def add_vertex(self, label: "VertexLabel", **attr: Any) -> "Vertex":
         """Adds a vertex to the graph and returns the new Vertex object. If an existing vertex
         matches the vertex label, the existing vertex is returned.
 
@@ -798,14 +926,19 @@ class Graph(G[Vertex, Edge]):
         Returns:
             Vertex: The new vertex (or an existing vertex matching the vertex label).
         """
-        return _add_vertex_to_graph(self, vertex_module._Vertex, label=label, **attr)
+        return cast(Vertex, _add_vertex_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
+            vertex_module._Vertex,
+            label=label,
+            **attr
+        ))
 
     def clear(self) -> None:
         """Removes all edges and vertices from the graph."""
         self._edges.clear()
         self._vertices.clear()
 
-    def deepcopy(self) -> Graph:
+    def deepcopy(self) -> "Graph":
         """Returns a deep copy of this graph."""
         return copy.deepcopy(self)
 
@@ -814,23 +947,28 @@ class Graph(G[Vertex, Edge]):
         """The number of edges."""
         return len(self._edges)
 
-    def edges(self) -> ValuesView[Edge]:
+    def edges(self) -> ValuesView["Edge"]:
         """A view of graph edges."""
         return self._edges.values()
 
-    def get_random_edge(self) -> Optional[Edge]:
+    def get_random_edge(self) -> Optional["Edge"]:  # type: ignore
         """Returns a randomly selected edge from the graph, or None if there are no edges."""
         if self._edges:
             return random.choice(list(self._edges.values()))
         return None
 
-    def vertices(self) -> ValuesView[Vertex]:
+    def vertices(self) -> ValuesView["Vertex"]:
         """A view of the graph vertices."""
         return self._vertices.values()
 
 
 class DiGraph(G[DiVertex, DiEdge]):
-    """A *digraph* is a graph with directed edges; parallel edges are not allowed.
+    """A :term:`digraph` is a graph with :term:`directed edges <directed edge>`;
+    :term:`parallel edges <parallel edge>` are not allowed.
+
+    The ``DiGraph`` class contains :term:`vertices <vertex>` of type :class:`DiVertex
+    <vertizee.classes.vertex.DiVertex>` and :term:`directed edges <directed edge>` of type
+    :class:`DiEdge <vertizee.classes.edge.DiEdge>`.
 
     Args:
         edges_or_graph: An iterable container of directed edges or a graph object. If a multigraph
@@ -840,6 +978,7 @@ class DiGraph(G[DiVertex, DiEdge]):
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary of the graph.
 
     See also:
+        * :mod:`EdgeType <vertizee.classes.edge>`
         * :class:`Graph`
         * :class:`MultiGraph`
         * :class:`MultiDiGraph`
@@ -847,15 +986,28 @@ class DiGraph(G[DiVertex, DiEdge]):
 
     @overload
     def __init__(
-        self, edges: Optional[Iterable["EdgeType"]] = None, allow_self_loops: bool = True, **attr
+        self,
+        edges: Optional[Iterable["EdgeType"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
     ) -> None:
         ...
 
     @overload
-    def __init__(self, graph: Optional[G] = None, allow_self_loops: bool = True, **attr) -> None:
+    def __init__(
+        self,
+        graph: Optional["G[VertexClass, EdgeClass]"] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         ...
 
-    def __init__(self, edges_or_graph=None, allow_self_loops=True, **attr) -> None:
+    def __init__(  # type: ignore
+        self,
+        edges_or_graph: Optional[Union[Iterable["EdgeType"], "G[VertexClass, EdgeClass]"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         super().__init__(
             allow_self_loops=allow_self_loops,
             is_directed=True,
@@ -865,24 +1017,26 @@ class DiGraph(G[DiVertex, DiEdge]):
         )
 
         if edges_or_graph and isinstance(edges_or_graph, G):
-            _init_graph_from_graph(self, edges_or_graph)
+            _init_graph_from_graph(
+                cast(G[VertexClass, EdgeClass], self),
+                cast(G[VertexClass, EdgeClass], edges_or_graph)
+            )
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
-            self.add_edges_from(edges_or_graph)
+            self.add_edges_from(cast(Iterable["EdgeType"], edges_or_graph))
 
         elif edges_or_graph:
             raise TypeError(
-                f"edges_or_graph must be None or an instance of G or Iterable;"
-                f" found {type(edges_or_graph).__name__}"
+                f"expected G or Iterable instance; {type(edges_or_graph).__name__} found"
             )
 
-    def add_edge(
+    def add_edge(  # type: ignore
         self,
         tail: "VertexType",
         head: "VertexType",
         weight: float = edge_module.DEFAULT_WEIGHT,
-        **attr,
-    ) -> DiEdge:
+        **attr: Any
+    ) -> "DiEdge":
         """Adds a new directed edge to the graph.
 
         If an existing edge matches the vertices, the existing edge is returned.
@@ -897,11 +1051,16 @@ class DiGraph(G[DiVertex, DiEdge]):
         Returns:
             DiEdge: The newly added edge, or an existing edge with matching vertices.
         """
-        return _add_edge_to_graph(
-            self, edge_module._DiEdge, vertex1=tail, vertex2=head, weight=weight, **attr
-        )
+        return cast(DiEdge, _add_edge_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
+            edge_module._DiEdge,
+            vertex1=tail,
+            vertex2=head,
+            weight=weight,
+            **attr
+        ))
 
-    def add_vertex(self, label: "VertexLabel", **attr) -> DiVertex:
+    def add_vertex(self, label: "VertexLabel", **attr: Any) -> "DiVertex":
         """Adds a vertex to the graph and returns the new Vertex object. If an existing vertex
         matches the vertex label, the existing vertex is returned.
 
@@ -912,14 +1071,19 @@ class DiGraph(G[DiVertex, DiEdge]):
         Returns:
             DiVertex: The new vertex (or an existing vertex matching the vertex label).
         """
-        return _add_vertex_to_graph(self, vertex_module._DiVertex, label=label, **attr)
+        return cast(DiVertex, _add_vertex_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
+            vertex_module._DiVertex,
+            label=label,
+            **attr
+        ))
 
     def clear(self) -> None:
         """Removes all edges and vertices from the graph."""
         self._edges.clear()
         self._vertices.clear()
 
-    def deepcopy(self) -> DiGraph:
+    def deepcopy(self) -> "DiGraph":
         """Returns a deep copy of this graph."""
         return copy.deepcopy(self)
 
@@ -928,24 +1092,29 @@ class DiGraph(G[DiVertex, DiEdge]):
         """The number of edges."""
         return len(self._edges)
 
-    def edges(self) -> ValuesView[DiEdge]:
+    def edges(self) -> ValuesView["DiEdge"]:
         """A view of graph edges."""
         return self._edges.values()
 
-    def get_random_edge(self) -> Optional[DiEdge]:
+    def get_random_edge(self) -> Optional["DiEdge"]:  # type: ignore
         """Returns a randomly selected edge from the graph, or None if there are no edges."""
         if self._edges:
             return random.choice(list(self._edges.values()))
         return None
 
-    def vertices(self) -> ValuesView[DiVertex]:
+    def vertices(self) -> ValuesView["DiVertex"]:
         """A view of the graph vertices."""
         return self._vertices.values()
 
 
 class MultiGraph(G[MultiVertex, MultiEdge]):
-    """An undirected :term:`graph` that supports parallel connections between each pair of vertices,
-    as well as multiple :term:`self-loops <loop>` on a single vertex.
+    """A :term:`multigraph` is an :term:`undirected graph` that supports :term:`parallel edge`
+    connections between each pair of :term:`vertices <vertex>`, as well as multiple
+    :term:`self-loops <loop>` on a single vertex.
+
+    The ``MultiGraph`` class contains :term:`vertices <vertex>` of type :class:`MultiVertex
+    <vertizee.classes.vertex.MultiVertex>` and :term:`undirected edges <undirected edge>` of type
+    :class:`MultiEdge <vertizee.classes.edge.MultiEdge>`.
 
     Args:
         edges_or_graph: An iterable container of edges or a graph object.
@@ -954,6 +1123,7 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary of the graph.
 
     See also:
+        * :mod:`EdgeType <vertizee.classes.edge>`
         * :class:`Graph`
         * :class:`DiGraph`
         * :class:`MultiDiGraph`
@@ -961,15 +1131,28 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
 
     @overload
     def __init__(
-        self, edges: Optional[Iterable["EdgeType"]] = None, allow_self_loops: bool = True, **attr
+        self,
+        edges: Optional[Iterable["EdgeType"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
     ) -> None:
         ...
 
     @overload
-    def __init__(self, graph: Optional[G] = None, allow_self_loops: bool = True, **attr) -> None:
+    def __init__(
+        self,
+        graph: Optional["G[VertexClass, EdgeClass]"] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         ...
 
-    def __init__(self, edges_or_graph=None, allow_self_loops=True, **attr) -> None:
+    def __init__(  # type: ignore
+        self,
+        edges_or_graph: Optional[Union[Iterable["EdgeType"], "G[VertexClass, EdgeClass]"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         super().__init__(
             allow_self_loops=allow_self_loops,
             is_directed=False,
@@ -979,15 +1162,17 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
         )
 
         if edges_or_graph and isinstance(edges_or_graph, G):
-            _init_graph_from_graph(self, edges_or_graph)
+            _init_graph_from_graph(
+                cast(G[VertexClass, EdgeClass], self),
+                cast(G[VertexClass, EdgeClass], edges_or_graph)
+            )
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
-            self.add_edges_from(edges_or_graph)
+            self.add_edges_from(cast(Iterable["EdgeType"], edges_or_graph))
 
         elif edges_or_graph:
             raise TypeError(
-                f"edges_or_graph must be None or an instance of G or Iterable;"
-                f" found {type(edges_or_graph).__name__}"
+                f"expected G or Iterable instance; {type(edges_or_graph).__name__} found"
             )
 
     def add_edge(
@@ -996,8 +1181,8 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
         vertex2: "VertexType",
         weight: float = edge_module.DEFAULT_WEIGHT,
         key: Optional[ConnectionKey] = None,
-        **attr,
-    ) -> MultiEdge:
+        **attr: Any
+    ) -> "MultiEdge":
         """Adds a new multiedge to the graph.
 
         If an existing edge matches the vertices, the existing edge is returned.
@@ -1019,17 +1204,17 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
             multiedge.add_connection(weight=weight, key=key, **attr)
             return multiedge
 
-        return _add_edge_to_graph(
-            self,
+        return cast(MultiEdge, _add_edge_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
             edge_module._MultiEdge,
             vertex1=vertex1,
             vertex2=vertex2,
             weight=weight,
             key=key,
             **attr,
-        )
+        ))
 
-    def add_vertex(self, label: "VertexLabel", **attr) -> MultiVertex:
+    def add_vertex(self, label: "VertexLabel", **attr: Any) -> "MultiVertex":
         """Adds a vertex to the graph and returns the new Vertex object. If an existing vertex
         matches the vertex label, the existing vertex is returned.
 
@@ -1040,14 +1225,19 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
         Returns:
             MultiVertex: The new vertex (or an existing vertex matching the vertex label).
         """
-        return _add_vertex_to_graph(self, vertex_module._MultiVertex, label=label, **attr)
+        return cast(MultiVertex, _add_vertex_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
+            vertex_module._MultiVertex,
+            label=label,
+            **attr
+        ))
 
     def clear(self) -> None:
         """Removes all edges and vertices from the graph."""
         self._edges.clear()
         self._vertices.clear()
 
-    def deepcopy(self) -> MultiGraph:
+    def deepcopy(self) -> "MultiGraph":
         """Returns a deep copy of this graph."""
         return copy.deepcopy(self)
 
@@ -1056,11 +1246,13 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
         """The number of edges, including parallel edge connections."""
         return sum(e.multiplicity for e in self._edges.values())
 
-    def edges(self) -> ValuesView[MultiEdge]:
+    def edges(self) -> ValuesView["MultiEdge"]:
         """A view of the graph edges."""
         return self._edges.values()
 
-    def get_random_edge(self, ignore_multiplicity: bool = False) -> Optional[MultiEdge]:
+    def get_random_edge(  # type: ignore
+        self, ignore_multiplicity: bool = False
+    ) -> Optional["MultiEdge"]:
         """Returns a randomly chosen multiedge from the graph, or None if there are no edges.
 
         Args:
@@ -1087,13 +1279,18 @@ class MultiGraph(G[MultiVertex, MultiEdge]):
 
         return None
 
-    def vertices(self) -> ValuesView[MultiVertex]:
+    def vertices(self) -> ValuesView["MultiVertex"]:
         """A view of the graph vertices."""
         return self._vertices.values()
 
 
 class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
-    """A directed graph that supports parallel connections between each pair of vertices.
+    """A directed :term:`multigraph` that supports :term:`parallel edge` connections between each
+    pair of :term:`vertices <vertex>`.
+
+    The ``MultiDiGraph`` class contains :term:`vertices <vertex>` of type :class:`MultiDiVertex
+    <vertizee.classes.vertex.MultiDiVertex>` and :term:`directed edges <directed edge>` of type
+    :class:`MultiDiEdge <vertizee.classes.edge.MultiDiEdge>`.
 
     Args:
         edges_or_graph: An iterable container of edges or a graph object.
@@ -1102,6 +1299,7 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary of the graph.
 
     See also:
+        * :mod:`EdgeType <vertizee.classes.edge>`
         * :class:`Graph`
         * :class:`DiGraph`
         * :class:`MultiGraph`
@@ -1109,15 +1307,28 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
 
     @overload
     def __init__(
-        self, edges: Optional[Iterable["EdgeType"]] = None, allow_self_loops: bool = True, **attr
+        self,
+        edges: Optional[Iterable["EdgeType"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
     ) -> None:
         ...
 
     @overload
-    def __init__(self, graph: Optional[G] = None, allow_self_loops: bool = True, **attr) -> None:
+    def __init__(
+        self,
+        graph: Optional["G[VertexClass, EdgeClass]"] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         ...
 
-    def __init__(self, edges_or_graph=None, allow_self_loops=True, **attr) -> None:
+    def __init__(  # type: ignore
+        self,
+        edges_or_graph: Optional[Union[Iterable["EdgeType"], "G[VertexClass, EdgeClass]"]] = None,
+        allow_self_loops: bool = True,
+        **attr: Any
+    ) -> None:
         super().__init__(
             allow_self_loops=allow_self_loops,
             is_directed=True,
@@ -1127,25 +1338,27 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
         )
 
         if edges_or_graph and isinstance(edges_or_graph, G):
-            _init_graph_from_graph(self, edges_or_graph)
+            _init_graph_from_graph(
+                cast(G[VertexClass, EdgeClass], self),
+                cast(G[VertexClass, EdgeClass], edges_or_graph)
+            )
 
         elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
-            self.add_edges_from(edges_or_graph)
+            self.add_edges_from(cast(Iterable["EdgeType"], edges_or_graph))
 
         elif edges_or_graph:
             raise TypeError(
-                f"edges_or_graph must be None or an instance of G or Iterable;"
-                f" found {type(edges_or_graph).__name__}"
+                f"expected G or Iterable instance; {type(edges_or_graph).__name__} found"
             )
 
-    def add_edge(
+    def add_edge(  # type: ignore
         self,
         tail: "VertexType",
         head: "VertexType",
         weight: float = edge_module.DEFAULT_WEIGHT,
         key: Optional[ConnectionKey] = None,
         **attr,
-    ) -> MultiDiEdge:
+    ) -> "MultiDiEdge":
         """Adds a new directed multiedge to the graph.
 
         If an existing edge matches the vertices, the existing edge is returned.
@@ -1168,17 +1381,17 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
             multiedge.add_connection(weight=weight, key=key, **attr)
             return multiedge
 
-        return _add_edge_to_graph(
-            self,
+        return cast(MultiDiEdge, _add_edge_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
             edge_module._MultiDiEdge,
             vertex1=tail,
             vertex2=head,
             weight=weight,
             key=key,
             **attr,
-        )
+        ))
 
-    def add_vertex(self, label: "VertexLabel", **attr) -> MultiDiVertex:
+    def add_vertex(self, label: "VertexLabel", **attr: Any) -> "MultiDiVertex":
         """Adds a vertex to the graph and returns the new Vertex object. If an existing vertex
         matches the vertex label, the existing vertex is returned.
 
@@ -1189,14 +1402,19 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
         Returns:
             MultiDiVertex: The new vertex (or an existing vertex matching the vertex label).
         """
-        return _add_vertex_to_graph(self, vertex_module._MultiDiVertex, label=label, **attr)
+        return cast(MultiDiVertex, _add_vertex_to_graph(
+            cast(G[VertexClass, EdgeClass], self),
+            vertex_module._MultiDiVertex,
+            label=label,
+            **attr
+        ))
 
     def clear(self) -> None:
         """Removes all multiedges and vertices from the graph."""
         self._edges.clear()
         self._vertices.clear()
 
-    def deepcopy(self) -> MultiDiGraph:
+    def deepcopy(self) -> "MultiDiGraph":
         """Returns a deep copy of this graph."""
         return copy.deepcopy(self)
 
@@ -1205,11 +1423,13 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
         """The number of edges, including parallel edge connections."""
         return sum(e.multiplicity for e in self._edges.values())
 
-    def edges(self) -> ValuesView[MultiDiEdge]:
+    def edges(self) -> ValuesView["MultiDiEdge"]:
         """A view of the graph multiedges."""
         return self._edges.values()
 
-    def get_random_edge(self, ignore_multiplicity: bool = False) -> Optional[MultiDiEdge]:
+    def get_random_edge(  # type: ignore
+        self, ignore_multiplicity: bool = False
+    ) -> Optional["MultiDiEdge"]:
         """Returns a randomly chosen multiedge from the graph, or None if there are no edges.
 
         Args:
@@ -1236,6 +1456,6 @@ class MultiDiGraph(G[MultiDiVertex, MultiDiEdge]):
 
         return None
 
-    def vertices(self) -> ValuesView[MultiDiVertex]:
+    def vertices(self) -> ValuesView["MultiDiVertex"]:
         """A view of the graph vertices."""
         return self._vertices.values()

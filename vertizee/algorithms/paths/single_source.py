@@ -12,23 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for the single-source-shortest-paths problem.
+# pylint: disable=line-too-long
+r"""
+===================================
+Paths: single-source shortest paths
+===================================
 
-Note:
-    :math:`m = |E|` (the number of edges) and :math:`n = |V|` (the number of vertices)
+Algorithms for the single-source-shortest-paths problem. The asymptotic running times use the
+notation that for some graph :math:`G(V, E)`, the number of vertices is :math:`n = |V|` and the
+number of edges is :math:`m = |E|`.
 
-* :func:`shortest_paths` - Finds the shortest paths and associated lengths from the source vertex
-  to all reachable vertices. This function chooses the fastest available single-source-shortest-path
-  algorithm depending on the properties of the graph.
-* :func:`bellman_ford` - Finds the shortest paths in a weighted graph using the Bellman-Ford
-  algorithm. Running time: :math:`O(mn)`
-* :func:`breadth_first_search_shortest_paths` - Finds the shortest paths in an unweighted graph
-  using a breadth-first search. Running time: :math:`O(m + n)`
-* :func:`dijkstra` - Finds the shortest paths in a graph with positive edge weights using Dijkstra's
-  algorithm. Running time: :math:`O((m + n)\\log{n})`
-* :func:`dijkstra_fibonacci` - Finds the shortest paths in a graph with positive edge weights using
-  Dijkstra's algorithm implemented using a Fibonacci-heap-based priority queue. Running time:
-  :math:`O(n(\\log{n}) + m)`
+**Recommended Tutorial**: :doc:`Paths <../../tutorials/paths>` - |image-colab-paths|
+
+.. |image-colab-paths| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/paths.ipynb
+
+Function summary
+================
+
+* :func:`shortest_paths` - Finds the shortest :term:`paths <path>` and associated lengths from the
+  source :term:`vertex` to all reachable vertices. This function chooses the fastest available
+  single-source-shortest-path algorithm depending on the properties of the graph.
+* :func:`bellman_ford` - Finds the shortest :term:`paths <path>` in a weighted graph using the
+  Bellman-Ford algorithm. Running time: :math:`O(mn)`
+* :func:`breadth_first_search_shortest_paths` - Finds the shortest :term:`paths <path>` in an
+  unweighted graph using a breadth-first search. Running time: :math:`O(m + n)`
+* :func:`dijkstra` - Finds the shortest :term:`paths <path>` in a graph with positive edge weights
+  using Dijkstra's algorithm. Running time: :math:`O((m + n)\log{n})`
+* :func:`dijkstra_fibonacci` - Finds the shortest :term:`paths <path>` in a graph with positive
+  edge weights using Dijkstra's algorithm implemented using a Fibonacci-heap-based priority queue.
+  Running time: :math:`O(n(\log{n}) + m)`
+
+Detailed documentation
+======================
 """
 
 from __future__ import annotations
@@ -53,17 +69,19 @@ INFINITY: Final = float("inf")
 def get_weight_function(
     weight: Union[Callable, str] = "Edge__weight"
 ) -> Callable[[V, V, bool], float]:
-    """Returns a function that accepts two vertices and a boolean indicating if the graph should be
-    treated as if it were reversed (i.e. edges of directed graphs in the opposite direction) and
-    returns the corresponding edge weight.
+    """Returns a function that accepts two :term:`vertices <vertex>` and a boolean indicating if
+    the :term:`graph` should be treated as if it were :term:`reversed <reverse>` and returns the
+    corresponding :term:`edge` weight.
 
     If there is no edge weight, then the edge weight is assumed to be one.
 
     Note:
-        For multigraphs, the minimum edge weight among the parallel edge connections is returned.
+        For :term:`multigraphs <multigraph>`, the minimum edge weight among the parallel edge
+        connections is returned.
 
     Note:
-        To support reversed graphs, custom weight functions should implement the following pattern:
+        To support :term:`reversed <reverse>` graphs, custom weight functions should implement the
+        following pattern:
 
         .. code-block:: python
 
@@ -93,9 +111,9 @@ def get_weight_function(
 
     Args:
         weight: Optional; If callable, then ``weight`` itself is returned. If
-            a string is specified, it is the key to use to retrieve the weight from an ``E.attr``
-            dictionary. The default value (``Edge__weight``) returns a function that accesses the
-            ``E.weight`` property.
+            a string is specified, it is the key to use to retrieve the weight from the edge
+            ``attr`` dictionary. The default value ("Edge__weight") returns a function that
+            accesses the edge property ``weight``.
 
     Returns:
         Callable[[V, V, bool], float]: A function that accepts two vertices
@@ -142,15 +160,15 @@ def shortest_paths(
     reverse_graph: bool = False,
     weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
-    """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices.
+    r"""Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to
+    all reachable vertices.
 
     Note:
         For weighted graphs that use custom weight attributes (instead of the built-in ``weight``
         attribute of the edge classes), this function may select the wrong algorithm. If there is
         doubt about which algorithm to use, choose the :func:`Bellman-Ford algorithm
         <bellman_ford>`, which will provide the correct shortest paths for both unweighted and
-        weighted graphs (including negative edge weights).
+        weighted graphs (including the case where the graph contains negative edge weights).
 
     This function chooses the fastest available single-source-shortest-path algorithm depending on
     the properties of the graph. Note that :math:`m = |E|` (the number of edges) and :math:`n = |V|`
@@ -160,12 +178,12 @@ def shortest_paths(
           for unweighted graphs. Running time: :math:`O(m + n)`
         * weighted (positive weights only) - :func:`Dijkstra's algorithm <dijkstra>`
           is used for weighted graphs that only contain positive edge weights. Running time:
-          :math:`O((m + n)\\log{n})`
+          :math:`O((m + n)\log{n})`
         * weighted (contains negative edge weights) - The :func:`Bellman-Ford algorithm
           <bellman_ford>` is used for weighted graphs that contain at least one negative edge
           weight. Running time: :math:`O(mn)`
 
-    Unreachable vertices will have a path length of infinity. In additional,
+    Unreachable vertices will have a path length of infinity. In addition,
     :func:`ShortestPath.is_destination_reachable
     <vertizee.algorithms.algo_utils.path_utils.ShortestPath.is_destination_reachable>`
     will return False.
@@ -181,12 +199,12 @@ def shortest_paths(
             reconstruct specific shortest paths, see :func:`reconstruct_path
             <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`. Defaults to False.
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
         weight: Optional; If callable, then ``weight`` must be a function accepting two vertex
             objects (edge endpoints) that returns an edge weight (or length). If a string is
-            specified, it is the key to use to retrieve the weight from the ``E.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``E.weight``.
+            specified, it is the key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Returns:
         VertexDict[ShortestPath[V]]: A dictionary mapping vertices to their shortest paths relative
@@ -196,12 +214,8 @@ def shortest_paths(
         NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
-        * :func:`get_weight_function`
         * :func:`reconstruct_path
           <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`
-        * :func:`bellman_ford`
-        * :func:`dijkstra`
-        * :func:`breadth_first_search_shortest_paths`
         * :class:`ShortestPath
           <vertizee.algorithms.algo_utils.path_utils.ShortestPath>`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
@@ -248,20 +262,20 @@ def bellman_ford(
     reverse_graph: bool = False,
     weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
-    """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices in a weighted graph using the Bellman-Ford algorithm.
+    """Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to all
+    reachable vertices in a weighted graph using the Bellman-Ford algorithm.
 
     Running time: :math:`O(mn)` where :math:`m = |E|` and :math:`n = |V|`
 
     The Bellman-Ford algorithm is not as fast as Dijkstra, but it can handle negative edge weights.
 
-    Unreachable vertices will have a path length of infinity. In additional,
+    Unreachable vertices will have a path length of infinity. In addition,
     :func:`ShortestPath.is_destination_reachable()
     <vertizee.algorithms.algo_utils.path_utils.ShortestPath.is_destination_reachable>`
     will return False.
 
     Note:
-        This implementation is based on BELLMAN-FORD [CLRS2009_3]_.
+        This implementation is based on BELLMAN-FORD :cite:`2009:clrs`.
 
     Args:
         graph: The graph to search.
@@ -270,12 +284,12 @@ def bellman_ford(
             reconstruct specific shortest paths, see :func:`reconstruct_path
             <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`. Defaults to False.
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
         weight: Optional; If callable, then ``weight`` must be a function accepting two vertex
             objects (edge endpoints) that returns an edge weight (or length). If a string is
-            specified, it is the key to use to retrieve the weight from the ``E.attr``
-            dictionary. The default value (``Edge__weight``) uses the property ``E.weight``.
+            specified, it is the key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
@@ -285,18 +299,11 @@ def bellman_ford(
         NegativeWeightCycle: If the graph contains a negative weight cycle.
 
     See Also:
-        * :func:`get_weight_function`
-        * :class:`Edge <vertizee.classes.edge.Edge>`
         * :func:`reconstruct_path
           <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`
         * :class:`ShortestPath
           <vertizee.algorithms.algo_utils.path_utils.ShortestPath>`
-        * :func:`dijkstra`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
-
-    References:
-     .. [CLRS2009_3] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, page 651. The MIT Press, 2009.
     """
     try:
         s: V = graph[source]
@@ -343,13 +350,15 @@ def bellman_ford(
 def breadth_first_search_shortest_paths(
     graph: G[V, E], source: VertexType, save_paths: bool = False, reverse_graph: bool = False
 ) -> VertexDict[ShortestPath[V]]:
-    """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices in an unweighted graph using a breadth-first search.
+    """Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to all
+    reachable vertices in an unweighted graph using a breadth-first search.
 
     Running time: :math:`O(m + n)` where :math:`m = |E|` and :math:`n = |V|`
 
-    Unreachable vertices will have an empty list of vertices for their path and a length of
-    infinity (``float("inf")``). In additional, ``ShortestPath.is_unreachable()`` will return True.
+    Unreachable vertices will have a path length of infinity. In addition,
+    :func:`ShortestPath.is_destination_reachable()
+    <vertizee.algorithms.algo_utils.path_utils.ShortestPath.is_destination_reachable>`
+    will return False.
 
     Args:
         graph: The graph to search.
@@ -359,7 +368,7 @@ def breadth_first_search_shortest_paths(
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`.
             Defaults to False.
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
 
     Returns:
@@ -367,6 +376,8 @@ def breadth_first_search_shortest_paths(
         the ``source`` vertex.
 
     See Also:
+        * :func:`reconstruct_path
+          <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`
         * :class:`ShortestPath
           <vertizee.algorithms.algo_utils.path_utils.ShortestPath>`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
@@ -418,19 +429,19 @@ def dijkstra(
     reverse_graph: bool = False,
     weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
-    """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices in a graph with positive edge weights using Dijkstra's algorithm.
+    r"""Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to
+    all reachable vertices in a graph with positive edge weights using Dijkstra's algorithm.
 
-    Running time: :math:`O((m + n)\\log{n})` where :math:`m = |E|` and :math:`n = |V|`. Running time
-    is due to implementation using a minimum priority queue based on a binary heap. For an
-    implementation built using a Fibonacci heap and corresponding running time of
-    :math:`O(n(\\log{n}) + m)`, see :func:`dijkstra_fibonacci`.
+    Running time: :math:`O((m + n)\log{n})` where :math:`m = |E|` and :math:`n = |V|`. Running time
+    is due to implementation using a minimum :term:`priority queue` based on a binary :term:`heap`.
+    For an implementation built using a :term:`Fibonacci heap` and corresponding running time of
+    :math:`O(n(\log{n}) + m)`, see :func:`dijkstra_fibonacci`.
 
     This algorithm is not guaranteed to work if edge weights are negative or are floating point
     numbers (overflows and roundoff errors can cause problems). To handle negative edge weights,
     see :func:`bellman_ford`.
 
-    Unreachable vertices will have a path length of infinity. In additional,
+    Unreachable vertices will have a path length of infinity. In addition,
     :func:`ShortestPath.is_destination_reachable()
     <vertizee.algorithms.algo_utils.path_utils.ShortestPath.is_destination_reachable>`
     will return False.
@@ -441,7 +452,7 @@ def dijkstra(
     edge. See :func:`get_weight_function`.
 
     Note:
-        This implementation is based on DIJKSTRA [CLRS2009_4]_.
+        This implementation is based on DIJKSTRA :cite:`2009:clrs`.
 
     Args:
         graph: The graph to search.
@@ -452,32 +463,24 @@ def dijkstra(
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`.
             Defaults to False.
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
-        weight: Optional; If callable, then `weight` must be a function
+        weight: Optional; If callable, then ``weight`` must be a function
             accepting two Vertex objects (edge endpoints) that returns an edge weight (or length).
-            If a string is specified, it is the key to use to retrieve the weight from the
-            ``E.attr`` dictionary. The default value (``Edge__weight``) uses the property
-            ``E.weight``.
+            If a string is specified, it is the key to use to retrieve the weight from the edge
+            ``attr`` dictionary. The default value ("Edge__weight") uses the edge property
+            ``weight``.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
-        * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
-        * :class:`Edge <vertizee.classes.edge.Edge>`
         * :func:`reconstruct_path
           <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`
         * :class:`ShortestPath
           <vertizee.algorithms.algo_utils.path_utils.ShortestPath>`
-        * :func:`bellman_ford`
-        * :func:`dijkstra_fibonacci`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
-
-    References:
-     .. [CLRS2009_4] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, page 658. The MIT Press, 2009.
     """
     try:
         s: V = graph[source]
@@ -522,19 +525,19 @@ def dijkstra_fibonacci(
     reverse_graph: bool = False,
     weight: Union[Callable, str] = "Edge__weight",
 ) -> VertexDict[ShortestPath[V]]:
-    """Finds the shortest paths and associated lengths from the source vertex to all reachable
-    vertices in a graph with positive edge weights using Dijkstra's algorithm.
+    r"""Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to
+    all reachable vertices in a graph with positive edge weights using Dijkstra's algorithm.
 
-    Running time: :math:`O(n(\\log{n}) + m)` where :math:`m = |E|` and :math:`n = |V|`. Running time
-    is due to implementation using a minimum priority queue based on a Fibonacci heap. For an
-    implementation using a binary heap and corresponding running time of math:`O((m + n)\\log{n})`,
-    see :func:`dijkstra`.
+    Running time: :math:`O(n(\log{n}) + m)` where :math:`m = |E|` and :math:`n = |V|`. Running time
+    is due to implementation using a minimum :term:`priority queue` based on a
+    :term:`Fibonacci heap`. For an implementation using a binary :term:`heap` and corresponding
+    running time of :math:`O((m + n)\log{n})`, see :func:`dijkstra`.
 
     This algorithm is *not* guaranteed to work if edge weights are negative or are floating point
     numbers (overflows and roundoff errors can cause problems). To handle negative edge weights,
     see :func:`bellman_ford`.
 
-    Unreachable vertices will have a path length of infinity. In additional,
+    Unreachable vertices will have a path length of infinity. In addition,
     :func:`ShortestPath.is_destination_reachable()
     <vertizee.algorithms.algo_utils.path_utils.ShortestPath.is_destination_reachable>`
     will return False.
@@ -544,7 +547,7 @@ def dijkstra_fibonacci(
     two vertices and returns the weight of the connecting edge. See :func:`get_weight_function`.
 
     Note:
-        This implementation is based on DIJKSTRA [CLRS2009_4]_.
+        This implementation is based on DIJKSTRA. :cite:`2009:clrs`
 
     Args:
         graph: The graph to search.
@@ -555,27 +558,22 @@ def dijkstra_fibonacci(
             :func:`vertizee.algorithms.algo_utils.path_utils.reconstruct_path`.
             Defaults to False.
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
-        weight: Optional; If callable, then `weight` must be a function
-            accepting two Vertex objects (edge endpoints) that returns an edge weight (or length).
-            If a string is specified, it is the key to use to retrieve the weight from the
-            ``E.attr`` dictionary. The default value (``Edge__weight``) uses the property
-            ``E.weight``.
+        weight: Optional; If callable, then ``weight`` must be a function accepting two Vertex
+            objects (edge endpoints) that returns an edge weight (or length). If a string is
+            specified, it is the key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Returns:
         VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
-        * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
-        * :class:`Edge <vertizee.classes.edge.Edge>`
         * :func:`reconstruct_path
           <vertizee.algorithms.algo_utils.path_utils.reconstruct_path>`
         * :class:`ShortestPath
           <vertizee.algorithms.algo_utils.path_utils.ShortestPath>`
-        * :func:`bellman_ford`
-        * :func:`dijkstra`
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
     """
     #

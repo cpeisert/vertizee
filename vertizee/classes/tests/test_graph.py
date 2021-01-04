@@ -77,11 +77,11 @@ class TestG:
         assert ("1", "2") in g, "edge specified as tuple should be in graph"
         assert (1, 3) not in g, "edge (1, 3) should not be in graph"
 
-        with pytest.raises(exception.VertizeeException):
+        with pytest.raises(TypeError):
             _ = 4.5 not in g
-        with pytest.raises(exception.VertizeeException):
+        with pytest.raises(TypeError):
             _ = (1, 2, 3, 4) not in g
-        with pytest.raises(exception.VertizeeException):
+        with pytest.raises(TypeError):
             _ = [1, 2] not in g
 
     def test__getitem__(self):
@@ -93,7 +93,7 @@ class TestG:
         assert isinstance(g[1, {}], Vertex), "graph should have vertex 1"
         v1 = g[1]
         assert isinstance(g[v1], Vertex), "graph should have vertex 1"
-        with pytest.raises(exception.VertizeeException):
+        with pytest.raises(TypeError):
             _ = g[2.0]
         with pytest.raises(KeyError):
             _ = g[3]
@@ -108,7 +108,7 @@ class TestG:
         assert isinstance(g[1, 2, 1.0, {}], Edge), "graph should have edge (1, 2)"
         edge = g[1, 2]
         assert isinstance(g[edge], Edge), "graph should have edge (1, 2)"
-        with pytest.raises(exception.VertizeeException):
+        with pytest.raises(TypeError):
             _ = g[1.0, 2.0]
         with pytest.raises(KeyError):
             _ = g[1, 3]

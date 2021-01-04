@@ -3,10 +3,10 @@ Data Structures
 ==================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
 
-   bk_tree
    fibonacci_heap
    priority_queue
+   tree
    union_find
    vertex_dictionary

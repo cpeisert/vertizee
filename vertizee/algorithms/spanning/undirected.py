@@ -12,28 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for finding optimum :term:`spanning trees <spanning tree>` and
-:term:`forests <forest>` of :term:`graphs <graph>`.
+# pylint: disable=line-too-long
+r"""
+===============================================
+Spanning: undirected graphs (trees and forests)
+===============================================
 
-Functions:
+Algorithms for finding optimum :term:`spanning trees <spanning tree>` and
+:term:`forests <forest>` of :term:`undirected graphs <undirected graph>`. The asymptotic running
+times use the notation that for some graph :math:`G(V, E)`, the number of vertices is
+:math:`n = |V|` and the number of edges is :math:`m = |E|`.
+
+**Recommended Tutorial**: :doc:`Spanning trees, arborescences, forests, and branchings <../../tutorials/spanning_tree_arborescence>` - |image-colab-spanning|
+
+.. |image-colab-spanning| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/spanning_tree_arborescence.ipynb
+
+Function summary
+================
 
 * :func:`spanning_tree` - Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
-  :term:`undirected graph` using Kruskal's algorithm.
+  :term:`undirected graph` using Kruskal's algorithm. Running time: :math:`O(m(\log{n}))`
 * :func:`optimum_forest` - Iterates over the minimum (or maximum) :term:`trees <tree>` comprising a
-  :term:`spanning forest` of a weighted, undirected graph.
+  :term:`spanning forest` of a weighted, undirected graph. Running time: :math:`O(m(\log{n}))`
 * :func:`kruskal_optimum_forest` - Iterates over the minimum (or maximum) trees comprising a
   :term:`spanning forest` of an undirected graph using Kruskal's algorithm.
+  Running time: :math:`O(m(\log{n}))`
 * :func:`kruskal_spanning_tree` - Iterates over a minimum (or maximum) :term:`spanning tree` of a
-  weighted, undirected graph using Kruskal's algorithm.
+  weighted, undirected graph using Kruskal's algorithm. Running time: :math:`O(m(\log{n}))`
 * :func:`prim_spanning_tree` - Iterates over a minimum (or maximum) :term:`spanning tree` of a
-  weighted, undirected graph using Prim's algorithm.
+  weighted, undirected graph using Prim's algorithm. Running time: :math:`O(m(\log{n}))`
 * :func:`prim_fibonacci` - Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
   undirected graph using Prim's algorithm implemented using a :term:`Fibonacci heap`.
+  Running time: :math:`O(m + n(\log{n}))`
+
+Detailed documentation
+======================
 """
 
 from __future__ import annotations
 import collections
-from typing import Dict, Final, Iterator, Optional, Union
+from typing import Dict, Final, Iterator, Optional, TYPE_CHECKING, Union
 
 from vertizee import exception
 from vertizee.algorithms.algo_utils.spanning_utils import get_weight_function
@@ -41,10 +60,11 @@ from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
-from vertizee.classes.graph import Graph, MultiGraph
 from vertizee.classes.edge import E, Edge, MultiEdge
 from vertizee.classes.vertex import MultiVertex, V, Vertex
 
+if TYPE_CHECKING:
+    from vertizee.classes.graph import Graph, MultiGraph
 
 INFINITY: Final = float("inf")
 
@@ -56,24 +76,25 @@ INFINITY: Final = float("inf")
 def kruskal_optimum_forest(
     graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
 ) -> Iterator[Tree[V, E]]:
-    """Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
+    r"""Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
     :term:`optimum spanning forest` of an :term:`undirected graph` using Kruskal's algorithm.
 
-    Running time: :math:`O(m(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(m(\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
 
-    This implementation is based on MST-KRUSKAL [CLRS2009_5]_.
+    This implementation is based on MST-KRUSKAL. :cite:`2009:clrs`
 
     Note:
         This algorithm is only defined for *undirected* graphs. To find the optimum forest of a
-        directed graph (also called an :term:`optimum branching <branching>`"), see
-        :func:`optimum_directed_forest`.
+        directed graph (also called an :term:`optimum branching <branching>`), see
+        :func:`optimum_directed_forest
+        <vertizee.algorithms.spanning.directed.optimum_directed_forest>`.
 
     Args:
         graph: The undirected graph to iterate.
         minimum: Optional; True to return the minimum spanning tree, or False to return the maximum
             spanning tree. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Iterator[Tree[V, E]]: An iterator over the minimum (or maximum) trees. If only one tree is
@@ -81,16 +102,9 @@ def kruskal_optimum_forest(
 
     See Also:
         * :func:`kruskal_spanning_tree`
-        * :func:`optimum_directed_forest`
         * :func:`optimum_forest`
-        * :func:`prim_spanning_tree`
-        * :func:`prim_fibonacci`
         * :func:`spanning_tree`
         * :class:`UnionFind <vertizee.classes.data_structures.union_find.UnionFind>`
-
-    References:
-     .. [CLRS2009_5] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, page 631. The MIT Press, 2009.
     """
     if len(graph) == 0:
         raise exception.Unfeasible("forests are undefined for empty graphs")
@@ -123,38 +137,41 @@ def kruskal_optimum_forest(
 def kruskal_spanning_tree(
     graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
 ) -> Iterator[Union[Edge, MultiEdge]]:
-    """Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
+    r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Kruskal's algorithm.
 
-    Running time: :math:`O(m(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
-
-    This implementation is based on MST-KRUSKAL [CLRS2009_5]_.
-
-    Note:
-        This algorithm is only defined for *undirected* graphs. To find the spanning tree of a
-        directed graph, see :func:`optimum_directed_forest`.
+    Running time: :math:`O(m(\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
 
     Note:
         If the graph does not contain a spanning tree, for example, if the graph is disconnected,
-        no error or warning will be raised. See :func:`optimum_forest`.
+        no error or warning will be raised. If the total number of edges yielded equals
+        :math:`|V| - 1`, then there is a spanning tree, otherwise see :func:`optimum_forest`.
+
+    Note:
+        This algorithm is only defined for *undirected* graphs. To find the spanning tree of a
+        directed graph, see :func:`spanning_arborescence
+        <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
+
+    Note:
+        This implementation is based on MST-KRUSKAL. :cite:`2009:clrs`
 
     Args:
         graph: The undirected graph to iterate.
         minimum: Optional; True to return the minimum spanning tree, or False to return the maximum
             spanning tree. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Union[Edge, MultiEdge]: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Kruskal's algorithm.
 
+    Raises:
+        Unfeasible: If the graph does not contain a spanning tree, an Unfeasible exception is
+            raised.
+
     See Also:
-        * :func:`kruskal_optimum_forest`
-        * :func:`optimum_directed_forest`
         * :func:`optimum_forest`
-        * :func:`prim_spanning_tree`
-        * :func:`prim_fibonacci`
         * :func:`spanning_tree`
         * :class:`UnionFind <vertizee.classes.data_structures.union_find.UnionFind>`
     """
@@ -180,17 +197,23 @@ def kruskal_spanning_tree(
 def optimum_forest(
     graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
 ) -> Iterator[Tree[V, E]]:
-    """Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
+    r"""Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
     :term:`optimum spanning forest` of an :term:`undirected graph` using Kruskal's algorithm.
 
-    Running time: :math:`O(m(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(m(\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+
+    Note:
+        This algorithm is only defined for *undirected* graphs. To find the optimum forest of a
+        directed graph (also called an :term:`optimum branching <branching>`), see
+        :func:`optimum_directed_forest
+        <vertizee.algorithms.spanning.directed.optimum_directed_forest>`.
 
     Args:
         graph: The undirected graph in which to find optimum trees.
         minimum: Optional;  True to return the minimum forest, or False to return the maximum
             forest. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Iterator[Tree[V, E]]: An iterator over the minimum (or maximum) trees. If only one tree is
@@ -198,10 +221,6 @@ def optimum_forest(
 
     See Also:
         * :func:`spanning_tree`
-        * :func:`kruskal`
-        * :func:`prim_spanning_tree`
-        * :func:`prim_fibonacci`
-        * :class:`UnionFind <vertizee.classes.data_structures.union_find.UnionFind>`
     """
     return kruskal_optimum_forest(graph, minimum=minimum, weight=weight)
 
@@ -212,10 +231,20 @@ def prim_spanning_tree(
     minimum: bool = True,
     weight: str = "Edge__weight",
 ) -> Iterator[Union[Edge, MultiEdge]]:
-    """Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
+    r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Prim's algorithm.
 
-    Running time: :math:`O(m(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(m(\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+
+    Note:
+        If the graph does not contain a spanning tree, for example, if the graph is disconnected,
+        no error or warning will be raised. If the total number of edges yielded equals
+        :math:`|V| - 1`, then there is a spanning tree, otherwise see :func:`optimum_forest`.
+
+    Note:
+        This algorithm is only defined for *undirected* graphs. To find the spanning tree of a
+        directed graph, see :func:`spanning_arborescence
+        <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
 
     Note:
         Prim's algorithm (implemented with a binary-heap-based :term:`priority queue`) has the same
@@ -224,11 +253,8 @@ def prim_spanning_tree(
         uses the highly-efficient :class:`UnionFind
         <vertizee.classes.data_structures.union_find.UnionFind>` data structure.
 
-    This algorithm is only defined for undirected graphs. To find the spanning tree of a directed
-    graph, see :func:`optimum_directed_forest`.
-
     Note:
-        This implementation is based on MST-PRIM [CLRS2009_6]_.
+        This implementation is based on MST-PRIM. :cite:`2009:clrs`
 
     Args:
         graph: The undirected graph to iterate.
@@ -236,26 +262,17 @@ def prim_spanning_tree(
             arbitrary root vertex is chosen. Defaults to None.
         minimum: Optional; True to return the minimum spanning tree, or False to return the maximum
             spanning tree. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Union[Edge, MultiEdge]: Edges from the minimum (or maximum) spanning tree discovered
         using Prim's algorithm.
 
     See Also:
-        * :func:`kruskal_optimum_forest`
-        * :func:`kruskal_spanning_tree`
-        * :func:`optimum_directed_forest`
         * :func:`optimum_forest`
-        * :func:`prim_spanning_tree`
-        * :func:`prim_fibonacci`
         * :class:`Priority Queue <vertizee.classes.data_structures.priority_queue.PriorityQueue>`
         * :func:`spanning_tree`
-
-    References:
-     .. [CLRS2009_6] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, page 634. The MIT Press, 2009.
     """
     if len(graph) == 0:
         raise exception.Unfeasible("spanning trees are undefined for empty graphs")
@@ -320,24 +337,31 @@ def prim_fibonacci(
     minimum: bool = True,
     weight: str = "Edge__weight",
 ) -> Iterator[Union[Edge, MultiEdge]]:
-    """Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
+    r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Prim's algorithm implemented using a :term:`Fibonacci heap`.
 
-    Running time: :math:`O(m + n(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(m + n(\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
 
     Note:
-        The Fibonacci-heap based implementation of Prim's algorithm is faster than the default
-        binary-heap implementation, since the DECREASE-KEY operation, i.e.
-        :meth:`PriorityQueue.add_or_update()
+        If the graph does not contain a spanning tree, for example, if the graph is disconnected,
+        no error or warning will be raised. If the total number of edges yielded equals
+        :math:`|V| - 1`, then there is a spanning tree, otherwise see :func:`optimum_forest`.
+
+    Note:
+        This algorithm is only defined for *undirected* graphs. To find the spanning tree of a
+        directed graph, see :func:`spanning_arborescence
+        <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
+
+    Note:
+        The :term:`Fibonacci-heap <Fibonacci heap>` based implementation of Prim's algorithm is
+        faster than the default :term:`binary-heap <heap>` implementation, since the DECREASE-KEY
+        operation, i.e. :meth:`PriorityQueue.add_or_update()
         <vertizee.classes.data_structures.priority_queue.PriorityQueue.add_or_update>`, requires
-        :math:`O(\\log{n})` time for binary heaps and only :math:`O(1)` amortized time for Fibonacci
+        :math:`O(\log{n})` time for binary heaps and only :math:`O(1)` amortized time for Fibonacci
         heaps.
 
-    This algorithm is only defined for undirected graphs. To find the spanning tree of a directed
-    graph, see :func:`optimum_directed_forest`.
-
     Note:
-        This implementation is based on MST-PRIM [CLRS2009_6]_.
+        This implementation is based on MST-PRIM. :cite:`2009:clrs`
 
     Args:
         graph: The undirected graph to iterate.
@@ -345,21 +369,17 @@ def prim_fibonacci(
             arbitrary root vertex is chosen. Defaults to None.
         minimum: Optional; True to return the minimum spanning tree, or False to return the maximum
             spanning tree. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Union[Edge, MultiEdge]: Edges from the minimum (or maximum) spanning tree discovered
         using Prim's algorithm.
 
     See Also:
-        * :func:`kruskal_optimum_forest`
-        * :func:`kruskal_spanning_tree`
-        * :func:`optimum_directed_forest`
         * :func:`optimum_forest`
         * :func:`prim_spanning_tree`
-        * :func:`prim_fibonacci`
-        * :class:`Priority Queue <vertizee.classes.data_structures.priority_queue.PriorityQueue>`
+        * :class:`FibonacciHeap <vertizee.classes.data_structures.fibonacci_heap.FibonacciHeap>`
         * :func:`spanning_tree`
     """
     if len(graph) == 0:
@@ -421,16 +441,22 @@ def prim_fibonacci(
 
 
 def spanning_tree(
-    graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
+    graph: Union["Graph", "MultiGraph"], minimum: bool = True, weight: str = "Edge__weight"
 ) -> Iterator[Union[Edge, MultiEdge]]:
-    """Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
+    r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Kruskal's algorithm.
 
-    Running time: :math:`O(m(\\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
+    Running time: :math:`O(m(\log{n}))` where :math:`m = |E|` and :math:`n = |V|`
 
-    This algorithm is only defined for *undirected* graphs. To find the spanning tree of a directed
-    graph, see :func:`spanning_arborescence
-    <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
+    Note:
+        If the graph does not contain a spanning tree, for example, if the graph is disconnected,
+        no error or warning will be raised. If the total number of edges yielded equals
+        :math:`|V| - 1`, then there is a spanning tree, otherwise see :func:`optimum_forest`.
+
+    Note:
+        This algorithm is only defined for *undirected* graphs. To find the spanning tree of a
+        directed graph, see :func:`spanning_arborescence
+        <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
 
     Note:
         Prim's algorithm (implemented with a binary-heap-based :term:`priority queue`) has the same
@@ -440,26 +466,20 @@ def spanning_tree(
         outperforms Prim.
 
     Note:
-        This implementation is based on MST-KRUSKAL [CLRS2009_5]_.
+        This implementation is based on MST-KRUSKAL. :cite:`2009:clrs`
 
     Args:
         graph: The undirected graph to iterate the spanning tree.
         minimum: Optional; True to return the minimum spanning tree, or False to return
             the maximum spanning tree. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Union[Edge, MultiEdge]: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Kruskal's algorithm.
 
     See Also:
-        * :func:`kruskal_optimum_forest`
-        * :func:`kruskal_spanning_tree`
-        * :func:`optimum_directed_forest`
         * :func:`optimum_forest`
-        * :func:`prim_spanning_tree`
-        * :func:`prim_fibonacci`
-        * :func:`spanning_tree`
     """
     return kruskal_spanning_tree(graph, minimum, weight)

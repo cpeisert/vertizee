@@ -12,15 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for depth-first search.
+# pylint: disable=line-too-long
+"""
+==========================
+Search: depth-first search
+==========================
 
-Note:
-    * :math:`G = (V, E)` is a :term:`graph` consisting of a set of :term:`vertices <vertex>`
-      :math:`V` and a set of :term:`edges <edge>` :math:`E`.
-    * :math:`m = |E|` (the number of edges)
-    * :math:`n = |V|` (the number of vertices)
+Algorithms for depth-first search. The asymptotic running times use the
+notation that for some graph :math:`G(V, E)`, the number of vertices is :math:`n = |V|` and the
+number of edges is :math:`m = |E|`.
 
-Functions:
+**Recommended Tutorial**: :doc:`Search <../../tutorials/search>` - |image-colab-search|
+
+.. |image-colab-search| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb
+
+Function summary
+================
 
 * :func:`dfs` - Performs a depth-first-search and provides detailed results (e.g. a :term:`forest`
   of depth-first-search :term:`trees <rooted tree>`, :term:`cycle` detection, and edge
@@ -31,6 +39,9 @@ Functions:
   :term:`postorder`. Running time: :math:`O(m + n)`
 * :func:`dfs_preorder_traversal` - Iterates over vertices of depth-first search in :term:`preorder`.
   Running time: :math:`O(m + n)`
+
+Detailed documentation
+======================
 """
 
 from __future__ import annotations
@@ -67,15 +78,16 @@ def dfs(
 
     Running time: :math:`O(m + n)`
 
-    If a ``source`` is not specified, then vertices are repeatedly selected until all components in
-    the graph have been searched.
+    Note:
+        If a ``source`` is not specified, then vertices are repeatedly selected until all
+        :term:`components <connected component>` in the graph have been searched.
 
     Args:
         graph: The graph to search.
         source: Optional; The source vertex from which to begin the search. When ``source`` is
             specified, only the component reachable from the source is searched. Defaults to None.
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
 
     Returns:
@@ -95,12 +107,8 @@ def dfs(
         False
 
     See Also:
-        * :class:`SearchResults
-          <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
+        * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
         * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
-        * :func:`dfs_labeled_edge_traversal`
-        * :func:`dfs_postorder_traversal`
-        * :func:`dfs_preorder_traversal`
 
     Note:
         The references for this algorithm are documented in :func:`dfs_labeled_edge_traversal`.
@@ -155,8 +163,8 @@ def dfs_labeled_edge_traversal(
     Running time: :math:`O(m + n)`
 
     Note:
-        If ``source`` is specified, then the traversal only includes the graph component containing
-        the ``source`` vertex.
+        If ``source`` is specified, then the traversal only includes the graph
+        :term:`component <connected component>` containing the ``source`` vertex.
 
     Args:
         graph: The graph to search.
@@ -164,7 +172,7 @@ def dfs_labeled_edge_traversal(
             specified, only the component reachable from the source is searched. Defaults to None.
         depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults
             to False.
 
     Yields:
@@ -175,14 +183,14 @@ def dfs_labeled_edge_traversal(
 
         The ``label`` is one of the strings:
 
-            1. "tree_root" - math:`(u, u)`, where math:`u` is the root vertex of a DFS tree.
-            2. "tree_edge" - edge math:`(u, v)` is a tree edge if math:`v` was first discovered by
-               exploring edge math:`(u, v)`.
-            3. "back_edge" - back edge math:`(u, v)` connects vertex math:`u` to ancestor math:`v`
-               in a depth-first tree. Per *Introduction to Algorithms* [CLRS2009_10]_, self loops
-               are considered back edges.
-            4. "forward_edge": non-tree edges math:`(u, v)` connecting a vertex math:`u` to a
-               descendant math:`v` in a depth-first tree.
+            1. "tree_root" - :math:`(u, u)`, where :math:`u` is the root vertex of a DFS tree.
+            2. "tree_edge" - edge :math:`(u, v)` is a tree edge if :math:`v` was first discovered by
+               exploring edge :math:`(u, v)`.
+            3. "back_edge" - back edge :math:`(u, v)` connects vertex :math:`u` to ancestor
+               :math:`v` in a depth-first tree. Per *Introduction to Algorithms* :cite:`2009:clrs`,
+               :term:`self loops <loop>` are considered back edges.
+            4. "forward_edge" - non-tree edges :math:`(u, v)` connecting a vertex :math:`u` to a
+               descendant :math:`v` in a depth-first tree.
             5. "cross_edge" - All other edges, which may go between vertices in the same depth-first
                tree as long as one vertex is not an ancestor of the other, or they go between
                vertices in different depth-first trees.
@@ -193,8 +201,8 @@ def dfs_labeled_edge_traversal(
 
             1. "preorder" - the traversal discovered new vertex `child` in the DFS.
             2. "postorder" - the traversal finished visiting vertex `child` in the DFS.
-            3. "already_discovered" - the traversal found a non-tree edge that had already been
-               discovered.
+            3. "already_discovered" - the traversal found a non-tree edge connecting to a vertex
+               that was already discovered.
 
     Example:
         The labels reveal the complete transcript of the depth-first search algorithm.
@@ -213,41 +221,23 @@ def dfs_labeled_edge_traversal(
          (0, 0, 'tree_root', 'postorder')]
 
     See Also:
-        * :func:`depth_first_search`
-        * :func:`dfs_postorder_traversal`
-        * :func:`dfs_preorder_traversal`
-        * :class:`Direction`
-        * :class:`Label`
+        * :class:`Direction <vertizee.algorithms.algo_utils.search_utils.Direction>`
+        * :class:`Label <vertizee.algorithms.algo_utils.search_utils.Label>`
+        * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
 
-    Notes:
+    Note:
         This function is adapted from the NetworkX function:
         `networkx.algorithms.traversal.depth_first_search.dfs_labeled_edges
         <https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/depth_first_search.py>`_
-        [N2020]_
+        :cite:`2008:hss`
 
         The NetworkX function was in turn adapted from David Eppstein's depth-first search function
-        in `PADS`. [E2004]_
+        in `PADS`. :cite:`2015:eppstein`
 
         The edge labeling of this function is based on the treatment in *Introduction to
-        Algorithms*. [CLRS2009_10]_
+        Algorithms*. :cite:`2009:clrs`
 
-        The feature to allow depth limits is based on the the Wikipedia article "Iterative
-        deepening depth-first search" [WEC2020_02]_.
-
-    References:
-     .. [CLRS2009_10] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                      Introduction to Algorithms: Third Edition, page 603-610. The MIT Press, 2009.
-
-     .. [E2004] David Eppstein's depth-first search function.
-                http://www.ics.uci.edu/~eppstein/PADS
-
-     .. [N2020] NetworkX module: networkx.algorithms.traversal.depth_first_search.py
-                https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/depth_first_search.py
-
-     .. [WEC2020_2] Wikipedia contributors. "Iterative deepening depth-first search." Wikipedia,
-                    The Free Encyclopedia. Available from:
-                    https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search.
-                    Accessed 16 November 2020.
+        The feature to allow depth limits is based on Korf. :cite:`1985:korf`
     """
     if len(graph) == 0:
         raise exception.Unfeasible("search is undefined for an empty graph")
@@ -344,36 +334,30 @@ def dfs_postorder_traversal(
 ) -> Iterator[V]:
     """Iterates over vertices of a depth-first search in :term:`postorder`.
 
-    Postorder is the order in which a depth-first search last visited the vertices. A vertex
-    visit is finished when all of the vertex's adjacent vertices have been recursively visited. If
-    the graph is directed and acyclic (a.k.a. a DAG), then the reverse postorder forms a
-    topological ordering of the vertices (i.e. the first vertex returned from next() will be the
-    last vertex in the topological sort).
+    Note:
+        If ``source`` is specified, then the traversal only includes the graph
+        :term:`component <connected component>` containing the ``source`` vertex.
+
+    :term:`Postorder <postorder>` is the order in which a depth-first search last visited the
+    vertices. A vertex visit is finished when all of the vertex's adjacent vertices have been
+    recursively visited. If the graph is directed and :term:`acyclic` (a.k.a. a :term:`dag`), then
+    the reverse postorder forms a :term:`topological ordering` of the vertices (i.e. the first
+    vertex returned from ``next()`` will be the last vertex in the :term:`topological sort
+    <topological sorting>`).
 
     For directed graphs, setting `reverse_graph` to True will generate vertices as if the graph
-    were reversed (i.e. all directed edges pointing in the opposite direction).
-
-    The reverse of a directed graph is also called the transpose or the converse. See
-    https://en.wikipedia.org/wiki/Transpose_graph.
+    were :term:`reversed <reverse>`.
 
     Args:
         graph: The graph to search.
         source: Optional; The source vertex from which to begin the search. When ``source`` is
             specified, only the component reachable from the source is searched. Defaults to None.
         depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
-        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
-            False.
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal as if
+            the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to False.
 
     Yields:
         Vertex: Vertices in the depth-first search in postorder.
-
-    See Also:
-        * :func:`depth_first_search`
-        * :func:`dfs_preorder_traversal`
-        * :func:`dfs_labeled_edge_traversal`
-        * :class:`Direction`
-        * :class:`Label`
 
     Note:
         The references for this algorithm are documented in :func:`dfs_labeled_edge_traversal`.
@@ -392,11 +376,12 @@ def dfs_preorder_traversal(
 ) -> Iterator[V]:
     """Iterates over vertices in depth-first search in :term:`preorder`.
 
-    For directed graphs, setting ``reverse_graph`` to True will generate vertices as if the graph
-    were reversed (i.e. all directed edges pointing in the opposite direction).
+    Note:
+        If ``source`` is specified, then the traversal only includes the graph
+        :term:`component <connected component>` containing the ``source`` vertex.
 
-    The reverse of a directed graph is also called the transpose or the converse. See
-    https://en.wikipedia.org/wiki/Transpose_graph.
+    For directed graphs, setting ``reverse_graph`` to True will generate vertices as if the graph
+    were :term:`reversed <reverse>`.
 
     Args:
         graph: The graph to search.
@@ -404,16 +389,11 @@ def dfs_preorder_traversal(
             specified, only the component reachable from the source is searched. Defaults to None.
         depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
 
     Yields:
         Vertex: Vertices in the depth-first search in preorder.
-
-    See Also:
-        * :func:`depth_first_search`
-        * :func:`dfs_postorder_traversal`
-        * :func:`dfs_labeled_edge_traversal`
 
     Note:
         The references for this algorithm are documented in :func:`dfs_labeled_edge_traversal`.

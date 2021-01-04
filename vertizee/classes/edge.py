@@ -12,54 +12,76 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Data types supporting directed and undirected :term:`edges <edge>`.
+"""Data types supporting directed and undirected :term:`edges <edge>` as well as directed and
+undirected :term:`multiedges <multiedge>`.
 
-Classes and type aliases:
+The :term:`edge` classes are divided into two separate hierarchies. One hierarchy derives from the
+abstract :class:`Connection` class and a second hierarchy derives from the abstract
+:class:`MultiConnection` class. Vertizee introduces the terminology :term:`connection` to refer to
+a single edge connection between two :term:`vertices <vertex>` in a :term:`graph`, and the term
+:term:`multiconnection` to refer to an edge that may have :term:`parallel edges <parallel edge>`
+between its :term:`endpoints <endpoint>`. A *multiconnection* may be described as a collection of
+parallel *connections*.
 
+
+Class and type-alias summary
+============================
+
+* :class:`V` - a generic type parameter defined as ``TypeVar("V", bound="VertexBase")``. See
+  :class:`VertexBase <vertizee.classes.vertex.VertexBase>`.
+* :class:`E` - a generic type parameter defined as
+  ``TypeVar("E", bound=Union["Connection", "MultiConnection"])``. See :class:`Connection
+  <vertizee.classes.edge.Connection>` and :class:`MultiConnection
+  <vertizee.classes.edge.MultiConnection>`.
+* :class:`EdgeType` - A type alias defined as ``Union[E, EdgeLiteral]`` where ``EdgeLiteral`` is an
+  alias for various edge-tuple formats, such as ``Tuple[VertexType, VertexType]`` and
+  ``Tuple[VertexType, VertexType, Weight]``. Weight is an alias for ``float``.
 * :class:`Connection[V] <Connection>` - An :term:`edge` that has exactly one :term:`connection`
   between its :term:`endpoints <endpoint>`.
-* :class:`MultiConnection[V] <MultiConnection>` - A edge that may have :term:`parallel edges
-  <parallel edge>` between its :term:`endpoints <endpoint>`.
-* :class:`ConnectionViewBase[V] <ConnectionViewBase>` - A dynamic view of an edge. Edge views
-  provide an edge-like API for each of the parallel edge connections in a multiedge.
-* :class:`ConnectionView(ConnectionViewBase[Vertex]) <ConnectionView>` - A dynamic view of an
-  undirected edge. Edge views provide an edge-like API for each of the parallel edge connections in
-  a multiedge.
-* :class:`DiConnectionView(ConnectionViewBase[DiVertex]) <DiConnectionView>` - A dynamic view of a
-  directed edge. Edge views provide an edge-like API for each of the parallel edge connections in a
-  multiedge.
+* :class:`MultiConnection[V] <MultiConnection>` - An :term:`edge` that may have :term:`parallel
+  edges <parallel edge>` between its :term:`endpoints <endpoint>`.
+* :class:`EdgeConnectionData` - Unique data associated with an individual connection in a
+  :term:`multiedge`, such as a weight and custom attributes.
+* :class:`EdgeConnectionView(Connection[V]) <EdgeConnectionView>` - A dynamic view of an edge
+  connection. Connection views provide an edge-like API for each of the :term:`parallel edge`
+  connections in a :term:`multiedge` or a :term:`multidiedge`.
+* :class:`EdgeConnectionView(EdgeInterface[V]) <EdgeConnectionView>` - A dynamic view of an
+  :term:`undirected edge` connection. Connection views provide an edge-like API for each of the
+  :term:`parallel edge` connections in a :term:`multiedge`.
+* :class:`SingleDiEdgeView(EdgeConnectionView[DiVertex]) <SingleDiEdgeView>` - A dynamic view of a
+  :term:`directed edge` connection. Directed-connection views provide an edge-like API for each of
+  the :term:`parallel edge` connections in a :term:`multidiedge`.
 * :class:`EdgeBase(Connection[V]) <EdgeBase>` - Abstract base class from which all single-connection
-  edge classes inherit.
+  edge classes derive.
 * :class:`MultiEdgeBase(MultiConnection[V]) <MultiEdgeBase>` - Abstract base class from which all
-  multiedge classes inherit.
+  edge classes derive that support :term:`parallel edges <parallel edge>`.
 * :class:`Edge(EdgeBase[Vertex]) <Edge>` - An undirected edge that does not allow parallel
-  connections between its vertices. This is the class to use when adding type hints for undirected
-  edge objects.
+  connections between its vertices. This is the class to use when adding type hints for
+  :term:`undirected edge` objects.
 * :class:`DiEdge(EdgeBase[DiVertex]) <DiEdge>` - A directed connection between two vertices that
-  defines the ``tail`` as the starting vertex and the ``head`` as the destination vertex. Parallel
-  connections are not allowed. This is the class to use when adding type hints for directed edge
-  objects.
-* :class:`MultiEdge(MultiEdgeBase[Vertex]) <MultiEdge>` - An undirected edge that allows parallel
-  connections between its two endpoints. This is the class to use when adding type hints for
-  undirected multiedge objects.
-* :class:`MultiDiEdge(MultiEdgeBase[DiVertex]) <MultiDiEdge>` - A directed edge that allows
-  multiple directed connections between its two endpoints. The ``tail`` is the starting vertex and
-  the ``head`` is the destination vertex. This is the class to use when adding type hints for
-  directed multiedge objects.
-* :class:`EdgeType` - A type alias defined as
-  ``Union[DiEdge, Edge, EdgeLiteral, MultiDiEdge, MultiEdge]`` where ``EdgeLiteral`` is an alias
-  for various edge-tuple formats, such as ``Tuple[VertexType, VertexType]`` and
-  ``Tuple[VertexType, VertexType, Weight]``.
-* :class:`V` - A generic type parameter that may be either a :class:`Vertex
-  <vertizee.classes.vertex.Vertex>` or :class:`DiVertex <vertizee.classes.vertex.DiVertex>`.
+  defines the :term:`tail` as the starting vertex and the :term:`head` as the destination vertex.
+  Parallel connections are not allowed. This is the class to use when adding type hints for
+  :term:`directed edge` objects.
+* :class:`MultiEdge(MultiEdgeBase[Vertex]) <MultiEdge>` - An :term:`undirected edge` that allows
+  parallel connections between its two endpoints. This is the class to use when adding type hints
+  for undirected :term:`multiedge` objects.
+* :class:`MultiDiEdge(MultiEdgeBase[DiVertex]) <MultiDiEdge>` - A :term:`directed edge` that allows
+  multiple directed connections between its two endpoints. The :term:`tail` is the starting vertex
+  and the :term:`head` is the destination vertex. This is the class to use when adding type hints
+  for :term:`multidiedge` objects.
 
-Functions:
+Function summary
+================
 
-* :func:`create_edge_label` - Creates a consistent string representation of the edge. Directed
-  edges have labels with the vertices ordered based on the initialization order. Undirected edges
-  have labels with the vertices sorted lexicographically. For example, both :math:`(1, 2)` and
-  :math:`(2, 1)` refer to the same undirected edge connection, but the label would always be
-  "(1, 2)".
+* :func:`create_edge_label` - Creates a consistent string representation of an :term:`edge`.
+  :term:`Directed edges <directed edge>` have labels with the :term:`vertices <vertex>` ordered
+  based on the initialization order. :term:`Undirected edges <undirected edge>` have labels with
+  the vertices sorted :term:`lexicographically <lexicographical order>`. For example, in an
+  :term:`undirected graph` both :math:`(1, 2)` and :math:`(2, 1)` refer to the same undirected edge,
+  but the label would always be "(1, 2)".
+
+Detailed documentation
+======================
 """
 # pylint: disable=unsubscriptable-object
 # See pylint issue #2822: https://github.com/PyCQA/pylint/issues/2822
@@ -68,56 +90,64 @@ Functions:
 
 from __future__ import annotations
 from abc import ABC, abstractmethod
-import numbers
 from typing import (
     Any,
+    cast,
     Dict,
     Final,
     Generic,
-    Hashable,
     Iterable,
-    List,
     Optional,
     Tuple,
+    Type,
+    TYPE_CHECKING,
     TypeVar,
     Union
 )
 
 from vertizee.classes import vertex as vertex_module
 from vertizee.classes.collection_views import ItemsView, ListView
-from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexType
+from vertizee.classes.comparable import Comparable
+from vertizee.classes.vertex import (
+    DiVertex, MultiDiVertex, MultiVertex, V, Vertex, VertexClass, VertexType
+)
 from vertizee.utils import abc_utils
+
+# pylint: disable=cyclic-import
+if TYPE_CHECKING:
+    from vertizee.classes.graph import G
+
 
 # Type aliases
 AttributesDict = dict
 Weight = float
-EdgeClass = Union["DiEdge", "Edge", "MultiDiEdge", "MultiEdge"]
 EdgeTuple = Tuple[VertexType, VertexType]
 EdgeTupleWeighted = Tuple[VertexType, VertexType, Weight]
 EdgeTupleAttr = Tuple[VertexType, VertexType, AttributesDict]
 EdgeTupleWeightedAttr = Tuple[VertexType, VertexType, Weight, AttributesDict]
 EdgeLiteral = Union[EdgeTuple, EdgeTupleWeighted, EdgeTupleAttr, EdgeTupleWeightedAttr]
 
-#: EdgeType: A type alias defined as ``Union[EdgeClass, EdgeLiteral]``,
-#: where ``EdgeLiteral`` is an alias for various edge-tuple formats.
+#: **E** - A generic type parameter that represents an edge.
+#: ``E = TypeVar("E", bound=Union["Connection", "MultiConnection"])``
+E = TypeVar("E", bound="EdgeInterface")  # type: ignore
+
+EdgeClass = Union["DiEdge", "Edge", "MultiDiEdge", "MultiEdge", "EdgeConnectionView"]
+
 EdgeType = Union[EdgeClass, EdgeLiteral]
 
-ConnectionKey = Hashable
-
-#: E: A generic type parameter that represents an edge (for example, DiEdge, Edge, MultiDiEdge,
-# MultiEdge).
-E = TypeVar("E", bound=Union["Connection", "MultiConnection"])
+ConnectionKey = str
 
 DEFAULT_WEIGHT: Final = 1.0
-DEFAULT_CONNECTION_KEY: Final = 0
+DEFAULT_CONNECTION_KEY: Final = "0"
 
 
 def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed: bool) -> str:
     """Creates a consistent string representation of an :term:`edge`.
 
-    :term:`Directed edges <directed edge>` have labels with the endpoints in initialization order.
-    Undirected edges have labels with the endpoints sorted lexicographically. For example, both
-    :math:`(1, 2)` and  :math:`(2, 1)` refer to the same *undirected* edge connection, but the label
+    :term:`Directed edges <directed edge>` have labels with the :term:`endpoints <endpoint>` in
+    initialization order. :term:`Undirected edges <undirected edge>` have labels with the endpoints
+    sorted :term:`lexicographically <lexicographical order>`. For example, in an :term:`undirected
+    graph` both :math:`(1, 2)` and :math:`(2, 1)` refer to the same undirected edge, but the label
     would always be "(1, 2)".
 
     Args:
@@ -136,424 +166,72 @@ def create_edge_label(vertex1: "VertexType", vertex2: "VertexType", is_directed:
     return f"({v1_label}, {v2_label})"
 
 
-def _are_connections_equal(connection: "Connection", other: "Connection") -> bool:
-    """Returns ``True`` if ``connection`` is logically equal to ``other``."""
-    if connection is other:
-        return True
-    v1 = connection.vertex1
-    v2 = connection.vertex2
-    o_v1 = other.vertex1
-    o_v2 = other.vertex2
-
-    if not v1._parent_graph.is_directed():
-        if v1.label > v2.label:
-            v1, v2 = v2, v1
-        if o_v1.label > o_v2.label:
-            o_v1, o_v2 = o_v2, o_v1
-
-    if v1 != o_v1 or v2 != o_v2 or connection.weight != other.weight:
-        return False
-    if connection.has_attributes_dict() != other.has_attributes_dict():
-        return False
-    if connection.has_attributes_dict() and other.has_attributes_dict():
-        if connection.attr != other.attr:
-            return False
-    return True
-
-
-def _are_multiconnections_equal(
-    multiconnection: "MultiConnection", other: "MultiConnection"
-) -> bool:
-    """Returns ``True`` if ``multiconnection`` is logically equal to ``other``. Note that
-    multiconnection equality does not rely on the attributes of individual parallel connections
-    within multiconnections."""
-    if multiconnection is other:
-        return True
-    v1 = multiconnection.vertex1
-    v2 = multiconnection.vertex2
-    o_v1 = other.vertex1
-    o_v2 = other.vertex2
-
-    if not v1._parent_graph.is_directed():
-        if v1.label > v2.label:
-            v1, v2 = v2, v1
-        if o_v1.label > o_v2.label:
-            o_v1, o_v2 = o_v2, o_v1
-
-    if v1 != o_v1 or v2 != o_v2 or multiconnection.weight != other.weight:
-        return False
-    if multiconnection.multiplicity != other.multiplicity:
-        return False
-    return True
-
-
-def _contract_connection(edge: Connection, remove_loops: bool = False) -> None:
-    """Contracts an edge by removing it from the graph and merging its two incident vertices.
-
-    Args:
-        edge: The edge to contract.
-        remove_loops: If True, loops on the merged vertex will be removed. Defaults to False.
-    """
-    graph = edge._parent_graph
-    v1 = edge.vertex1
-    v2 = edge.vertex2
-
-    edges_to_delete: List[EdgeClass] = []
-    # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
-    for incident in v2.incident_edges():
-        edges_to_delete.append(incident)
-
-        if incident.is_loop():
-            vertex1 = v1
-            vertex2 = v1
-        elif incident.vertex1 == v2:
-            vertex1 = v1
-            vertex2 = incident.vertex2
-        else:  # incident.vertex2 == v2
-            vertex1 = incident.vertex1
-            vertex2 = v1
-
-        if not graph.has_edge(vertex1, vertex2):
-            graph.add_edge(vertex1, vertex2, weight=incident.weight, **incident.attr)
-
-    # Delete indicated edges after finishing loop iteration.
-    for e in edges_to_delete:
-        e.remove()
-    if remove_loops or not graph.allows_self_loops():
-        v1.remove_loops()
-    graph.remove_vertex(v2)
-
-
-def _contract_multiconnection(edge: MultiConnection, remove_loops: bool = False) -> None:
-    """Contracts a multiedge by removing it from the graph and merging its two incident vertices.
-
-    Args:
-        edge: The edge to contract.
-        remove_loops: If True, loops on the merged vertex will be removed. Defaults to False.
-    """
-    graph = edge._parent_graph
-    v1 = edge.vertex1
-    v2 = edge.vertex2
-
-    edges_to_delete: List[MultiConnection] = []
-    # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
-    for incident in v2.incident_edges():
-        edges_to_delete.append(incident)
-
-        if incident.is_loop():
-            vertex1 = v1
-            vertex2 = v1
-        elif incident.vertex1 == v2:
-            vertex1 = v1
-            vertex2 = incident.vertex2
-        else:  # incident.vertex2 == v2
-            vertex1 = incident.vertex1
-            vertex2 = v1
-
-        multiedge = None
-        if graph.has_edge(vertex1, vertex2):
-            multiedge = graph[vertex1, vertex2]
-
-        for connection in incident.connections():
-            attr = connection.attr if connection.has_attributes_dict() else dict()
-            if multiedge:
-                multiedge.add_connection(weight=connection.weight, **attr)
-            else:
-                multiedge = graph.add_edge(vertex1, vertex2, weight=connection.weight, **attr)
-
-    # Delete indicated edges after finishing loop iteration.
-    for e in edges_to_delete:
-        e.remove()
-    if remove_loops or not graph.allows_self_loops():
-        v1.remove_loops()
-    graph.remove_vertex(v2)
-
-
-def _create_connection_key(connection_keys: Iterable[ConnectionKey]):
-    """Creates a new connection key that does not conflict with a collection of existing keys."""
-    numeric_keys = [int(k) for k in connection_keys if isinstance(k, numbers.Number)]
-    if numeric_keys:
-        max_key = max(numeric_keys)
-        new_key = max_key + 1
-    else:
-        new_key = DEFAULT_CONNECTION_KEY + 1
-    return new_key
-
-
-def _str_for_connection(vertex1: V, vertex2: V, weight: float) -> str:
-    """A simple string representation of the edge connection that shows the vertex labels, and for
-    weighted graphs, includes the edge weight."""
-    edge_str = f"({vertex1.label}, {vertex2.label}"
-
-    if not vertex1._parent_graph.is_directed():
-        if vertex1.label > vertex2.label:
-            edge_str = f"({vertex2.label}, {vertex1.label}"
-
-    if vertex1._parent_graph.is_weighted():
-        edge_str = f"{edge_str}, {weight})"
-    else:
-        edge_str = f"{edge_str})"
-
-    return edge_str
-
-
-def _str_for_multiconnection(
-    vertex1: V, vertex2: V, connections: Dict[ConnectionKey, _EdgeConnectionData]
-) -> str:
-    """A simple string representation of the multiedge that shows the vertex labels, and for
-    weighted graphs, includes the edge weight. The string will show separate vertex tuples for each
-    parallel connection, such as "(a, b, 1.0), (a, b, 3.5), (a, b, 2.1)"."""
-    connection_str = f"({vertex1.label}, {vertex2.label}"
-
-    if not vertex1._parent_graph.is_directed():
-        if vertex1.label > vertex2.label:
-            connection_str = f"({vertex2.label}, {vertex1.label}"
-
-    multiconnection_strings = list()
-    if vertex1._parent_graph.is_weighted():
-        for connection in connections.values():
-            multiconnection_strings.append(f"{connection_str}, {connection.weight})")
-    else:
-        connection_str = f"{connection_str})"
-        multiconnection_strings = [connection_str] * len(connections)
-
-    return ", ".join(multiconnection_strings)
-
-
-class Connection(ABC, Generic[V]):
-    """A single connection between two vertices in a graph. The ``Connection`` API only defines
-    methods that do not change its state, with the exception of custom attributes stored in the
-    ``attr`` dictionary. Subclasses may change this behavior by adding mutability."""
+class Attributes(ABC):
+    """An interface defining a class that provides an attributes dictionary."""
 
     __slots__ = ()
 
-    # mypy: See https://github.com/python/mypy/issues/2783#issuecomment-579868936
+    @property
     @abstractmethod
-    def __eq__(self, other: Connection) -> bool:  # type: ignore[override]
-        """Returns True if ``self`` is logically equal to ``other``."""
-
-    @abstractmethod
-    def __getitem__(self, key: Hashable) -> Any:
-        """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
-
-    @abstractmethod
-    def __setitem__(self, key: Hashable, value: Any) -> None:
-        """Supports index accessor notation to set values in the ``attr`` dictionary."""
+    def attr(self) -> Dict[str, Any]:
+        """A dictionary of ad-hoc attributes."""
+        return dict()
 
     @classmethod
-    def __subclasshook__(cls, C):
-        if cls is Connection:
-            return abc_utils.check_methods(
-                C,
-                "__eq__",
-                "__getitem__",
-                "__setitem__",
-                "attr",
-                "is_loop",
-                "label",
-                "vertex1",
-                "vertex2",
-                "weight",
-            )
+    def __subclasshook__(cls, C: Type[object]) -> bool:
+        if cls is Attributes:
+            return abc_utils.check_methods(C, "attr")
         return NotImplemented
 
-    @property
-    @abstractmethod
-    def attr(self) -> Dict[Hashable, Any]:
-        """Attribute dictionary to store optional data associated with a connection."""
 
-    @abstractmethod
-    def has_attributes_dict(self) -> bool:
-        """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
-        ``attr`` dictionary is only created as needed, this method can be used to save memory.
-        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
-        dictionary instantiation."""
+class EdgeInterface(ABC, Comparable, Generic[V]):
+    """Abstract class that defines the basic :term:`edge` interface.
 
-    @abstractmethod
-    def is_loop(self) -> bool:
-        """Returns True if the connection links a vertex to itself."""
+    This class has a generic type parameter ``V``, which supports the type-hint usage
+    ``EdgeInterface[V]``.
 
-    @property
-    @abstractmethod
-    def label(self) -> str:
-        """A consistent string representation that should, at a minimum, include the vertex
-        endpoints."""
-
-    @property
-    @abstractmethod
-    def vertex1(self) -> V:
-        """The first vertex."""
-
-    @property
-    @abstractmethod
-    def vertex2(self) -> V:
-        """The second vertex."""
-
-    @property
-    @abstractmethod
-    def weight(self) -> float:
-        """The connection weight."""
-
-
-class MultiConnection(ABC, Generic[V]):
-    """An :term:`edge` connection that may have :term:`parallel connections <parallel edge>`
-    between its :term:`endpoints <endpoint>`. A multiconnection can be thought of as a collection
-    of parallel :term:`connections <connection>`. The ``MultiConnection`` API only defines methods
-    that do not change its state. Subclasses may change this behavior by adding mutability."""
-
-    __slots__ = ()
-
-    # mypy: See https://github.com/python/mypy/issues/2783#issuecomment-579868936
-    @abstractmethod
-    def __eq__(self, other: MultiConnection) -> bool:  # type: ignore[override]
-        """Returns True if ``self`` is logically equal to ``other``."""
-
-    @classmethod
-    def __subclasshook__(cls, C):
-        if cls is MultiConnection:
-            return abc_utils.check_methods(
-                C,
-                "__eq__",
-                "connections",
-                "get_connection",
-                "is_loop",
-                "label",
-                "multiplicity",
-                "vertex1",
-                "vertex2",
-                "weight",
-            )
-        return NotImplemented
-
-    @abstractmethod
-    def connections(self) -> ListView[Connection[V]]:
-        """Returns a ListView of the connections in the multiconnection."""
-
-    @abstractmethod
-    def connection_items(self) -> ItemsView[ConnectionKey, Connection[V]]:
-        """Returns an ItemsView, where each item is a tuple containing a connection key and the
-        corresponding connection in the multiconnection."""
-
-    @abstractmethod
-    def get_connection(self, key: ConnectionKey) -> Connection[V]:
-        """Retrieves a connection by its key."""
-
-    @abstractmethod
-    def is_loop(self) -> bool:
-        """Returns True if the connection links a vertex to itself."""
-
-    @property
-    @abstractmethod
-    def label(self) -> str:
-        """A consistent string representation that should, at a minimum, include the vertex
-        endpoints."""
-
-    @property
-    @abstractmethod
-    def multiplicity(self) -> int:
-        """The multiplicity is the number of connections within the multiedge."""
-
-    @property
-    @abstractmethod
-    def vertex1(self) -> V:
-        """The first vertex."""
-
-    @property
-    @abstractmethod
-    def vertex2(self) -> V:
-        """The second vertex."""
-
-    @property
-    def weight(self) -> float:
-        """The weight of the multiconnection, including all parallel connections."""
-
-
-class _EdgeConnectionData:
-    """Unique data associated with a connection in a :term:`multiedge`, such as a weight and custom
-    attributes.
-
-    Args:
-        weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
-        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+    ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
+    <vertizee.classes.vertex.VertexBase>`.
     """
 
-    __slots__ = ("_attr", "weight")
+    @abstractmethod
+    def __eq__(self, other: object) -> bool:
+        pass
 
-    def __init__(self, weight: float = DEFAULT_WEIGHT, **attr):
-        self._attr: Optional[dict] = None  # Initialized lazily using property getter.
-        for k, v in attr.items():
-            self.attr[k] = v
+    @abstractmethod
+    def __lt__(self, other: object) -> bool:
+        pass
 
-        self.weight = weight
+    @abstractmethod
+    def __hash__(self) -> int:
+        """Supports adding edges to set-like collections."""
 
-    @property
-    def attr(self) -> dict:
-        """Attribute dictionary to store optional data associated with a multiedge connection."""
-        if not self._attr:
-            self._attr = dict()
-        return self._attr
-
-    def has_attributes_dict(self) -> bool:
-        """Returns True if this connection has an instantiated ``attr`` dictionary."""
-        return self._attr is not None
-
-
-class ConnectionViewBase(Connection[V], Generic[V]):
-    """A dynamic view of an term:`edge` connection. Connection views provide an edge-like API for
-    each of the parallel connections in a :term:`multiedge`.
-
-    Args:
-        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
-        edge_data: The data associated with the particular edge connection that this edge view
-            represents.
-    """
-
-    __slots__ = ("_edge_data", "_multiconnection")
-
-    def __init__(self, multiconnection: MultiConnection[V], edge_data: _EdgeConnectionData):
-        self._multiconnection = multiconnection
-        self._edge_data = edge_data
-
-    def __eq__(self, other: ConnectionViewBase[V]) -> bool:  # type: ignore[override]
-        """Returns True if ``self`` is logically equal to ``other``."""
-        if isinstance(other, Connection):
-            return _are_connections_equal(self, other)
-        return NotImplemented  # Delegate equality check to the right-hand side.
-
-    def __getitem__(self, key: Hashable) -> Any:
-        """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
-        return self._edge_data.attr[key]
-
+    @abstractmethod
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __setitem__(self, key: Hashable, value: Any) -> None:
-        """Supports index accessor notation to set values in the ``attr`` dictionary."""
-        self._edge_data.attr[key] = value
-
+    @abstractmethod
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}{self._multiconnection.label}"
+        """A simple string representation of the edge showing the vertex labels, and for weighted
+        graphs, the edge weight.
 
-    @property
-    def attr(self) -> Dict[Hashable, Any]:
-        """Attribute dictionary to store optional data associated with an edge."""
-        return self._edge_data.attr
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are :term:`lexicographically <lexicographical order>` ordered.
+        """
 
-    def has_attributes_dict(self) -> bool:
-        """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
-        ``attr`` dictionary is only created as needed, this method can be used to save memory.
-        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
-        dictionary instantiation."""
-        return self._edge_data.has_attributes_dict()
-
+    @abstractmethod
     def is_loop(self) -> bool:
         """Returns True if this edge connects a vertex to itself."""
-        return self._multiconnection.is_loop()
 
     @property
+    @abstractmethod
     def label(self) -> str:
-        """A consistent string representation."""
-        return self._multiconnection.label
+        """A consistent string representation that includes the vertex endpoints. Directed edges
+        have labels with the vertices ordered based on the initialization order. Undirected edges
+        have labels with vertices :term:`lexicographically <lexicographical order>` sorted to
+        ensures consistency. For example, both :math:`(1, 2)` and :math:`(2, 1)` refer to the same
+        undirected edge, but the edge label would always be "(1, 2)".
+        """
 
     @property
     @abstractmethod
@@ -566,104 +244,50 @@ class ConnectionViewBase(Connection[V], Generic[V]):
         """The second vertex. For DiEdge objects, this is a synonym for the ``head`` property."""
 
     @property
+    @abstractmethod
     def weight(self) -> float:
-        """The edge weight."""
-        return self._edge_data.weight
+        """The weight of the edge. For multiedges, the total weight of all parallel edge
+        connections."""
 
 
-class ConnectionView(ConnectionViewBase[MultiVertex]):
-    """A dynamic view of an undirected :term:`edge` connection. Connection views provide an
-    edge-like API for each of the parallel edge connections in a :term:`multiedge`.
+class EdgeBase(EdgeInterface[V], Generic[V]):
+    """Abstract base class from which all :term:`edge` classes derive.
 
-    Args:
-        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
-        edge_data: The data associated with the particular edge connection that this edge view
-            represents.
-    """
+    This class has a generic type parameter ``V``, which supports the type-hint usage
+    ``EdgeBase[V]``.
 
-    __slots__ = ()
-
-    @property
-    def vertex1(self) -> MultiVertex:
-        """The first vertex."""
-        return self._multiconnection.vertex1
-
-    @property
-    def vertex2(self) -> MultiVertex:
-        """The second vertex."""
-        return self._multiconnection.vertex2
-
-
-class DiConnectionView(ConnectionViewBase[MultiDiVertex]):
-    """A dynamic view of a :term:`directed edge` connection. Directed connection views provide an
-    edge-like API for each of the parallel edge connections in a :term:`multiedge`.
-
-    Args:
-        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
-        edge_data: The data associated with the particular edge connection that this edge view
-            represents.
-    """
-
-    __slots__ = ()
-
-    @property
-    def head(self) -> MultiDiVertex:
-        """The head vertex, which is the destination of the directed edge."""
-        return self._multiconnection.vertex2
-
-    @property
-    def tail(self) -> MultiDiVertex:
-        """The tail vertex, which is the origin of the directed edge."""
-        return self._multiconnection.vertex1
-
-    @property
-    def vertex1(self) -> MultiDiVertex:
-        """The first vertex. This is a synonym for the ``tail`` property."""
-        return self._multiconnection.vertex1
-
-    @property
-    def vertex2(self) -> MultiDiVertex:
-        """The second vertex. This is a synonym for the ``head`` property."""
-        return self._multiconnection.vertex2
-
-
-class EdgeBase(Connection[V], Generic[V]):
-    """Abstract base class from which all single-connection :term`edge` classes inherit.
+    ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
+    <vertizee.classes.vertex.VertexBase>`.
 
     Args:
         vertex1: The first vertex. In undirected edges, the order of ``vertex1`` and ``vertex2``
             does not matter. For subclasses implementing directed edges, it is recommended to
-            rename these arguments ``tail`` (for ``vertex1``) and ``head`` (for ``vertex2``).
+            add aliases ``tail`` (for ``vertex1``) and ``head`` (for ``vertex2``).
         vertex2: The second vertex.
-        weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
-        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
     """
 
-    __slots__ = ("_attr", "_label", "_parent_graph", "_vertex1", "_vertex2", "_weight")
+    __slots__ = ("_label", "_parent_graph", "_vertex1", "_vertex2")
 
-    def __init__(self, vertex1: V, vertex2: V, weight: float = DEFAULT_WEIGHT, **attr):
+    def __init__(self, vertex1: V, vertex2: V) -> None:
+        super().__init__()
         self._vertex1 = vertex1
         self._vertex2 = vertex2
 
         self._label = create_edge_label(
             vertex1, vertex2, is_directed=vertex1._parent_graph.is_directed()
         )
+        self._parent_graph = vertex1._parent_graph
 
-        self._parent_graph = vertex1._parent_graph  # type: G[V, Connection]
-        self._weight = weight
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, EdgeBase):
+            return _is_edge_equal_to(cast(EdgeInterface[VertexClass], self), other)
+        return NotImplemented  # Delegate equality check to the RHS.
 
-        self._attr: Optional[dict] = None  # Initialized lazily using property getter.
-        for k, v in attr.items():
-            self.attr[k] = v
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, Connection):
-            return _are_connections_equal(self, other)
+    def __lt__(self, other: object) -> bool:
+        """Returns True if ``self`` is less than ``other``."""
+        if isinstance(other, EdgeBase):
+            return _is_edge_less_than(cast(EdgeInterface[VertexClass], self), other)
         return NotImplemented  # Delegate equality check to the right-hand side.
-
-    def __getitem__(self, key: Hashable) -> Any:
-        """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
-        return self.attr[key]
 
     def __hash__(self) -> int:
         """Supports adding edges to set-like collections."""
@@ -672,35 +296,23 @@ class EdgeBase(Connection[V], Generic[V]):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __setitem__(self, key: Hashable, value: Any) -> None:
-        """Supports index accessor notation to set values in the ``attr`` dictionary."""
-        self.attr[key] = value
-
     @abstractmethod
     def __str__(self) -> str:
         """A simple string representation of the edge showing the vertex labels, and for weighted
         graphs, the edge weight.
 
         Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
-        vertices are lexicographically sorted.
+        vertices are :term:`lexicographically <lexicographical order>` sorted.
         """
 
-    @property
-    def attr(self) -> Dict[Hashable, Any]:
-        """Attribute dictionary to store optional data associated with an edge."""
-        if not self._attr:
-            self._attr = dict()
-        return self._attr
-
     def contract(self, remove_loops: bool = False) -> None:
-        """Contracts this edge by removing it from the graph and merging its two incident
-        vertices.
+        r""":term:`Contracts <contraction>` this edge by removing it from the graph and
+        merging its two incident vertices.
 
         Edge contraction is written as :math:`G/e`, which should not be confused with set
-        difference, written as :math:`B \\setminus A = \\{ x\\in B \\mid x \\notin A \\}`.
+        difference, written as :math:`B \setminus A = \{ x\in B \mid x \notin A \}`.
 
-        For a formal definition, see Wikipedia, `"Edge contraction"
-        <https://en.wikipedia.org/wiki/Edge_contraction>`_ [WEC2020]_.
+        For a formal definition, see :term:`contraction`.
 
         For efficiency, only one of the two incident vertices is actually deleted. After the edge
         contraction:
@@ -724,20 +336,8 @@ class EdgeBase(Connection[V], Generic[V]):
 
         Args:
             remove_loops: If True, loops on the merged vertices will be removed. Defaults to False.
-
-        References:
-         .. [WEC2020] Wikipedia contributors. "Edge contraction." Wikipedia, The Free
-                      Encyclopedia. Available from: https://en.wikipedia.org/wiki/Edge_contraction.
-                      Accessed 19 October 2020.
         """
-        _contract_connection(self, remove_loops)
-
-    def has_attributes_dict(self) -> bool:
-        """Returns True if this connection has an instantiated ``attr`` dictionary. Since the
-        ``attr`` dictionary is only created as needed, this method can be used to save memory.
-        Calling an ``attr`` accessor (such as the ``attr`` property), results in automatic
-        dictionary instantiation."""
-        return self._attr is not None
+        _contract_edge(cast(EdgeBase[VertexClass], self), self._parent_graph, remove_loops)
 
     def is_loop(self) -> bool:
         """Returns True if this edge connects a vertex to itself."""
@@ -747,9 +347,9 @@ class EdgeBase(Connection[V], Generic[V]):
     def label(self) -> str:
         """A consistent string representation that includes the vertex endpoints. Directed edges
         have labels with the vertices ordered based on the initialization order. Undirected edges
-        have labels with vertices lexicographically sorted to ensures consistency. For example,
-        both :math:`(1, 2)` and :math:`(2, 1)` refer to the same undirected edge, but the edge
-        label would always be "(1, 2)".
+        have labels with vertices :term:`lexicographically <lexicographical order>` sorted to
+        ensures consistency. For example, both :math:`(1, 2)` and :math:`(2, 1)` refer to the same
+        undirected edge, but the edge label would always be "(1, 2)".
         """
         return self._label
 
@@ -773,74 +373,583 @@ class EdgeBase(Connection[V], Generic[V]):
         return self._vertex2
 
     @property
+    @abstractmethod
     def weight(self) -> float:
-        """The edge weight."""
+        """The weight of the edge. For multiedges, the total weight of all parallel edge
+        connections."""
+
+
+class Edge(EdgeBase[Vertex]):
+    """An :term:`undirected edge` that does not allow :term:`parallel edge` connections between
+    its :term:`endpoints <endpoint>`.
+
+    To help ensure the integrity of :term:`graphs <graph>`, the ``Edge`` class is abstract and
+    cannot be instantiated directly. To create edges, use :meth:`Graph.add_edge
+    <vertizee.classes.graph.Graph.add_edge>` and :meth:`Graph.add_edges_from
+    <vertizee.classes.graph.G.add_edges_from>`.
+
+    Note:
+        In an :term:`undirected graph`, edges :math:`(s, t)` and :math:`(t, s)` represent the same
+        edge. Therefore, attempting to add :math:`(s, t)` and :math:`(t, s)` would raise an
+        exception, since ``Edge`` objects do not support :term:`parallel edge` connections. For
+        parallel connection support, see :class:`MultiEdge` and :class:`MultiDiEdge`.
+
+    Args:
+        vertex1: The first vertex. In undirected edges, the order of ``vertex1`` and ``vertex2``
+            does not matter. For subclasses implementing directed edges, it is recommended to
+            add aliases ``tail`` (for ``vertex1``) and ``head`` (for ``vertex2``).
+        vertex2: The second vertex.
+        weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+    """
+
+    __slots__ = ("_attr", "_weight")
+
+    def __init__(
+        self, vertex1: "Vertex", vertex2: "Vertex", weight: float = DEFAULT_WEIGHT, **attr: Any
+    ) -> None:
+        super().__init__(vertex1, vertex2)
+
+        self._attr: Optional[Dict[str, Any]] = None  # Initialized lazily using getter.
+        for k, v in attr.items():
+            self.attr[k] = v
+
+        self._weight = weight
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """A simple string representation of the edge that shows the vertex labels, and for
+        weighted graphs, includes the edge weight. The vertices are :term:`lexicographically
+        <lexicographical order>` sorted.
+
+        Example:
+            "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
+        """
+
+    @property
+    def attr(self) -> Dict[str, Any]:
+        """Attribute dictionary to store optional data associated with a connection. The attribute
+        dictionary is only instantiated as needed, for example, the first time that the ``attr``
+        property is accessed. See :meth:`has_attributes_dict`."""
+        if not self._attr:
+            self._attr = dict()
+        return self._attr
+
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Use this method
+        to save memory by avoiding unnecessarily accessing the ``attr`` dictionary. See
+        :attr:`attr`."""
+        return self._attr is not None
+
+    @property
+    def vertex1(self) -> Vertex:
+        """The first vertex (type :class:`Vertex <vertizee.classes.vertex.Vertex>`)."""
+        return self._vertex1
+
+    @property
+    def vertex2(self) -> Vertex:
+        """The second vertex (type :class:`Vertex <vertizee.classes.vertex.Vertex>`)."""
+        return self._vertex2
+
+    @property
+    def weight(self) -> float:
+        """The edge weight (type ``float``)."""
         return self._weight
 
 
-class MultiEdgeBase(MultiConnection[V], Generic[V]):
+class DiEdge(EdgeBase[DiVertex]):
+    """A :term:`directed edge` that does not allow :term:`parallel edge` connections between its
+    :term:`endpoints <endpoint>`.
+
+    To help ensure the integrity of graphs, the ``DiEdge`` class is abstract and cannot be
+    instantiated directly. To create directed edges, use :meth:`DiGraph.add_edge
+    <vertizee.classes.graph.DiGraph.add_edge>` and :meth:`DiGraph.add_edges_from
+    <vertizee.classes.graph.G.add_edges_from>`.
+
+    Note:
+        In a :term:`directed graph`, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`.
+        Adding these two edges to a directed graph results in separate ``DiEdge`` objects. However,
+        adding the edges to an :term:`undirected graph` (for example, :class:`Graph
+        <vertizee.classes.graph.Graph>`), would raise an exception, since :term:`parallel edges
+        <parallel edge>` are not allowed.
+
+    Args:
+        tail: The :term:`tail` of the directed edge.
+        head: The :term:`head` of the directed edge.
+        weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+    """
+
+    __slots__ = ("_attr", "_weight")
+
+    def __init__(
+        self, tail: "DiVertex", head: "DiVertex", weight: float = DEFAULT_WEIGHT, **attr: Any
+    ) -> None:
+        super().__init__(tail, head)
+
+        self._attr: Optional[Dict[str, Any]] = None  # Initialized lazily using getter.
+        for k, v in attr.items():
+            self.attr[k] = v
+
+        self._weight = weight
+
+    @abstractmethod
+    def __str__(self) -> str:
+        """A simple string representation of the edge that shows the vertex labels, and for
+        weighted graphs, includes the edge weight. The vertices are :term:`lexicographically
+        <lexicographical order>` ordered.
+
+        Example:
+            "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
+        """
+
+    @property
+    def attr(self) -> Dict[str, Any]:
+        """Attribute dictionary to store optional data associated with a connection. The attribute
+        dictionary is only instantiated as needed, for example, the first time that the ``attr``
+        property is accessed. See :meth:`has_attributes_dict`."""
+        if not self._attr:
+            self._attr = dict()
+        return self._attr
+
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Use this method
+        to save memory by avoiding unnecessarily accessing the ``attr`` dictionary. See
+        :attr:`attr`."""
+        return self._attr is not None
+
+    @property
+    def vertex1(self) -> DiVertex:
+        """The tail vertex (type :class:`DiVertex <vertizee.classes.vertex.DiVertex>`), which is
+        the origin of the :term:`directed edge`."""
+        return self._vertex1
+
+    @property
+    def vertex2(self) -> DiVertex:
+        """The head vertex (type :class:`DiVertex <vertizee.classes.vertex.DiVertex>`), which is
+        the destination of the :term:`directed edge`."""
+        return self._vertex2
+
+    @property
+    def weight(self) -> float:
+        """The edge weight (type ``float``)."""
+        return self._weight
+
+
+# class Connection(EdgeBase[V], Generic[V]):
+#     """An abstract class that defines an :term:`edge` interface for a single :term:`connection`
+#     between two :term:`vertices <vertex>` in a :term:`graph`. The ``Connection`` API only defines
+#     methods that do not change its state, with the exception of custom attributes stored in the
+#     ``attr`` dictionary. Subclasses may change this behavior by adding mutability.
+#     """
+
+#     __slots__ = ()
+
+#     @abstractmethod
+#     def __getitem__(self, key: Hashable) -> Any:
+#         """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
+
+#     @abstractmethod
+#     def __setitem__(self, key: Hashable, value: Any) -> None:
+#         """Supports index accessor notation to set values in the ``attr`` dictionary."""
+
+#     @property
+#     @abstractmethod
+#     def attr(self) -> Dict[str, Any]:
+#         """Attribute dictionary to store optional data associated with a connection. The attribute
+#         dictionary is only instantiated as needed, for example, the first time that the ``attr``
+#         property is accessed. See :meth:`has_attributes_dict`."""
+
+#     @abstractmethod
+#     def has_attributes_dict(self) -> bool:
+#         """Returns True if this connection has an instantiated ``attr`` dictionary. Use this method
+#         to save memory by avoiding unnecessarily accessing the ``attr`` dictionary. See
+#         :attr:`attr`."""
+
+#     @property
+#     @abstractmethod
+#     def weight(self) -> float:
+#         """The connection weight (type ``float``)."""
+
+
+# class MultiConnection(EdgeBase, Generic[V]):
+#     """An abstract class that defines an interface for :term:`multiconnection` :term:`edges <edge>`.
+#     The ``MultiConnection`` API only defines methods that do not change its state. Subclasses may
+#     change this behavior by adding mutability.
+
+#     See Also:
+#         :class:`VertexBase <vertizee.classes.vertex.VertexBase>`
+#     """
+
+#     __slots__ = ()
+
+#     @abstractmethod
+#     def connections(self) -> "ListView[Connection[V]]":
+#         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the
+#         connections in the multiconnection."""
+
+#     @abstractmethod
+#     def connection_items(self) -> "ItemsView[ConnectionKey, Connection[V]]":
+#         """Returns an :class:`ItemsView <vertizee.classes.collection_views.ItemsView>`, where each
+#         item is a tuple containing a connection key and the corresponding connection in the
+#         multiconnection."""
+
+#     @abstractmethod
+#     def get_connection(self, key: "ConnectionKey") -> "Connection[V]":
+#         """Retrieves a connection by its key."""
+
+#     @property
+#     @abstractmethod
+#     def multiplicity(self) -> int:
+#         """The multiplicity (type ``int``) is the number of connections within the multiedge."""
+
+#     @property
+#     @abstractmethod
+#     def weight(self) -> float:
+#         """The weight (type ``float``) of the multiconnection, including all parallel
+#         connections."""
+
+
+class EdgeConnectionData:
+    """Unique data associated with a, individual connection in a :term:`multiedge`, such as a
+    weight and custom attributes.
+
+    Args:
+        weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+    """
+
+    __slots__ = ("_attr", "weight")
+
+    def __init__(self, weight: float = DEFAULT_WEIGHT, **attr: Any):
+        self._attr: Optional[Dict[str, Any]] = None  # Initialized lazily using getter.
+        for k, v in attr.items():
+            self.attr[k] = v
+
+        self.weight = weight
+
+    @property
+    def attr(self) -> Dict[str, Any]:
+        """Attribute dictionary to store optional data associated with a connection. The attribute
+        dictionary is only instantiated as needed, for example, the first time that the ``attr``
+        property is accessed. See :meth:`has_attributes_dict`."""
+        if not self._attr:
+            self._attr = dict()
+        return self._attr
+
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Use this method
+        to save memory by avoiding unnecessarily accessing the ``attr`` dictionary. See
+        :attr:`attr`."""
+        return self._attr is not None
+
+
+class EdgeConnectionView(EdgeInterface[Union[MultiVertex, MultiDiVertex]]):
+    """A dynamic view of an :term:`edge` connection. Connection views provide an edge-like API for
+    each of the :term:`parallel edge` connections in a :term:`multiedge` or a :term:`multidiedge`.
+
+    Args:
+        multiconnection: A :class:`MultiConnection` object representing parallel edge connections.
+        edge_data: The data associated with the particular edge connection that this edge view
+            represents.
+    """
+
+    __slots__ = ("_edge_data", "_multiconnection", "_parent_graph")
+
+    def __init__(self, multiconnection: "MultiEdgeBase", edge_data: "EdgeConnectionData"):
+        self._multiconnection = multiconnection
+        self._edge_data = edge_data
+        self._parent_graph = multiconnection._parent_graph
+
+    def __eq__(self, other: object) -> bool:
+        """Returns True if ``self`` is logically equal to ``other``."""
+        if isinstance(other, EdgeInterface):
+            return _is_edge_equal_to(cast(EdgeInterface[VertexClass], self), other)
+        return NotImplemented  # Delegate equality check to the right-hand side.
+
+    def __lt__(self, other: object) -> bool:
+        """Returns True if ``self`` is less than ``other``."""
+        if isinstance(other, EdgeInterface):
+            return _is_edge_less_than(cast(EdgeInterface[VertexClass], self), other)
+        return NotImplemented  # Delegate equality check to the right-hand side.
+
+    def __getitem__(self, key: str) -> Any:
+        """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
+        return self._edge_data.attr[key]
+
+    def __hash__(self) -> int:
+        """Supports adding edges to set-like collections."""
+        return self._multiconnection.__hash__()
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Supports index accessor notation to set values in the ``attr`` dictionary."""
+        self._edge_data.attr[key] = value
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}{self._multiconnection.label}"
+
+    @property
+    def attr(self) -> Dict[str, Any]:
+        """Attribute dictionary to store optional data associated with a connection. The attribute
+        dictionary is only instantiated as needed, for example, the first time that the ``attr``
+        property is accessed. See :meth:`has_attributes_dict`."""
+        return self._edge_data.attr
+
+    def has_attributes_dict(self) -> bool:
+        """Returns True if this connection has an instantiated ``attr`` dictionary. Use this method
+        to save memory by avoiding unnecessarily accessing the ``attr`` dictionary. See
+        :attr:`attr`."""
+        return self._edge_data.has_attributes_dict()
+
+    def is_loop(self) -> bool:
+        """Returns True if this edge connects a vertex to itself."""
+        return self._multiconnection.is_loop()
+
+    @property
+    def label(self) -> str:
+        """A consistent string representation."""
+        return self._multiconnection.label
+
+    @property
+    def vertex1(self) -> Union[MultiVertex, MultiDiVertex]:
+        """The first vertex (type ``V``). For DiEdge objects, this
+        is a synonym for the ``tail`` property."""
+        return self._multiconnection.vertex1
+
+    @property
+    def vertex2(self) -> Union[MultiVertex, MultiDiVertex]:
+        """The second vertex (type ``V``). For DiEdge objects, this
+        is a synonym for the ``head`` property."""
+        return self._multiconnection.vertex2
+
+    @property
+    def weight(self) -> float:
+        """The edge weight (type ``float``)."""
+        return self._edge_data.weight
+
+
+# class EdgeBase(Connection[V], Generic[V]):
+#     """Abstract base class from which all single-connection :term:`edge` classes derive.
+
+#     This class has a generic type parameter ``V``, which supports the type-hint usage
+#     ``EdgeBase[V]``.
+
+#     ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
+#     <vertizee.classes.vertex.VertexBase>`.
+
+#     See Also:
+#         :class:`VertexBase <vertizee.classes.vertex.VertexBase>`
+
+#     Args:
+#         vertex1: The first vertex. In undirected edges, the order of ``vertex1`` and ``vertex2``
+#             does not matter. For subclasses implementing directed edges, it is recommended to
+#             add aliases ``tail`` (for ``vertex1``) and ``head`` (for ``vertex2``).
+#         vertex2: The second vertex.
+#         weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
+#         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+#     """
+
+#     __slots__ = ("_attr", "_label", "_parent_graph", "_vertex1", "_vertex2", "_weight")
+
+#     def __init__(
+#         self,
+#         vertex1: V,
+#         vertex2:V,
+#         weight: float = DEFAULT_WEIGHT,
+#         **attr
+#     ) -> None:
+#         self._vertex1 = vertex1
+#         self._vertex2 = vertex2
+
+#         self._label = create_edge_label(
+#             vertex1, vertex2, is_directed=vertex1._parent_graph.is_directed()
+#         )
+
+#         self._parent_graph = vertex1._parent_graph
+#         self._weight = weight
+
+#         self._attr: Optional[dict] = None  # Initialized lazily using property getter.
+#         for k, v in attr.items():
+#             self.attr[k] = v
+
+#     def __eq__(self, other: object) -> bool:
+#         if isinstance(other, Connection):
+#             return _is_edge_equal_to(self, other)
+#         return NotImplemented  # Delegate equality check to the right-hand side.
+
+#     def __lt__(self, other: object) -> bool:
+#         if isinstance(other, Connection):
+#             return _is_edge_less_than(self, other)
+#         return NotImplemented  # Delegate equality check to the right-hand side.
+
+#     def __gt__(self, other: object) -> bool:
+#         return (not self < other) and self != other
+
+#     def __le__(self, other: object) -> bool:
+#         return self < other or self == other
+
+#     def __ge__(self, other: object) -> bool:
+#         return not self < other
+
+#     def __getitem__(self, key: Hashable) -> Any:
+#         """Supports index accessor notation to retrieve values from the ``attr`` dictionary."""
+#         return self.attr[key]
+
+#     def __hash__(self) -> int:
+#         """Supports adding edges to set-like collections."""
+#         return hash(self.label)
+
+#     def __repr__(self) -> str:
+#         return self.__str__()
+
+#     def __setitem__(self, key: Hashable, value: Any) -> None:
+#         """Supports index accessor notation to set values in the ``attr`` dictionary."""
+#         self.attr[key] = value
+
+#     @abstractmethod
+#     def __str__(self) -> str:
+#         """A simple string representation of the edge showing the vertex labels, and for weighted
+#         graphs, the edge weight.
+
+#         Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+#         vertices are :term:`lexicographically <lexicographical order>` sorted.
+#         """
+
+#     @property
+#     def attr(self) -> Dict[str, Any]:
+#         """Attribute dictionary to store optional data associated with a connection. The attribute
+#         dictionary is only instantiated as needed, for example, the first time that the ``attr``
+#         property is accessed. See :meth:`has_attributes_dict`."""
+#         if not self._attr:
+#             self._attr = dict()
+#         return self._attr
+
+#     def contract(self, remove_loops: bool = False) -> None:
+#         r""":term:`Contracts <contraction>` this multiedge by removing it from the graph and
+#         merging its two incident vertices.
+
+#         Edge contraction is written as :math:`G/e`, which should not be confused with set
+#         difference, written as :math:`B \setminus A = \{ x\in B \mid x \notin A \}`.
+
+#         For a formal definition, see :term:`contraction`.
+
+#         For efficiency, only one of the two incident vertices is actually deleted. After the edge
+#         contraction:
+
+#            - Incident edges of ``vertex2`` are modified such that ``vertex2`` is replaced by
+#              ``vertex1``
+#            - Incident loops on ``vertex2`` become loops on ``vertex1``
+#            - ``vertex2`` is deleted from the graph
+
+#         When ``vertex2`` is deleted, its incident edges are also deleted.
+
+#         In some cases, an incident edge of ``vertex2`` will be modified such that by replacing
+#         ``vertex2`` with ``vertex1``, there exists an edge in the graph matching the new endpoints.
+#         In this case, the existing edge is not modified.
+
+#         If the graph does not contain an edge matching the new endpoints after replacing ``vertex2``
+#         with ``vertex1``, then a new edge object is added to the graph.
+
+#         Note that if either ``G._allow_self_loops`` is False or ``remove_loops`` is True,
+#         self loops will be deleted from the merged vertex (``vertex1``).
+
+#         Args:
+#             remove_loops: If True, loops on the merged vertices will be removed. Defaults to False.
+#         """
+#         _contract_edge(self, self._parent_graph, remove_loops)
+
+#     def has_attributes_dict(self) -> bool:
+#         """Returns True if this connection has an instantiated ``attr`` dictionary. Use this method
+#         to save memory by avoiding unnecessarily accessing the ``attr`` dictionary. See
+#         :attr:`attr`."""
+#         return self._attr is not None
+
+#     def is_loop(self) -> bool:
+#         """Returns True if this edge connects a vertex to itself."""
+#         return self._vertex1.label == self._vertex2.label
+
+#     @property
+#     def label(self) -> str:
+#         """A consistent string representation that includes the vertex endpoints. Directed edges
+#         have labels with the vertices ordered based on the initialization order. Undirected edges
+#         have labels with vertices :term:`lexicographically <lexicographical order>` sorted to
+#         ensures consistency. For example, both :math:`(1, 2)` and :math:`(2, 1)` refer to the same
+#         undirected edge, but the edge label would always be "(1, 2)".
+#         """
+#         return self._label
+
+#     def remove(self, remove_semi_isolated_vertices: bool = False) -> None:
+#         """Removes this edge from the graph.
+
+#         Args:
+#             remove_semi_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
+#                 :term:`semi-isolated` after the edge removal are also removed. Defaults to False.
+#         """
+#         self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_semi_isolated_vertices)
+
+#     @property
+#     def vertex1(self) -> V:
+#         """The first vertex. For DiEdge objects, this is a synonym for the ``tail`` property."""
+#         return self._vertex1
+
+#     @property
+#     def vertex2(self) -> V:
+#         """The second vertex. For DiEdge objects, this is a synonym for the ``head`` property."""
+#         return self._vertex2
+
+#     @property
+#     def weight(self) -> float:
+#         """The edge weight (type ``float``)."""
+#         return self._weight
+
+
+class MultiEdgeBase(EdgeBase[Union[MultiVertex, MultiDiVertex]]):
     """Abstract base class from which all :term:`multiedge` classes inherit.
 
     Args:
         vertex1: The first vertex. In undirected multiedges, the order of ``vertex1`` and
             ``vertex2`` does not matter. For subclasses implementing directed edges, it is
-            recommended to rename these arguments ``tail`` (for ``vertex1``) and ``head`` (for
-            ``vertex2``).
+            recommended to add aliases ``tail`` (for ``vertex1``) and ``head`` (for ``vertex2``).
         vertex2: The second vertex.
         weight: Optional; Edge weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
         key: Optional; The key to use within the multiedge to reference the new edge connection.
-            Each of the potentially multiple parallel connections is assigned a key unique to the
-            multiedge object. Defaults to ``DEFAULT_CONNECTION_KEY`` (0).
+            Each of the potentially multiple parallel connections is assigned a key that is unique
+            to the multiedge object. Defaults to ``DEFAULT_CONNECTION_KEY`` (0).
         **attr: Optional; Keyword arguments to add to the ``attr`` dictionary of the first
             edge connection in the new multiedge.
     """
 
-    __slots__ = ("_connections", "_label", "_parent_graph", "_vertex1", "_vertex2", "_weight")
+    __slots__ = ("_connections", "_weight")
 
     def __init__(
         self,
-        vertex1: V,
-        vertex2: V,
+        vertex1: Union[MultiVertex, MultiDiVertex],
+        vertex2: Union[MultiVertex, MultiDiVertex],
         weight: float = DEFAULT_WEIGHT,
         key: ConnectionKey = DEFAULT_CONNECTION_KEY,
-        **attr,
+        **attr: Any,
     ) -> None:
-        self._vertex1 = vertex1
-        self._vertex2 = vertex2
+        super().__init__(vertex1, vertex2)
 
-        edge_connection = _EdgeConnectionData(weight, **attr)
-        self._connections: Dict[ConnectionKey, _EdgeConnectionData] = dict()
+        edge_connection = EdgeConnectionData(weight, **attr)
+        self._connections: Dict[ConnectionKey, EdgeConnectionData] = dict()
         self._connections[key] = edge_connection
-
-        self._label = create_edge_label(
-            vertex1, vertex2, is_directed=vertex1._parent_graph.is_directed()
-        )
-        self._parent_graph = vertex1._parent_graph  # type: G[V, MultiConnection]
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, MultiConnection):
-            return _are_multiconnections_equal(self, other)
-        return NotImplemented  # Delegate equality check to the RHS.
-
-    def __hash__(self) -> int:
-        """Creates a hash key using the edge label."""
-        return hash(self.label)
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
     @abstractmethod
     def __str__(self) -> str:
-        """A simple string representation of the edge showing the vertex labels, and for weighted
-        graphs, the edge weight.
+        """A simple string representation of the :term:`multiedge` showing the vertex labels, and
+        for weighted graphs, the edge connection weights.
 
         Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
-        vertices are lexicographically sorted.
+        vertices are :term:`lexicographically <lexicographical order>` ordered.
         """
 
     def add_connection(
-        self, weight: float = DEFAULT_WEIGHT, key: Optional[ConnectionKey] = None, **attr
-    ) -> ConnectionViewBase[V]:
+        self, weight: float = DEFAULT_WEIGHT, key: Optional["ConnectionKey"] = None, **attr: Any
+    ) -> "EdgeConnectionView":
         """Adds a new edge connection to this multiedge. If the connection key already exists, then
         the existing connection key data is replaced with ``weight`` and ``**attr``.
 
@@ -851,116 +960,42 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
             **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
 
         Returns:
-            ConnectionViewBase[V]: The newly added edge connection.
+            EdgeConnectionView[V]: The newly added edge connection.
         """
-        new_key = key
-        if key is not None and key in self._connections:
-            edge_data: _EdgeConnectionData = self._connections[key]
-            if edge_data.has_attributes_dict():
-                edge_data._attr.clear()
-            for k, v in attr.items():
-                edge_data.attr[k] = v
-            edge_data.weight = weight
-        else:
-            edge_data = _EdgeConnectionData(weight, **attr)
-            if key is None:
-                new_key = _create_connection_key(self._connections.keys())
+        return _add_connection(self, weight, key, **attr)
 
-        if weight != DEFAULT_WEIGHT:
-            self._parent_graph._is_weighted_graph = True
-        if weight < 0:
-            self._parent_graph._has_negative_edge_weights = True
+    def connections(self) -> "ListView[EdgeConnectionView]":
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the
+        connections in the multiconnection, where each connection is represented as an
+        :class:`EdgeConnectionView`."""
+        return ListView([EdgeConnectionView(self, c) for c in self._connections.values()])
 
-        self._connections[new_key] = edge_data
-        return ConnectionView(self, self._connections[new_key])
+    def connection_items(self) -> "ItemsView[ConnectionKey, EdgeConnectionView]":
+        """Returns an :class:`ItemsView <vertizee.classes.collection_views.ItemsView>`, where each
+        item is a tuple containing a connection key and the corresponding connection in the
+        multiconnection. Each connection is represented as an :class:`EdgeConnectionView`."""
+        items = dict()
+        for key, connection in self._connections.items():
+            view = EdgeConnectionView(self, connection)
+            items[key] = view
+        return ItemsView(items)
 
-    @abstractmethod
-    def connections(self) -> ListView[ConnectionViewBase[V]]:
-        """Returns a ListView of the connections in the multiconnection, where each connection
-        is represented as either a ConnectionView or a DiConnectionView."""
-
-    @abstractmethod
-    def connection_items(self) -> ItemsView[ConnectionKey, ConnectionViewBase[V]]:
-        """Returns an ItemsView, where each item is a tuple containing a connection key and the
-        corresponding connection in the multiconnection. Each connection is represented as either a
-        ConnectionView or a DiConnectionView."""
-
-    def contract(self, remove_loops: bool = False) -> None:
-        """Contracts this multiedge by removing it from the graph and merging its two incident
-        vertices.
-
-        Edge contraction is written as :math:`G/e`, which should not be confused with set
-        difference, written as :math:`B \\setminus A = \\{ x\\in B \\mid x \\notin A \\}`.
-
-        For a formal definition, see Wikipedia, `"Edge contraction"
-        <https://en.wikipedia.org/wiki/Edge_contraction>`_ [WEC2020]_.
-
-        For efficiency, only one of the two incident vertices is actually deleted. After the edge
-        contraction:
-
-           - Incident edges of ``vertex2`` are modified such that ``vertex2`` is replaced by
-             ``vertex1``
-           - Incident loops on ``vertex2`` become loops on ``vertex1``
-           - ``vertex2`` is deleted from the graph
-           - If loops are not deleted, then :math:`degree(vertex1)` [post-merge]
-             :math:`\\Longleftrightarrow degree(vertex1) + degree(vertex2)` [pre-merge]
-
-        When ``vertex2`` is deleted, its incident edges are also deleted.
-
-        In some cases, an incident edge of ``vertex2`` will be modified such that by replacing
-        ``vertex2`` with ``vertex1``, there exists an edge in the graph matching the new endpoints.
-        In this case, the multiplicity of the existing multiedge is increased accordingly.
-
-        If the graph does not contain an edge matching the new endpoints after replacing ``vertex2``
-        with ``vertex1``, then a new multiedge object is added to the graph.
-
-        Note that if either ``G._allow_self_loops`` is False or ``remove_loops`` is True,
-        self loops will be deleted from the merged vertex (``vertex1``).
-
-        Args:
-            remove_loops: If True, loops on the merged vertices will be removed. Defaults to False.
-        """
-        _contract_multiconnection(self, remove_loops)
-
-    def get_connection(self, key: ConnectionKey) -> ConnectionViewBase[V]:
+    def get_connection(self, key: "ConnectionKey") -> "EdgeConnectionView":
         """Supports index accessor notation to retrieve a multiedge connection by its key."""
         if key in self._connections:
-            return DiConnectionView(self, self._connections[key])
+            return EdgeConnectionView(self, self._connections[key])
         raise KeyError(key)
-
-    def is_loop(self) -> bool:
-        """Returns True if this edge connects a vertex to itself."""
-        return self._vertex1.label == self._vertex2.label
-
-    @property
-    def label(self) -> str:
-        """A consistent string representation that includes the vertex endpoints. Directed edges
-        have labels with the vertices ordered based on the initialization order. Undirected edges
-        have labels with vertices lexicographically sorted to ensures consistency. For example,
-        both :math:`(1, 2)` and :math:`(2, 1)` refer to the same undirected edge, but the edge
-        label would always be "(1, 2)".
-        """
-        return self._label
 
     @property
     def multiplicity(self) -> int:
-        """The number of connections within the multiedge.
+        """The number (type ``int``) of connections within the multiedge.
 
         For multiedges without parallel connections, the multiplicity is 1. Each parallel edge adds
         1 to the multiplicity.
         """
         return len(self._connections)
 
-    def remove(self, remove_semi_isolated_vertices: bool = False) -> None:
-        """Removes this edge from the graph.
-
-        Args:
-            remove_semi_isolated_vertices: If True, then vertices adjacent to ``edge`` that become
-                :term:`semi-isolated` after the edge removal are also removed. Defaults to False.
-        """
-        self._parent_graph.remove_edge(self.vertex1, self.vertex2, remove_semi_isolated_vertices)
-
-    def remove_connection(self, key: ConnectionKey) -> None:
+    def remove_connection(self, key: "ConnectionKey") -> None:
         """Removes an edge connection from this multiedge based on its key. If the multiedge only
         has one connection, then removing the connection is the same as calling :meth:`remove`."""
         if key in self._connections:
@@ -972,205 +1007,151 @@ class MultiEdgeBase(MultiConnection[V], Generic[V]):
             raise KeyError(key)
 
     @property
-    def vertex1(self) -> V:
-        """The first vertex. For DiEdge objects, this is a synonym for the ``tail`` property."""
-        return self._vertex1
-
-    @property
-    def vertex2(self) -> V:
-        """The second vertex. For DiEdge objects, this is a synonym for the ``head`` property."""
-        return self._vertex2
-
-    @property
     def weight(self) -> float:
-        """The weight of the multiedge, including parallel connections."""
+        """The weight (type ``float``) of the multiedge, including parallel connections."""
         return sum(connection.weight for connection in self._connections.values())
 
 
-class Edge(EdgeBase[Vertex]):
-    """An undirected :term:`edge` that does not allow parallel connections between its endpoints.
+# class DiEdge(EdgeBase[DiVertex]):
+#     """A :term:`directed edge` that does not allow :term:`parallel edge` connections between its
+#     :term:`endpoints <endpoint>`.
 
-    To help ensure the integrity of graphs, the ``Edge`` class is abstract and cannot be
-    instantiated directly. To create edges, use :meth:`Graph.add_edge
-    <vertizee.classes.graph.Graph.add_edge>` and :meth:`Graph.add_edges_from
-    <vertizee.classes.graph.Graph.add_edges_from>`.
+#     To help ensure the integrity of graphs, the ``DiEdge`` class is abstract and cannot be
+#     instantiated directly. To create directed edges, use :meth:`DiGraph.add_edge
+#     <vertizee.classes.graph.DiGraph.add_edge>` and :meth:`DiGraph.add_edges_from
+#     <vertizee.classes.graph.G.add_edges_from>`.
 
-    Note:
-        In an undirected graph, edges :math:`(s, t)` and :math:`(t, s)` represent the same edge.
-        Therefore, attempting to add :math:`(s, t)` and :math:`(t, s)` would raise an exception,
-        since ``Edge`` objects do not support parallel connections. For parallel connection support,
-        see :class:`MultiEdge` and :class:`MultiDiEdge`.
-    """
+#     Note:
+#         In a :term:`directed graph`, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`.
+#         Adding these two edges to a directed graph results in separate ``DiEdge`` objects. However,
+#         adding the edges to an :term:`undirected graph` (for example, :class:`Graph
+#         <vertizee.classes.graph.Graph>`), would raise an exception, since :term:`parallel edges
+#         <parallel edge>` are not allowed.
+#     """
 
-    __slots__ = ()
+#     __slots__ = ()
 
-    def __init__(self, vertex1: Vertex, vertex2: Vertex, weight: float = DEFAULT_WEIGHT, **attr):
-        super().__init__(vertex1, vertex2, weight=weight, **attr)
+#     def __init__(self, tail: "DiVertex", head: "DiVertex", weight: float = DEFAULT_WEIGHT, **attr):
+#         super().__init__(vertex1=tail, vertex2=head, weight=weight, **attr)
 
-    @abstractmethod
-    def __str__(self) -> str:
-        """A simple string representation of the edge that shows the vertex labels, and for
-        weighted graphs, includes the edge weight. The vertices are lexicographically sorted.
+#     @abstractmethod
+#     def __str__(self) -> str:
+#         """A simple string representation of the edge that shows the vertex labels, and for
+#         weighted graphs, includes the edge weight. The vertex order matches the initialization
+#         order.
 
-        Example:
-            "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
-        """
+#         Example:
+#             "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
+#         """
 
+#     @property
+#     def head(self) -> DiVertex:
+#         """The head vertex, which is the destination of the :term:`directed edge`."""
+#         return self._vertex2
 
-class DiEdge(EdgeBase[DiVertex]):
-    """A :term:`directed edge` that does not allow parallel connections between its endpoints.
-
-    To help ensure the integrity of graphs, the ``DiEdge`` class is abstract and cannot be
-    instantiated directly. To create directed edges, use :meth:`DiGraph.add_edge
-    <vertizee.classes.graph.DiGraph.add_edge>` and :meth:`DiGraph.add_edges_from
-    <vertizee.classes.graph.DiGraph.add_edges_from>`.
-
-    Note:
-        In a directed graph, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`. Adding
-        these two edges to a directed graph results in separate ``DiEdge`` objects. However, adding
-        the edges to an undirected graph (for example, :class:`Graph
-        <vertizee.classes.graph.Graph>`), would raise an exception, since parallel edges are not
-        allowed.
-
-    Attributes:
-        attr: Attribute dictionary to store optional data associated with the edge.
-    """
-
-    __slots__ = ()
-
-    def __init__(self, tail: DiVertex, head: DiVertex, weight: float = DEFAULT_WEIGHT, **attr):
-        super().__init__(vertex1=tail, vertex2=head, weight=weight, **attr)
-
-    @abstractmethod
-    def __str__(self) -> str:
-        """A simple string representation of the edge that shows the vertex labels, and for
-        weighted graphs, includes the edge weight. The vertex order matches the initialization
-        order.
-
-        Example:
-            "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
-        """
-
-    @property
-    def head(self) -> DiVertex:
-        """The head vertex, which is the destination of the directed edge."""
-        return self._vertex2
-
-    @property
-    def tail(self) -> DiVertex:
-        """The tail vertex, which is the origin of the directed edge."""
-        return self._vertex1
+#     @property
+#     def tail(self) -> DiVertex:
+#         """The tail vertex, which is the origin of the :term:`directed edge`."""
+#         return self._vertex1
 
 
-class MultiEdge(MultiEdgeBase[MultiVertex]):
-    """Undirected :term:`edge` that allows parallel connections between its endpoints.
+class MultiEdge(MultiEdgeBase):
+    """:term:`Undirected edge <undirected edge>` that allows :term:`parallel edge` connections
+    between its :term:`endpoints <endpoint>`.
 
     To help ensure the integrity of graphs, the ``MultiEdge`` class is abstract and cannot be
     instantiated directly. To create ``MultiEdge`` objects, use :meth:`MultiGraph.add_edge
     <vertizee.classes.graph.MultiGraph.add_edge>` and :meth:`MultiGraph.add_edges_from
-    <vertizee.classes.graph.MultiGraph.add_edges_from>`.
+    <vertizee.classes.graph.G.add_edges_from>`.
 
     Note:
-        In an undirected multigraph, edges :math:`(s, t)` and :math:`(t, s)` represent the same
-        multiedge. If multiple edges are added with the same vertices, then a single ``MultiEdge``
-        instance is used to store the parallel connections. When working with multiedges, use the
-        ``multiplicity`` property to determine if the edge represents more than one edge connection.
+        In an undirected :term:`multigraph`, edges :math:`(s, t)` and :math:`(t, s)` represent the
+        same :term:`multiedge`. If multiple edges are added with the same vertices, then a single
+        ``MultiEdge`` instance is used to store the :term:`parallel edge` connections. When working
+        with multiedges, use the :attr:`multiplicity` property to determine if the edge represents
+        more than one edge connection.
     """
 
     __slots__ = ()
 
     def __init__(
         self,
-        vertex1: MultiVertex,
-        vertex2: MultiVertex,
+        vertex1: "MultiVertex",
+        vertex2: "MultiVertex",
         weight: float = DEFAULT_WEIGHT,
-        key: ConnectionKey = DEFAULT_CONNECTION_KEY,
-        **attr,
+        key: "ConnectionKey" = DEFAULT_CONNECTION_KEY,
+        **attr: Any
     ) -> None:
         super().__init__(vertex1, vertex2, weight=weight, key=key, **attr)
 
     @abstractmethod
     def __str__(self) -> str:
-        """A simple string representation of the edge that shows the vertex labels, and for
-        weighted graphs, includes the edge weight. The vertices are lexicographically sorted. The
-        string will show separate vertex tuples for each parallel connection, such as
-        "(a, b), (a, b), (a, b)".
+        """A simple string representation of the :term:`multiedge` showing the vertex labels, and
+        for weighted graphs, the edge connection weights.
 
-        Example:
-            "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are :term:`lexicographically <lexicographical order>` ordered.
         """
 
-    @abstractmethod
-    def connections(self) -> ListView[ConnectionView]:
-        """Returns a ListView of the connections in the multiconnection, where each connection
-        is represented as a ConnectionView."""
+    @property
+    def vertex1(self) -> MultiVertex:
+        """The first vertex (type :class:`MultiVertex <vertizee.classes.vertex.MultiVertex>`)."""
+        return cast(MultiVertex, self._vertex1)
 
-    @abstractmethod
-    def connection_items(self) -> ItemsView[ConnectionKey, ConnectionView]:
-        """Returns an ItemsView, where each item is a tuple containing a connection key and the
-        corresponding connection in the multiconnection. Each connection is represented as a
-        ConnectionView."""
+    @property
+    def vertex2(self) -> MultiVertex:
+        """The second vertex (type :class:`MultiVertex <vertizee.classes.vertex.MultiVertex>`)."""
+        return cast(MultiVertex, self._vertex2)
 
 
-class MultiDiEdge(MultiEdgeBase[MultiDiVertex]):
+class MultiDiEdge(MultiEdgeBase):
     """Directed :term:`multiedge` that allows parallel, directed connections between its endpoints.
 
     To help ensure the integrity of graphs, ``MultiDiEdge`` is abstract and cannot be instantiated
     directly. To create edges, use :meth:`MultiDiGraph.add_edge
     <vertizee.classes.graph.MultiDiGraph.add_edge>` and :meth:`MultiDiGraph.add_edges_from
-    <vertizee.classes.graph.MultiDiGraph.add_edges_from>`.
+    <vertizee.classes.graph.G.add_edges_from>`.
 
     Note:
-        In a directed graph, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`. Adding
-        these two edges to a directed multigraph results in separate ``MultiDiEdge`` objects.
-        However, adding the edges to an undirected multigraph (for example, :class:`MultiGraph
-        <vertizee.classes.graph.MultiGraph>`), results in one :class:`MultiEdge` object with a
-        parallel connection.
+        In a :term:`directed graph`, edge :math:`(s, t)` is distinct from edge :math:`(t, s)`.
+        Adding these two edges to a directed :term:`multigraph` results in separate ``MultiDiEdge``
+        objects. However, adding the edges to an undirected multigraph (for example,
+        :class:`MultiGraph <vertizee.classes.graph.MultiGraph>`), results in one :class:`MultiEdge`
+        object with a :term:`parallel edge` connection.
     """
 
     __slots__ = ("_connections",)
 
     def __init__(
         self,
-        tail: MultiDiVertex,
-        head: MultiDiVertex,
+        tail: "MultiDiVertex",
+        head: "MultiDiVertex",
         weight: float = DEFAULT_WEIGHT,
-        key: ConnectionKey = DEFAULT_CONNECTION_KEY,
-        **attr,
+        key: "ConnectionKey" = DEFAULT_CONNECTION_KEY,
+        **attr: Any
     ):
         super().__init__(vertex1=tail, vertex2=head, weight=weight, key=key, **attr)
 
     @abstractmethod
     def __str__(self) -> str:
-        """A simple string representation of the edge that shows the vertex labels, and for
-        weighted graphs, includes the edge weight. The vertex order matches the initialization
-        order. The string will show separate vertex tuples for each parallel connection, such as
-        "(a, b), (a, b), (a, b)".
+        """A simple string representation of the :term:`multiedge` showing the vertex labels, and
+        for weighted graphs, the edge connection weights.
 
-        Example:
-            "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]
+        Examples: "(a, b)" [unweighted] and "(a, b, 4.5)" [weighted]. For undirected graphs, the
+        vertices are :term:`lexicographically <lexicographical order>` ordered.
         """
 
-    @abstractmethod
-    def connections(self) -> ListView[DiConnectionView]:
-        """Returns a ListView of the connections in the multiconnection, where each connection
-        is represented as a DiConnectionView."""
-
-    @abstractmethod
-    def connection_items(self) -> ItemsView[ConnectionKey, DiConnectionView]:
-        """Returns an ItemsView, where each item is a tuple containing a connection key and the
-        corresponding connection in the multiconnection. Each connection is represented as a
-        DiConnectionView."""
+    @property
+    def vertex1(self) -> MultiDiVertex:
+        """The tail vertex (type :class:`MultiDiVertex <vertizee.classes.vertex.MultiDiVertex>`),
+        which is the origin of the :term:`directed edge`."""
+        return cast(MultiDiVertex, self._vertex1)
 
     @property
-    def head(self) -> MultiDiVertex:
-        """The head vertex, which is the destination of the directed edge."""
-        return self._vertex2
-
-    @property
-    def tail(self) -> MultiDiVertex:
-        """The tail vertex, which is the origin of the directed edge."""
-        return self._vertex1
+    def vertex2(self) -> MultiDiVertex:
+        """The head vertex (type :class:`MultiDiVertex <vertizee.classes.vertex.MultiDiVertex>`),
+        which is the destination of the :term:`directed edge`."""
+        return cast(MultiDiVertex, self._vertex2)
 
 
 class _Edge(Edge):
@@ -1179,7 +1160,7 @@ class _Edge(Edge):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return _str_for_connection(self._vertex1, self._vertex2, self._weight)
+        return _str_for_edge(self._vertex1, self._vertex2, self._weight)
 
 
 class _DiEdge(DiEdge):
@@ -1188,7 +1169,7 @@ class _DiEdge(DiEdge):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return _str_for_connection(self._vertex1, self._vertex2, self._weight)
+        return _str_for_edge(self._vertex1, self._vertex2, self._weight)
 
 
 class _MultiEdge(MultiEdge):
@@ -1197,17 +1178,7 @@ class _MultiEdge(MultiEdge):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return _str_for_multiconnection(self._vertex1, self._vertex2, self._connections)
-
-    def connections(self) -> ListView[ConnectionView]:
-        return ListView([ConnectionView(self, c) for c in self._connections.values()])
-
-    def connection_items(self) -> ItemsView[ConnectionKey, ConnectionView]:
-        items = dict()
-        for key, connection in self._connections.items():
-            view = ConnectionView(self, connection)
-            items[key] = view
-        return ItemsView(items)
+        return _str_for_multiedge(self._vertex1, self._vertex2, self._connections)
 
 
 class _MultiDiEdge(MultiDiEdge):
@@ -1216,14 +1187,216 @@ class _MultiDiEdge(MultiDiEdge):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return _str_for_multiconnection(self._vertex1, self._vertex2, self._connections)
+        return _str_for_multiedge(self._vertex1, self._vertex2, self._connections)
 
-    def connections(self) -> ListView[DiConnectionView]:
-        return ListView([DiConnectionView(self, c) for c in self._connections.values()])
 
-    def connection_items(self) -> ItemsView[ConnectionKey, DiConnectionView]:
-        items = dict()
-        for key, connection in self._connections.items():
-            view = DiConnectionView(self, connection)
-            items[key] = view
-        return ItemsView(items)
+def _add_connection(
+    edge: MultiEdgeBase, weight: float, key: Optional["ConnectionKey"] = None, **attr: Any
+) -> EdgeConnectionView:
+    """Adds a new edge connection to the multiedge. If the connection key already
+    exists, then the existing connection key data is replaced with ``weight`` and ``**attr``.
+
+    Args:
+        edge: The multiedge to which a new connection is added.
+        weight: Optional; The connection weight. Defaults to ``DEFAULT_WEIGHT`` (1.0).
+        key: Optional; The key to associate with the new connection that distinguishes it from
+            other parallel connections in the multiedge.
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+
+    Returns:
+        EdgeConnectionView[V]: The newly added edge connection.
+    """
+    new_key = key
+    if key is not None and key in edge._connections:
+        edge_data: EdgeConnectionData = edge._connections[key]
+        if edge_data.has_attributes_dict():
+            assert edge_data._attr is not None
+            edge_data._attr.clear()
+        for k, v in attr.items():
+            edge_data.attr[k] = v
+        edge_data.weight = weight
+    else:
+        edge_data = EdgeConnectionData(weight, **attr)
+        if key is None:
+            new_key = _create_connection_key(edge._connections.keys())
+
+    if weight != DEFAULT_WEIGHT:
+        edge._parent_graph._is_weighted_graph = True
+    if weight < 0:
+        edge._parent_graph._has_negative_edge_weights = True
+
+    assert new_key is not None
+    edge._connections[new_key] = edge_data
+    return EdgeConnectionView(edge, edge._connections[new_key])
+    # if edge._parent_graph.is_directed():
+    #     return cast(EdgeConnectionView[MultiDiVertex], view)
+    # else:
+    #     return cast(EdgeConnectionView[MultiVertex], view)
+
+def _is_edge_equal_to(edge: EdgeInterface[VertexClass], other: EdgeInterface[VertexClass]) -> bool:
+    """Returns True if ``edge`` is logically equal to ``other``."""
+    if edge is other:
+        return True
+    v1 = edge.vertex1
+    v2 = edge.vertex2
+    o_v1 = other.vertex1
+    o_v2 = other.vertex2
+
+    if not v1._parent_graph.is_directed():
+        if v1.label > v2.label:
+            v1, v2 = v2, v1
+        if o_v1.label > o_v2.label:
+            o_v1, o_v2 = o_v2, o_v1
+
+    if v1 != o_v1 or v2 != o_v2 or edge.weight != other.weight:
+        return False
+    if getattr(edge, "has_attributes_dict", None) and getattr(other, "has_attributes_dict", None):
+        if cast(Edge, edge).has_attributes_dict() != cast(Edge, other).has_attributes_dict():
+            return False
+        if cast(Edge, edge).has_attributes_dict() and cast(Edge, other).has_attributes_dict():
+            if cast(Edge, edge).attr != cast(Edge, other).attr:
+                return False
+    elif getattr(edge, "multiplicity", None) and getattr(other, "multiplicity", None):
+        if cast(MultiEdge, edge).multiplicity != cast(MultiEdge, other).multiplicity:
+            return False
+    return True
+
+
+def _is_edge_less_than(edge: EdgeInterface[VertexClass], other: EdgeInterface[VertexClass]) -> bool:
+    """Returns True if ``edge`` is less than ``other``."""
+    if edge is other:
+        return False
+    v1 = edge.vertex1
+    v2 = edge.vertex2
+    o_v1 = other.vertex1
+    o_v2 = other.vertex2
+
+    if not v1._parent_graph.is_directed():
+        if v1.label > v2.label:
+            v1, v2 = v2, v1
+        if o_v1.label > o_v2.label:
+            o_v1, o_v2 = o_v2, o_v1
+
+    if v1 < o_v1:
+        return True
+    if v1 == o_v1 and v2 < o_v2:
+        return True
+    if v1 == o_v1 and v2 == o_v2 and edge.weight < other.weight:
+        return True
+    if getattr(edge, "multiplicity", None) and getattr(other, "multiplicity", None):
+        if (v1 == o_v1 and v2 == o_v2 and edge.weight == other.weight
+                and cast(MultiEdge, edge).multiplicity < cast(MultiEdge, other).multiplicity):
+            return True
+    return False
+
+
+def _contract_edge(
+    edge: EdgeBase[VertexClass], graph: G[VertexClass, EdgeClass], remove_loops: bool = False
+) -> None:
+    """Contracts an edge by removing it from the graph and merging its two incident vertices.
+
+    Args:
+        edge: The edge to contract.
+        graph: The graph to which the edge connection belongs.
+        remove_loops: If True, loops on the merged vertex will be removed. Defaults to False.
+    """
+    v1 = edge.vertex1
+    v2 = edge.vertex2
+
+    edges_to_delete = []
+    # Incident edges of vertex2, where vertex2 is to be replaced by vertex1.
+    for incident in v2.incident_edges():
+        edges_to_delete.append(incident)
+
+        if incident.is_loop():
+            vertex1 = v1
+            vertex2 = v1
+        elif incident.vertex1 == v2:
+            vertex1 = v1
+            vertex2 = incident.vertex2
+        else:  # incident.vertex2 == v2
+            vertex1 = incident.vertex1
+            vertex2 = v1
+
+        if graph.is_multigraph():
+            assert isinstance(incident, MultiEdgeBase)
+            multiedge: Optional[MultiEdgeBase] = None
+            if graph.has_edge(vertex1, vertex2):
+                multiedge = cast(MultiEdgeBase, graph[vertex1, vertex2])
+
+            for connection in incident.connections():
+                attr = connection.attr if connection.has_attributes_dict() else dict()
+                if multiedge:
+                    multiedge.add_connection(weight=connection.weight, **attr)
+                else:
+                    multiedge = cast(MultiEdgeBase,
+                        graph.add_edge(vertex1, vertex2, weight=connection.weight, **attr))
+        else:
+            assert isinstance(incident, (Edge, DiEdge))
+            if not graph.has_edge(vertex1, vertex2):
+                graph.add_edge(vertex1, vertex2, weight=incident.weight, **incident.attr)
+
+    # Delete indicated edges after finishing loop iteration.
+    for e in edges_to_delete:
+        graph.remove_edge(e.vertex1, e.vertex2)
+    if remove_loops or not graph.allows_self_loops():
+        v1.remove_loops()
+    graph.remove_vertex(v2)
+
+
+def _create_connection_key(connection_keys: Iterable[ConnectionKey]) -> ConnectionKey:
+    """Creates a new connection key that does not conflict with a collection of existing keys."""
+    numeric_keys = []
+    for key in connection_keys:
+        try:
+            int_key = int(key)
+            numeric_keys.append(int_key)
+        except ValueError:
+            pass
+
+    if numeric_keys:
+        max_key = max(numeric_keys)
+        new_key = max_key + 1
+    else:
+        new_key = int(DEFAULT_CONNECTION_KEY) + 1
+    return str(new_key)
+
+
+def _str_for_edge(vertex1: V, vertex2: V, weight: float) -> str:
+    """A simple string representation of the edge that shows the vertex labels, and for weighted
+    graphs, includes the edge weight."""
+    edge_str = f"({vertex1.label}, {vertex2.label}"
+
+    if not vertex1._parent_graph.is_directed():
+        if vertex1.label > vertex2.label:
+            edge_str = f"({vertex2.label}, {vertex1.label}"
+
+    if vertex1._parent_graph.is_weighted():
+        edge_str = f"{edge_str}, {weight})"
+    else:
+        edge_str = f"{edge_str})"
+
+    return edge_str
+
+
+def _str_for_multiedge(
+    vertex1: V, vertex2: V, connections: Dict[ConnectionKey, EdgeConnectionData]
+) -> str:
+    """A simple string representation of the multiedge that shows the vertex labels, and for
+    weighted graphs, includes the edge weight. The string will show separate vertex tuples for each
+    parallel connection, such as "(a, b, 1.0), (a, b, 3.5), (a, b, 2.1)"."""
+    connection_str = f"({vertex1.label}, {vertex2.label}"
+
+    if not vertex1._parent_graph.is_directed():
+        if vertex1.label > vertex2.label:
+            connection_str = f"({vertex2.label}, {vertex1.label}"
+
+    multiconnection_strings = list()
+    if vertex1._parent_graph.is_weighted():
+        for connection in connections.values():
+            multiconnection_strings.append(f"{connection_str}, {connection.weight})")
+    else:
+        connection_str = f"{connection_str})"
+        multiconnection_strings = [connection_str] * len(connections)
+
+    return ", ".join(multiconnection_strings)

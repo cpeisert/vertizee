@@ -12,7 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Graph algorithms for finding and evaluating cuts in a graph."""
+# pylint: disable=line-too-long
+"""
+==================
+Connectivity: cuts
+==================
+
+Algorithms for finding and evaluating :term:`cuts <cut>` in a :term:`graph`.
+
+**Recommended Tutorial**: :doc:`Cuts <../../tutorials/cuts>` - |image-colab-cuts|
+
+.. |image-colab-cuts| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/cuts.ipynb
+
+Detailed documentation
+======================
+"""
 
 import math
 from typing import Dict, Optional
@@ -46,10 +61,10 @@ class KargerResults:
 
 
 def brute_force_min_cut(graph: G) -> KargerResults:
-    """Uses multiple iterations of the Karger algorithm to find the minimum cut of the graph.
+    r"""Uses multiple iterations of the Karger algorithm to find the minimum cut of the graph.
 
     Note that for the Karger algorithm to be guaranteed of finding a minimum cut on a graph with
-    n vertices, it must be run at least :math:`n^2 * \\log{n}` iterations.
+    n vertices, it must be run at least :math:`n^2 * \log{n}` iterations.
 
     Args:
         graph: The multigraph in which to find the minimum cut.

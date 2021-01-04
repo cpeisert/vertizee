@@ -12,7 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Vertizee exceptions."""
+"""
+==========
+Exceptions
+==========
+
+Vertizee exceptions.
+"""
 
 
 class VertizeeException(Exception):
@@ -38,28 +44,31 @@ class Unfeasible(AlgorithmError):
 
 class GraphTypeNotSupported(Unfeasible):
     """Exception raised if an algorithm does not support (or is undefined) for a particular type
-    of graph (e.g. DiGraph, Graph, MultiGraph, MultiDiGraph)."""
+    of graph (for example, :term:`digraph`, :term:`graph`, :term:`multigraph`,
+    :term:`multidigraph`)."""
 
 
 class NegativeWeightCycle(Unfeasible):
-    """Exception raised if a negative weight cycle is found that precludes a solution. For example,
-    see the Bellman-Ford algorithm for solving the single-source shortest-paths problem."""
+    """Exception raised if a negative weight :term:`cycle` is found that precludes a solution.
+    For example, see the :func:`Bellman-Ford algorithm
+    <vertizee.algorithms.paths.single_source.bellman_ford>` for solving the single-source
+    shortest-paths problem."""
 
 
 class NoPath(Unfeasible):
-    """Exception for algorithms that should return a path when running on graphs where such a path
-    does not exist."""
+    """Exception for algorithms that should return a :term:`path` when running on
+    :term:`graphs <graph>` where such a path does not exist."""
 
 
 class ParallelEdgesNotAllowed(VertizeeException):
-    """Exception raised when attempting to add a parallel edge to a graph that is not a
-    multigraph."""
+    """Exception raised when attempting to add a :term:`parallel edge` to a :term:`graph` that is
+    not a :term:`multigraph`."""
 
 
 class SelfLoopsNotAllowed(VertizeeException):
-    """Exception raised when attempting to add a self loop to a graph instantiated with
-    ``allow_self_loops`` set to False."""
+    """Exception raised when attempting to add a :term:`self loop <loop>` to a :term:`graph`
+    instantiated with ``allow_self_loops`` set to False."""
 
 
 class VertexNotFound(VertizeeException):
-    """Exception raised if indicated vertex is not present in the graph"""
+    """Exception raised if indicated :term:`vertex` is not present in the :term:`graph`."""

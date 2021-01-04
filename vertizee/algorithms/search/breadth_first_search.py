@@ -12,23 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for breadth-first search.
+# pylint: disable=line-too-long
+"""
+============================
+Search: breadth-first search
+============================
 
-Note:
-    * :math:`G = (V, E)` is a :term:`graph` consisting of a set of :term:`vertices <vertex>`
-      :math:`V` and a set of :term:`edges <edge>` :math:`E`.
-    * :math:`m = |E|` (the number of edges)
-    * :math:`n = |V|` (the number of vertices)
+Algorithms for breadth-first search. The asymptotic running times use the
+notation that for some graph :math:`G(V, E)`, the number of vertices is :math:`n = |V|` and the
+number of edges is :math:`m = |E|`.
 
-Functions:
+**Recommended Tutorial**: :doc:`Search <../../tutorials/search>` - |image-colab-search|
+
+.. |image-colab-search| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/search.ipynb
+
+Function summary
+================
 
 * :func:`bfs` - Performs a breadth-first-search and provides detailed results (e.g. a :term:`forest`
-  of breadth-first-search :term:`trees <tree>` and edge classification). Running time:
+  of breadth-first-search :term:`trees <tree>` and :term:`edge` classification). Running time:
   :math:`O(m + n)`
 * :func:`bfs_labeled_edge_traversal` - Iterates over the labeled :term:`edges <edge>` of a
   breadth-first search traversal. Running time: :math:`O(m + n)`
-* :func:`bfs_preorder_traversal` - Iterates over :term:`vertices <vertex>` in breadth-first search
-  :term:`preorder`. Running time: :math:`O(m + n)`
+* :func:`bfs_vertex_traversal` - Iterates over the :term:`vertices <vertex>` using a breadth-first
+  search. Running time: :math:`O(m + n)`
+
+Detailed documentation
+======================
 """
 
 from __future__ import annotations
@@ -56,51 +67,48 @@ INFINITY: Final = float("inf")
 def bfs(
     graph: G[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
 ) -> SearchResults[V, E]:
-    """Performs a breadth-first-search and provides detailed results (e.g. a forest of
-        breadth-first-search trees and edge classification).
+    """Performs a breadth-first-search and provides detailed results (e.g. a :term:`forest` of
+    breadth-first-search :term:`trees <tree>` and edge classification).
 
-        Running time: :math:`O(m + n)`
+    Running time: :math:`O(m + n)`
 
+    Note:
         If a ``source`` is not specified, then vertices are repeatedly selected until all
-        components in the graph have been searched.
+        :term:`components <connected component>` in the graph have been searched.
 
-        Note:
-            Breadth-first search does not support cycle detection. For cycle detection, use
-            :func:`depth_first_search
-            <vertizee.algorithms.search.depth_first_search.depth_first_search>`.
+    Note:
+        Breadth-first search does not support :term:`cycle` detection. For cycle detection, use
+        :func:`dfs <vertizee.algorithms.search.depth_first_search.dfs>` (depth-first search).
 
-        Args:
-            graph: The graph to search.
-            source: Optional; The source vertex from which to begin the search. When ``source`` is
-                specified, only the component reachable from the source is searched. Defaults to
-                None.
-            reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-                as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults
-                to False.
+    Args:
+        graph: The graph to search.
+        source: Optional; The source vertex from which to begin the search. When ``source`` is
+            specified, only the component reachable from the source is searched. Defaults to None.
+        reverse_graph: Optional; For directed graphs, setting to True will yield a traversal as if
+            the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to False.
 
-        Returns:
-            SearchResults: The results of the depth-first search.
+    Returns:
+        SearchResults: The results of the breadth-first search.
 
     #### TODO(cpeisert): Update example below
 
-        Example:
-            >>> import vertizee as vz
-            >>> from vertizee.algorithms import search
-            >>> g = vz.Graph()
-            >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-            >>> results = search.breadth_first_search(g)
-            >>> results.vertices_preorder
-            [3, 1, 0, 2, 5, 4, 7, 6]
-            >>> [str(edge) for edge in results.edges_in_discovery_order]
-            ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
+    Example:
+        >>> import vertizee as vz
+        >>> from vertizee.algorithms import search
+        >>> g = vz.Graph()
+        >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
+        >>> results = search.breadth_first_search(g)
+        >>> results.vertices_preorder
+        [3, 1, 0, 2, 5, 4, 7, 6]
+        >>> [str(edge) for edge in results.edges_in_discovery_order]
+        ['(1, 3)', '(0, 1)', '(1, 2)', '(3, 5)', '(4, 5)', '(6, 7)']
 
-        See Also:
-            * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
-            * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
-            * :func:`bfs_labeled_edge_traversal`
+    See Also:
+        * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
+        * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
 
-        Note:
-            The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.
+    Note:
+        The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.
     """
     results = SearchResults(graph, depth_first_search=False)
 
@@ -141,50 +149,50 @@ def bfs_labeled_edge_traversal(
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
 ) -> Iterator[Tuple[V, V, str]]:
-    """Iterates over the labeled edges of a breadth-first search traversal.
+    """Iterates over the labeled :term:`edges <edge>` of a breadth-first search traversal.
 
     Running time: :math:`O(m + n)`
 
     Note:
-        If ``source`` is specified, then only vertices within the graph component containing
-        ``source`` will be traversed.
+        If ``source`` is specified, then the traversal only includes the graph
+        :term:`component <connected component>` containing the ``source`` vertex.
 
-    For directed graphs, setting ``reverse_graph`` to True will generate edges as if the graph
-    were reversed (i.e. all directed edges pointing in the opposite direction).
+    For :term:`directed graphs <digraph>`, setting ``reverse_graph`` to True will generate
+    vertices as if the graph were :term:`reversed <reverse>`.
 
     Args:
         graph: The graph to search.
         source: The source vertex from which to discover reachable vertices.
         depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults
             to False.
 
     Yields:
         Tuple[Vertex, Vertex, str, str, int]: An iterator over tuples of the form
         ``(parent, child, label, search_direction, depth)`` where ``(parent, child)`` is the edge
-        being explored in the depth-first search.
+        being explored in the breadth-first search.
 
         The ``label`` is one of the strings:
 
-            1. "tree_root" - math:`(u, u)`, where math:`u` is the root vertex of a DFS tree.
-            2. "tree_edge" - edge math:`(u, v)` is a tree edge if math:`v` was first discovered by
-               exploring edge math:`(u, v)`.
-            3. "back_edge" - back edge math:`(u, v)` connects vertex math:`u` to ancestor math:`v`
-               in a depth-first tree. Per *Introduction to Algorithms* [CLRS2009_9]_, self loops
-               are considered back edges.
-            4. "forward_edge": non-tree edges math:`(u, v)` connecting a vertex math:`u` to a
-               descendant math:`v` in a depth-first tree.
+            1. "tree_root" - :math:`(u, u)`, where :math:`u` is the root vertex of a BFS tree.
+            2. "tree_edge" - edge :math:`(u, v)` is a tree edge if :math:`v` was first discovered by
+               exploring edge :math:`(u, v)`.
+            3. "back_edge" - back edge :math:`(u, v)` connects vertex :math:`u` to ancestor
+               :math:`v` in a breadth-first tree. Per *Introduction to Algorithms*, self loops are
+               considered back edges. :cite:`2009:clrs`
+            4. "forward_edge" - non-tree edges :math:`(u, v)` connecting a vertex :math:`u` to a
+               descendant :math:`v` in a breadth-first tree.
             5. "cross_edge" - All other edges, which may go between vertices in the same
-               depth-first tree as long as one vertex is not an ancestor of the other, or they go
-               between vertices in different depth-first trees.
+               breadth-first tree as long as one vertex is not an ancestor of the other, or they go
+               between vertices in different breadth-first trees.
 
         The ``search_direction`` is the direction of traversal and is one of the strings:
 
-            1. "preorder" - the traversal discovered new vertex `child` in the DFS.
-            2. "postorder" - the traversal finished visiting vertex `child` in the DFS.
-            3. "already_discovered" - the traversal found a non-tree edge that had already been
-               discovered.
+            1. "preorder" - the traversal discovered new vertex `child` in the BFS.
+            2. "postorder" - the traversal finished visiting vertex `child` in the BFS.
+            3. "already_discovered" - the traversal found a non-tree edge connecting to a vertex
+               that was already discovered.
 
         The ``depth`` is the count of edges between ``child`` and the root vertex in its
         breadth-first search tree. If  the edge :math:`(parent, child)` is not a tree edge (or the
@@ -207,38 +215,23 @@ def bfs_labeled_edge_traversal(
          (1, 2, 'tree_edge', 'postorder', 2)]
 
     See Also:
-        * :func:`breadth_first_search`
-        * :class:`Label`
+        * :class:`Direction <vertizee.algorithms.algo_utils.search_utils.Direction>`
+        * :class:`Label <vertizee.algorithms.algo_utils.search_utils.Label>`
+        * :class:`SearchResults <vertizee.algorithms.algo_utils.search_utils.SearchResults>`
 
-    Notes:
+    Note:
         This function uses ideas from the NetworkX function:
         `networkx.algorithms.traversal.breadth_first_search.generic_bfs_edges
         <https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/breadth_first_search.py>`_
-        [N2020_3]_
+        :cite:`2008:hss`
 
-        The NetworkX function was in turn adapted from David Eppstein's depth-first search function
-        in `PADS`. [E2004_3]_
+        The NetworkX function was in turn adapted from David Eppstein's breadth-first search
+        function in `PADS`. :cite:`2015:eppstein`
 
         The edge labeling of this function is based on the treatment in *Introduction to
-        Algorithms*. [CLRS2009_9]_
+        Algorithms*. :cite:`2009:clrs`
 
-        The feature to allow depth limits is based on the the Wikipedia article "Iterative
-        deepening depth-first search" [WEC2020_03]_.
-
-    References:
-     .. [CLRS2009_9] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, page 594-610. The MIT Press, 2009.
-
-     .. [E2004_3] David Eppstein's breadth-first levels function.
-                  http://www.ics.uci.edu/~eppstein/PADS/BFS.py
-
-     .. [N2020_3] NetworkX module: networkx.algorithms.traversal.breadth_first_search.py
-                  https://github.com/networkx/networkx/blob/master/networkx/algorithms/traversal/breadth_first_search.py
-
-     .. [WEC2020_3] Wikipedia contributors. "Iterative deepening depth-first search." Wikipedia,
-                    The Free Encyclopedia. Available from:
-                    https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search.
-                    Accessed 16 November 2020.
+        The feature to allow depth limits is based on Korf. :cite:`1985:korf`
     """
     if len(graph) == 0:
         raise exception.Unfeasible("search is undefined for an empty graph")
@@ -354,23 +347,24 @@ def bfs_labeled_edge_traversal(
                 yield parent, parent, Label.TREE_ROOT, Direction.POSTORDER, vertex_depth[parent]
 
 
-def bfs_preorder_traversal(
+def bfs_vertex_traversal(
     graph: G[V, E],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
 ) -> Iterator[V]:
-    """Iterates over vertices in breadth-first search preorder (order of first discovery).
-
-    For directed graphs, setting ``reverse_graph`` to True will generate vertices as if the graph
-    were reversed (i.e. all directed edges pointing in the opposite direction).
-
-    The reverse of a directed graph is also called the transpose or the converse. See
-    https://en.wikipedia.org/wiki/Transpose_graph.
+    """Iterates over :term:`vertices <vertex>` in a breadth-first search.
 
     Note:
-        The preorder and postorder are identical for breadth-first search, which is why there is no
-        function named ``bfs_postorder_traversal``.
+        If ``source`` is specified, then the traversal only includes the graph
+        :term:`component <connected component>` containing the ``source`` vertex.
+
+    Note:
+        Breadth-first search produces vertices in the same sequence for both :term:`preorder` and
+        :term:`postorder`.
+
+    For :term:`directed graphs <digraph>`, setting ``reverse_graph`` to True will generate
+    vertices as if the graph were :term:`reversed <reverse>`.
 
     Args:
         graph: The graph to search.
@@ -378,15 +372,11 @@ def bfs_preorder_traversal(
             specified, only the component reachable from the source is searched. Defaults to None.
         depth_limit: Optional; The depth limit of the search. Defaults to None (no limit).
         reverse_graph: Optional; For directed graphs, setting to True will yield a traversal
-            as if the graph were reversed (i.e. the reverse/transpose/converse graph). Defaults to
+            as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
             False.
 
     Yields:
         Vertex: Vertices in the breadth-first search in preorder (order of first discovery).
-
-    See Also:
-        * :func:`bfs_labeled_edge_traversal`
-        * :func:`breadth_first_search`
 
     Note:
         The references for this algorithm are documented in :func:`bfs_labeled_edge_traversal`.

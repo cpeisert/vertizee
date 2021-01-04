@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Union-find data structure (a.k.a. disjoint-set data structure) for maintaining a collection of
-disjoint, dynamic sets."""
+"""
+==========
+Union Find
+==========
+
+:term:`Union-find <union find>` data structure (a.k.a. disjoint-set data structure) for
+maintaining a collection of disjoint, dynamic sets.
+"""
 
 # pytype: disable=not-supported-yet
 import collections.abc
@@ -21,15 +27,19 @@ import collections.abc
 from collections import defaultdict
 from typing import Dict, Generic, Iterator, Optional, Set, TypeVar
 
-#:Type variable for values in a generic UnionFind data structure.
 T = TypeVar("T", bound=collections.abc.Hashable)
 
 
 class UnionFind(Generic[T]):
-    """Union-find data structure (a.k.a. disjoint-set data structure) for maintaining a collection
-    of disjoint, dynamic sets.
+    """:term:`Union-find <union find>` data structure (a.k.a. disjoint-set data structure) for
+    maintaining a collection of disjoint, dynamic sets.
 
-    The dynamic sets are comprised of objects of generic type :class:`T`.
+    This class has a generic type parameter ``T``, which supports the type-hint usage
+    ``UnionFind[T]``.
+
+    ``T = TypeVar("T", bound=collections.abc.Hashable)``
+
+    The dynamic sets are comprised of objects of type :class:`T`.
 
     Note:
         The objects stored in UnionFind must be hashable.
@@ -37,22 +47,23 @@ class UnionFind(Generic[T]):
     **Traditional operations:**
 
         * :func:`find_set` - Returns the representative item of the set containing the given item.
-          Implemented as :func:`__getitem__` to enable index accessor notation.
-        * :func:`make_set` - Creates a new set containing the given item.
-        * :func:`union` - Unites the dynamic sets that contain the given items.
+          Implemented as :meth:`__getitem__` to enable index accessor notation.
+        * :meth:`make_set` - Creates a new set containing the given item.
+        * :meth:`union` - Unites the dynamic sets that contain the given items.
 
     **Bonus operations:**
 
-        * :func:`__iter__` - Returns an iterator over all items in the data structure.
-        * :func:`__len__` - Returns the number of items in the data structure.
-        * :func:`in_same_set` - Returns True if the given items are in the same set.
-        * :func:`set_count` - Returns the number of sets.
-        * :func:`to_sets` - Returns an iterator over the sets.
+        * :meth:`__iter__` - Returns an iterator over all items in the data structure.
+        * :meth:`__len__` - Returns the number of items in the data structure.
+        * :meth:`get_set` - Returns the set containing ``item``.
+        * :meth:`get_sets` - Returns the sets contained in the data structure.
+        * :meth:`in_same_set` - Returns True if the given items are in the same set.
+        * :attr:`set_count` - Returns the number of sets.
 
-    Notes:
+    Note:
         This implementation is based on the **disjoint-set forest** presented by Cormen, Leiserson,
-        Rivest, and Stein [CLRS2009_7]_ as well as the NetworkX [N2020_2]_ UnionFind implementation,
-        which was in turn based on work by Josiah Carlson [CAR]_ and D. Eppstein [E2004_2]_.
+        Rivest, and Stein :cite:`2009:clrs` as well as the NetworkX :cite:`2008:hss` ``UnionFind``
+        implementation, which was in turn based on work by D. Eppstein. :cite:`2015:eppstein`
 
     Args:
         *args (Generic[T]): Optional; Items to initialize as disjoint sets. Each item is added to
@@ -85,17 +96,6 @@ class UnionFind(Generic[T]):
         False
         >>> uf[1] == uf[3]
         False
-
-    References:
-     .. [CAR] Carlson, Josiah. http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/215912
-
-     .. [CLRS2009_7] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, pages 568-571. The MIT Press, 2009.
-
-     .. [E2004_2] Eppstein, D. http://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
-
-     .. [N2020_2] NetworkX module: networkx.utils.union_find.py
-                  https://github.com/networkx/networkx/blob/master/networkx/utils/union_find.py
     """
 
     __slots__ = ("_parents", "_paths_compressed", "_ranks", "_set_count", "_sets_dict")
@@ -159,24 +159,8 @@ class UnionFind(Generic[T]):
             merged. To get the representative item of a set, use :meth:``__getitem__``.
         """
         self.get_sets()  # Called for side effects.
+        assert self._sets_dict is not None
         return self._sets_dict[self[item]]
-
-    def in_same_set(self, item1: T, item2: T) -> bool:
-        """Returns True if the items are elements of the same set."""
-        return self[item1] == self[item2]
-
-    def make_set(self, item: T) -> None:
-        """Creates a new set containing the item."""
-        self._paths_compressed = False
-        self._set_count += 1
-        self._parents[item] = item
-        self._ranks[item] = 0
-
-    @property
-    def set_count(self) -> int:
-        """The number of sets. This value is decremented after calling ``union``
-        on disjoint sets."""
-        return self._set_count
 
     def get_sets(self) -> Iterator[Set[T]]:
         """Returns the sets contained in the data structure.
@@ -197,7 +181,25 @@ class UnionFind(Generic[T]):
             for k, root in self._parents.items():
                 self._sets_dict[root].add(k)
 
+        assert self._sets_dict is not None
         return iter(self._sets_dict.values())
+
+    def in_same_set(self, item1: T, item2: T) -> bool:
+        """Returns True if the items are elements of the same set."""
+        return self[item1] == self[item2]
+
+    def make_set(self, item: T) -> None:
+        """Creates a new set containing the item."""
+        self._paths_compressed = False
+        self._set_count += 1
+        self._parents[item] = item
+        self._ranks[item] = 0
+
+    @property
+    def set_count(self) -> int:
+        """The number of sets. This value is decremented after calling ``union``
+        on disjoint sets."""
+        return self._set_count
 
     def union(self, item1: T, item2: T) -> None:
         """Unites the dynamic sets that contain ``item1`` and ``item2``."""

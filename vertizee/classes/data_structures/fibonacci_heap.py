@@ -12,19 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Fibonacci heap data structure that serves the lowest priority item as defined by a priority
-function."""
+"""
+==============
+Fibonacci Heap
+==============
+
+:term:`Fibonacci heap` data structure that serves the lowest priority item as defined by a
+priority function.
+"""
 
 # pytype: disable=not-supported-yet
 
 from __future__ import annotations
+import collections.abc
 import math
 from typing import Callable, Dict, Generic, List, Optional, Set, TypeVar, Union
 
 NEG_INFINITY = float("-inf")
 
-#:Type variable for values in a generic FibonacciHeap data structure.
-T = TypeVar("T")
+T = TypeVar("T", bound=collections.abc.Hashable)
 
 
 class _FibonacciNode(Generic[T]):
@@ -32,7 +38,7 @@ class _FibonacciNode(Generic[T]):
     __slots__ = ("children", "item", "marked", "parent", "priority")
 
     def __init__(self, priority: Union[float, int], item: T) -> None:
-        self.children: Set[_FibonacciNode] = set()
+        self.children: Set[_FibonacciNode[T]] = set()
         self.item: T = item
         self.marked: bool = False
         self.parent: Optional[_FibonacciNode[T]] = None
@@ -45,18 +51,24 @@ class _FibonacciNode(Generic[T]):
 
 
 class FibonacciHeap(Generic[T]):
-    """A Fibonacci heap data structure that obeys the min-heap-property: the priority of a node is
-    greater than or equal to the priority of its parent, where priorities are defined by a priority
-    function.
+    """A :term:`Fibonacci heap` data structure that obeys the min-heap-property: the priority of a
+    node is greater than or equal to the priority of its parent, where priorities are defined by a
+    priority function.
 
-    The priority function accepts an item of generic type ``T`` and returns a numeric priority
-    (int or float). The default is the identity function (i.e. returns its argument), which is
-    suitable for heaps of floats or integers.
+    This class has a generic type parameter ``T``, which supports the type-hint usage
+    ``FibonacciHeap[T]``.
+
+    ``T = TypeVar("T", bound=collections.abc.Hashable)``
+
+    The priority function accepts an item of type ``T`` and returns a numeric priority (int or
+    float). The default is the identity function (i.e. returns its argument), which is suitable
+    for heaps of floats or integers.
 
     Note:
         Items stored in the heap must be hashable.
 
-    The Fibonacci heap asymptotic performance compares to a binary heap as follows::
+    The :term:`Fibonacci heap` asymptotic performance compares to a :term:`binary heap <heap>` as
+    follows :cite:`2009:clrs`::
 
                     | Binary heap  | Fibonacci heap
       Procedure     | (worst-case) | (amortized)
@@ -64,15 +76,15 @@ class FibonacciHeap(Generic[T]):
       MAKE-HEAP     | Θ(1)         | Θ(1)
       INSERT        | Θ(lg n)      | Θ(1)
       MINIMUM       | Θ(1)         | Θ(1)
-      EXTRACT-MIN   | Θ(lg n)      | Θ(lg n)
+      EXTRACT-MIN   | Θ(lg n)      | O(lg n)
       UNION         | Θ(n)         | Θ(1)
       DECREASE-KEY  | Θ(lg n)      | Θ(1)
-      DELETE        | Θ(lg n)      | Θ(lg n)
+      DELETE        | Θ(lg n)      | O(lg n)
 
     Note:
-        This implementation is based on *Introduction to Algorithms: Third Edition* [CLRS2009_8]_
-        and the original paper :download:`"Fibonacci heaps and their uses in improved network
-        optimization algorithms." </references/Fibonacci-Heap-Tarjan.pdf>` [FT1987]_
+        This implementation is based on *Introduction to Algorithms: Third Edition*
+        :cite:`2009:clrs` and the original paper "Fibonacci heaps and their uses in improved
+        network optimization algorithms." :cite:`1987:fredman`
 
     Args:
         priority_function: The item/node priority function. If omitted, the identity function is
@@ -100,14 +112,6 @@ class FibonacciHeap(Generic[T]):
         >>> fh.union(fh2)
         >>> len(fh)
         18
-
-    References:
-     .. [CLRS2009_8] Thomas H. Cormen, Charles E. Leiserson, Ronald L. Rivest, and Clifford Stein.
-                     Introduction to Algorithms: Third Edition, pages 505-526. The MIT Press, 2009.
-
-     .. [FT1987] Michael Lawrence Fredman and Robert E. Tarjan. :download:`"Fibonacci heaps and
-                 their uses in improved network optimization algorithms."
-                 </references/Fibonacci-Heap-Tarjan.pdf>` Journal of the ACM, 34(3):596-615, 1987.
     """
 
     __slots__ = ("_item_to_node", "_length", "_min", "_priority_function", "_roots")
@@ -121,10 +125,11 @@ class FibonacciHeap(Generic[T]):
 
         self._length = 0
         self._min: Optional[_FibonacciNode[T]] = None
-        if priority_function is None:
-            self._priority_function = lambda x: x
+        if priority_function:
+            self._priority_function: Callable[[T], Union[float, int]] = priority_function
         else:
-            self._priority_function = priority_function
+            self._priority_function = lambda x: x  # type: ignore
+
         self._roots: Set[_FibonacciNode[T]] = set()
 
     def __len__(self) -> int:
@@ -173,7 +178,7 @@ class FibonacciHeap(Generic[T]):
             return self._min.item
         return None
 
-    def union(self, other: "FibonacciHeap") -> None:
+    def union(self, other: "FibonacciHeap[T]") -> None:
         """Merge ``other`` Fibonacci heap into this heap."""
         self._roots.update(other._roots)
         if self._min is None or (
@@ -182,8 +187,10 @@ class FibonacciHeap(Generic[T]):
             self._min = other._min
         self._length += other._length
 
-    def update_item_with_decreased_priority(self, item: T, priority: float = None) -> None:
-        """If the result of ``priority_function(item)`` is a lower priority than when item was
+    def update_item_with_decreased_priority(
+        self, item: T, priority: Optional[float] = None
+    ) -> None:
+        """If the result of ``priority_function(item)`` is a lower priority than when ``item`` was
         first inserted into the heap, then this method must be called in order to update the item's
         position in the data structure.
 
@@ -197,7 +204,7 @@ class FibonacciHeap(Generic[T]):
             priority: Optional; The new priority for the item. By default, the
                 ``priority_function`` is used to get the new priority value. Defaults to None.
         """
-        if priority is not None:
+        if priority:
             new_priority = priority
         else:
             new_priority = self._priority_function(item)
@@ -233,6 +240,8 @@ class FibonacciHeap(Generic[T]):
             * Once there are no two trees with roots of the same degree, find the root with
                 minimum key to serve as the minimum node of the modified heap.
         """
+        if not self._roots:
+            return
         max_degree = (int(math.log2(self._length)) + 2) * 2
         roots_indexed_by_degree: List[Optional[_FibonacciNode[T]]] = [
             None for x in range(max_degree)
@@ -249,7 +258,10 @@ class FibonacciHeap(Generic[T]):
                 d = d + 1
             roots_indexed_by_degree[d] = x
 
-        self._min = min(self._roots, key=lambda n: n.priority if n is not None else n, default=None)
+        self._min = next(iter(self._roots))
+        for node in self._roots:
+            if node and node.priority < self._min.priority:
+                self._min = node
 
     def _cut(self, x: _FibonacciNode[T], y: _FibonacciNode[T]) -> None:
         """Cut the link between x and its parent y, making x a root."""

@@ -12,22 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for finding optimum :term:`arborescences <arborescence>` and
-:term:`branchings <branching>` of :term:`digraphs <digraph>`.
+# pylint: disable=line-too-long
+"""
+========================================================
+Spanning: directed graphs (arborescences and branchings)
+========================================================
 
-Functions:
+Algorithms for finding optimum :term:`arborescences <arborescence>` and
+:term:`directed forests <directed forest>` (also called :term:`branchings <branching>`). The
+asymptotic running times use the notation that for some digraph :math:`G(V, E)`, the number of
+vertices is :math:`n = |V|` and the number of edges is :math:`m = |E|`.
+
+**Recommended Tutorial**: :doc:`Spanning trees, arborescences, forests, and branchings <../../tutorials/spanning_tree_arborescence>` - |image-colab-spanning|
+
+.. |image-colab-spanning| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/spanning_tree_arborescence.ipynb
+
+Function summary
+================
 
 * :func:`optimum_directed_forest` - Iterates over a minimum (or maximum) :term:`directed forest` of
-  a weighted, :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds` A directed
-  forest is also called a :term:`branching`.
+  a weighted, :term:`digraph` using Edmonds' algorithm. :cite:`1967:edmonds` A directed
+  forest is also called a :term:`branching`. Running time: :math:`O(mn)`
 * :func:`spanning_arborescence` - Returns a minimum (or maximum) :term:`spanning arborescence` of
-  a weighted, :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds`
-* :func:`edmonds` - Iterates over the maximum (or minimum) :term:`arborescences <arborescence>` of
-  a :term:`digraph` comprising an :term:`optimum spanning branching` using Edmonds' algorithm.
+  a weighted, :term:`digraph` using Edmonds' algorithm. :cite:`1967:edmonds`
+  Running time: :math:`O(mn)`
+* :func:`edmonds` - Iterates over the :term:`optimum spanning arborescence` or the
+  :term:`optimum spanning branching` of a :term:`digraph` using Edmonds' algorithm.
+  :cite:`1967:edmonds` Running time: :math:`O(mn)`
+
+Detailed documentation
+======================
 """
 
 from __future__ import annotations
-from typing import Dict, Final, Iterator, Union
+from typing import Dict, Final, Iterator, TYPE_CHECKING, Union
 
 from vertizee import exception
 
@@ -40,9 +59,11 @@ from vertizee.algorithms.algo_utils.spanning_utils import (
 )
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.data_structures.tree import Tree
-from vertizee.classes.graph import DiGraph, MultiDiGraph
 from vertizee.classes.edge import E
 from vertizee.classes.vertex import V
+
+if TYPE_CHECKING:
+    from vertizee.classes.graph import DiGraph, MultiDiGraph
 
 
 INFINITY: Final = float("inf")
@@ -54,41 +75,47 @@ def edmonds(
     find_spanning_arborescence: bool = False,
     weight: str = "Edge__weight",
 ) -> Iterator[Tree[V, E]]:
-    """Iterates over the maximum (or minimum) :term:`arborescences <arborescence>` of a
-    :term:`digraph` comprising an :term:`optimum spanning branching` using Edmonds' algorithm.
+    """Iterates over the :term:`optimum spanning arborescence` or the
+    :term:`optimum spanning branching` of a :term:`digraph` using Edmonds' algorithm.
     :cite:`1967:edmonds`
 
     Running time: :math:`O(mn)` where :math:`m = |E|` and :math:`n = |V|`
 
     Note:
+        This algorithm is only defined for *directed* graphs. To find the optimum forest of an
+        undirected graph, see :func:`optimum_forest
+        <vertizee.algorithms.spanning.undirected.optimum_forest>`. To find the spanning tree of an
+        undirected graph, see :func:`spanning_tree
+        <vertizee.algorithms.spanning.undirected.spanning_tree>`.
+
+    Note:
         In multigraphs, finding optimum branchings does not require knowing all of the parallel
         edge weights, but only the maximum or minimum weight connection of each multiedge
-        (depending on the value of ``minimum``). Hence, for the purposes of analysis, this
-        algorithm creates a new digraph (or pseudodigraph) by replace parallel edges with either
-        the max or min weight connection. The ``digraph`` object is not modified.
+        (depending on the value of ``minimum``). Hence, this algorithm creates a new digraph (or
+        pseudodigraph) by replacing parallel edges with either the max or min weight connection.
+        The original ``digraph`` object is not modified.
 
     Args:
-        graph: The directed graph to explore.
+        digraph: The directed graph to explore.
         minimum: Optional;  True to return the minimum arborescences, or False to return
             the maximum arborescences. Defaults to True.
         find_spanning_arborescence: If True, then attempts to find an
             :term:`optimum spanning arborescence` as opposed to an
             :term:`optimum spanning branching`.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
-        Iterator[Tree[V, E]]: An iterator over the minimum (or maximum) arborescences. If only one
-        arborescence is yielded prior to ``StopIteration``, then it is a
-        :term:`spanning arborescence`.
+        Iterator[Tree[V, E]]: An iterator over the minimum (or maximum) arborescences.
 
     Raises:
         Unfeasible: If ``find_spanning_arborescence`` is set to True and the graph does not contain
             a spanning arborescence, an Unfeasible exception is raised.
 
     See Also:
-        * :func:`spanning_arborescence`
         * :func:`optimum_directed_forest`
+        * :func:`spanning_arborescence`
+        * :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
     """
     if len(digraph) == 0:
         raise exception.Unfeasible("directed forests are undefined for empty graphs")
@@ -183,9 +210,6 @@ def edmonds(
             )
         vertex.parent_vertex = parent_candidate
 
-        # parent_representative = arborescence_vertex_sets[
-        #     vertex.parent_vertex.get_an_original_vertex()]
-        # child_representative = arborescence_vertex_sets[vertex.get_an_original_vertex()]
         parent_representative = arborescence_vertex_sets[vertex.parent_vertex]
         child_representative = arborescence_vertex_sets[vertex]
 
@@ -264,7 +288,7 @@ def edmonds(
             and len(pseudo_arborescence.edges()) != digraph.vertex_count - 1
         ):
             raise exception.Unfeasible(
-                "digraph does not contain a spanning arborescence; see " "optimum_directed_forest()"
+                "digraph does not contain a spanning arborescence; see optimum_directed_forest()"
             )
 
         arborescence = Tree(digraph._vertices[pseudo_arborescence.root.label])
@@ -286,16 +310,17 @@ def optimum_directed_forest(
 
     Running time: :math:`O(mn)` where :math:`m = |E|` and :math:`n = |V|`
 
-    This algorithm is only defined for *directed* graphs. To find the optimum forest of an
-    undirected graph, see :func:`optimum_forest
-    <vertizee.algorithms.spanning.undirected.optimum_forest>`.
+    Note:
+        This algorithm is only defined for *directed* graphs. To find the optimum forest of an
+        undirected graph, see :func:`optimum_forest
+        <vertizee.algorithms.spanning.undirected.optimum_forest>`.
 
     Args:
-        graph: The directed graph to explore.
+        digraph: The directed graph to explore.
         minimum: Optional;  True to return the minimum directed forest, or False to return
             the maximum directed forest. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
         Iterator[Tree[V, E]]: An iterator over the minimum (or maximum) arborescences. If only one
@@ -303,8 +328,7 @@ def optimum_directed_forest(
         :term:`spanning arborescence`.
 
     See Also:
-        * :func:`edmonds`
-        * :func:`optimum_directed_forest`
+        :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
     """
     return edmonds(digraph, minimum, find_spanning_arborescence=False, weight=weight)
 
@@ -317,16 +341,17 @@ def spanning_arborescence(
 
     Running time: :math:`O(mn)` where :math:`m = |E|` and :math:`n = |V|`
 
-    This algorithm is only defined for *directed* graphs. To find the spanning tree of an undirected
-    graph, see :func:`spanning_tree
-    <vertizee.algorithms.spanning.undirected.spanning_tree>`.
+    Note:
+        This algorithm is only defined for *directed* graphs. To find the spanning tree of an
+        undirected graph, see :func:`spanning_tree
+        <vertizee.algorithms.spanning.undirected.spanning_tree>`.
 
     Args:
-        graph: The directed graph to explore.
+        digraph: The directed graph to explore.
         minimum: Optional;  True to return the minimum arborescences, or False to return
             the maximum arborescences. Defaults to True.
-        weight: Optional; The key to use to retrieve the weight from the ``E.attr`` dictionary. The
-            default value (``Edge__weight``) uses the property ``E.weight``.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Returns:
         Tree: The minimum (or maximum) spanning arborescence discovered using Edmonds' algorithm.
@@ -336,8 +361,7 @@ def spanning_arborescence(
             arborescence.
 
     See Also:
-        * :func:`edmonds`
-        * :func:`optimum_directed_forest`
+        :class:`Tree <vertizee.classes.data_structures.tree.Tree>`
     """
     return next(edmonds(digraph, minimum, find_spanning_arborescence=True, weight=weight))
 

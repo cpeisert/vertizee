@@ -1,3 +1,18 @@
+..
+  Copyright 2020 The Vertizee Authors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
 ===============================
 Glossary
 ===============================
@@ -14,9 +29,9 @@ Glossary
     An *adjacency matrix* is a matrix representing a :term:`graph` :math:`G = (V, E)`, where the
     rows and columns are indexed by the :term:`vertices <vertex>`. A one at row :math:`i` and
     column :math:`j` indicates that vertices :math:`i` and :math:`j` are :term:`adjacent`. Formally,
-    let the vertices be arbitrarily numbered :math:`1, 2,...,|V|`. Then the adjacent matrix
-    :math:`A = (a_{ij})` is a :math:`|V| \\times |V|` matrix such that: :math:`a_{ij} = 1` if
-    math:`(i, j) \\in E` and :math:`0` otherwise. :cite:`2009:clrs`
+    let the vertices be arbitrarily numbered :math:`1, 2,...,|V|`. Then the adjacency matrix
+    :math:`A = (a_{ij})` is a :math:`|V| \times |V|` matrix such that: :math:`a_{ij} = 1` if
+    :math:`(i, j) \in E` and :math:`0` otherwise. :cite:`2009:clrs`
 
   adjacent
     Two :term:`vertices <vertex>` that are connected by an :term:`edge` are called *adjacent*, and
@@ -33,24 +48,25 @@ Glossary
     :term:`edges <edge>` point away from the root. Each edge is directed toward a different vertex,
     that is, there is no vertex with more than a single incoming edge. The path from the root to
     any other vertex is unique. :cite:`1967:edmonds` :cite:`1974:deo`
-    See :func:`optimum_directed_forest <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
+    See :func:`spanning_arborescence <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
 
   binary relation
     A *binary relation* :math:`R` from a set :math:`A` to a set :math:`B` is a subset of
-    :math:`A \\times B`. Given an ordered pair :math:`(x, y)` in :math:`A \\times B`, :math:`x` is
+    :math:`A \times B`. Given an ordered pair :math:`(x, y)` in :math:`A \times B`, :math:`x` is
     related to :math:`y` by :math:`R`, written :math:`x R y`, if and only if, :math:`(x, y)` is in
     :math:`R`. :cite:`2010:epp`
 
   bipartite graph
     A *bipartite graph* is an :term:`undirected graph` :math:`G(V, E)` in which :math:`V` can be
-    partitioned into :math:`V_1` and :math:`V_2` such that :math:`(u, v) \\in E` implies either
-    :math:`u \\in V_1` and `v \\in V_2` or :math:`u \\in V_2` and :math:`v \\in V_1`.
+    partitioned into :math:`V_1` and :math:`V_2` such that :math:`(u, v) \in E` implies either
+    :math:`u \in V_1` and :math:`v \in V_2` or :math:`u \in V_2` and :math:`v \in V_1`.
     :cite:`2009:clrs`
 
   branching
     A *branching* is a :term:`forest` of :term:`arborescences <arborescence>`. A branching is also
     called a :term:`directed forest`. :cite:`1967:edmonds`
-    See :func:`optimum_directed_forest <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
+    See :func:`optimum_directed_forest
+    <vertizee.algorithms.spanning.directed.optimum_directed_forest>`
 
   circuit
     A synonym for :term:`closed path`.
@@ -91,8 +107,8 @@ Glossary
 
   connected component
     A *connected component* within an :term:`undirected graph` :math:`G(V, E)` is a
-    :term:`connected` :term:`subgraph` :math:`G'(V', E')` such that :math:`\\forall v \\in V'` and
-    :math:`\\forall u \\in (V - V')`, there is no :math:`v \\leadsto u` :term:`path`. Another way
+    :term:`connected` :term:`subgraph` :math:`G'(V', E')` such that :math:`\forall v \in V'` and
+    :math:`\forall u \in (V - V')`, there is no :math:`v \leadsto u` :term:`path`. Another way
     to define connected components is by recognizing that "is :term:`reachable` from" is an
     :term:`equivalence relation`. The connected components of an undirected graph are the
     equivalence classes of vertices under the "is reachable from" relation. :cite:`2009:clrs`
@@ -110,7 +126,7 @@ Glossary
     An *edge contraction* is the operation of removing an edge and merging its endpoints into a new
     vertex. Given a graph :math:`G(V, E)` and an edge :math:`e = (u, v)`, the contraction of
     :math:`e` is written :math:`G/e`. Contracting edge :math:`e` results in a graph
-    :math:`G' = (V', E')`, where :math:`V' = (V - {u, v}) \\cup {x}`, where :math:`x` is a new
+    :math:`G' = (V', E')`, where :math:`V' = (V - \{u, v\}) \cup {x}`, where :math:`x` is a new
     vertex. The set of edges :math:`E'` is formed from :math:`E` by deleting edge :math:`(u, v)`
     and, for each vertex :math:`w` adjacent to :math:`u` or :math:`v`, deleting whichever of
     :math:`(u, w)` and :math:`(v, w)` is in :math:`E` and adding the new edge :math:`(x, w)`.
@@ -131,16 +147,16 @@ Glossary
     A *cycle* (also called a *simple circuit*) is a :term:`closed path` that does not have any other
     repeated :term:`vertex` except the first and the last. Thus, a cycle is a path of the form:
     :math:`v_0 e_1 v_1 e_2...v_{n - 1} e_n v_n` where all of the :math:`e_i` are distinct and all
-    the :math:`v_j` are distinct except that :math:`v_0 = v_n'. The minimum cycle is a :term:`loop`.
-    In an :term:`undirected graph`, and the second smallest cycle is two vertices connected by
+    the :math:`v_j` are distinct except that :math:`v_0 = v_n`. The minimum cycle is a :term:`loop`.
+    In an :term:`undirected graph`, the second smallest cycle is two vertices connected by
     :term:`parallel edges <parallel edge>`. In a :term:`digraph`, the second smallest cycle is two
     vertices connected by two edges facing opposite directions. :cite:`2010:epp`
 
   dag
-    A *dag* is a *directed acyclic graph*.
+    A *dag* is a :term:`directed <digraph>` :term:`acyclic` :term:`graph`.
 
   degree
-    The *degree* of a vertex (also called its :term:`valence`) is the count of its incident
+    The *degree* of a vertex (also called its valence) is the count of its incident
     :term:`edges <edge>`, where self-loops are counted twice. :cite:`2010:epp`
     See :attr:`VertexBase.degree <vertizee.classes.vertex.VertexBase.degree>`.
 
@@ -148,15 +164,15 @@ Glossary
     A *dense* :term:`graph` is a graph in which the number of :term:`edges <edge>` is close to the
     maximum possible. For a graph :math:`G(V, E)` with :math:`m = |E|` (the number of edges) and
     :math:`n = |V|` (the number of :term:`vertices <vertex>`), :math:`m = O(n^2)`. If :math:`G`
-    is connected, :math:`m = \\Omega (n)`. Graphs with :math:`m = \\Theta (n^2)` are called *dense*
-    and graphs with :math:`m = \\Theta (n)` are called *sparse*. :cite:`2013:jungnickel`
+    is connected, :math:`m = \Omega (n)`. Graphs with :math:`m = \Theta (n^2)` are called *dense*
+    and graphs with :math:`m = \Theta (n)` are called *sparse*. :cite:`2013:jungnickel`
 
   density
     The *density* of a :term:`graph` with :math:`n` vertices is the ratio of its :term:`edge` count
     to the number of edges in a :term:`complete graph` with :math:`n` vertices. See :term:`dense`.
 
   dictionary
-    A *dictionary* is data structure comprised of key-value pairs, where each key appears at most
+    A *dictionary* is a data structure comprised of key-value pairs, where each key appears at most
     once. Dictionaries provide efficient key lookup and are one of the Python standard library
     built-in types.
 
@@ -181,7 +197,8 @@ Glossary
   directed forest
     A *directed forest* (also called a :term:`branching`) is a :term:`forest` of
     :term:`arborescences <arborescence>`. :cite:`1967:edmonds`
-    See :func:`optimum_directed_forest <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
+    See :func:`optimum_directed_forest
+    <vertizee.algorithms.spanning.directed.optimum_directed_forest>`
 
   directed graph
     A synonym for :term:`digraph`.
@@ -190,12 +207,13 @@ Glossary
     A *directed rooted tree* is a :term:`rooted tree` that has been assigned an orientation, with
     :term:`edges <edge>` that are either directed *away from* the root (see :term:`arborescence`)
     or *towards* the root (see :term:`anti-arborescence`). :cite:`1967:edmonds` :cite:`1974:deo`
-    See :class:`Tree <vertex.classes.data_structures.tree.Tree>`.
+    See :class:`Tree <vertizee.classes.data_structures.tree.Tree>`.
 
   directed spanning forest
     A *directed spanning forest* is a :term:`directed forest` (or :term:`branching`) that contains
     all the :term:`vertices <vertex>` of a :term:`digraph`.
-    See :func:`optimum_directed_forest <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
+    See :func:`optimum_directed_forest
+    <vertizee.algorithms.spanning.directed.optimum_directed_forest>`
 
   disconnected
     A graph :math:`G(V, E)` is *disconnected* if and only if its :term:`vertex` set :math:`V` can be
@@ -215,7 +233,7 @@ Glossary
     connected by an edge are called :term:`adjacent`, and a vertex that is an endpoint of a loop
     is said to be adjacent to itself. :cite:`2010:epp`
     See :class:`DiEdge <vertizee.classes.edge.DiEdge>`,
-    class:`Edge <vertizee.classes.edge.Edge>`, :class:`MultiDiEdge
+    :class:`Edge <vertizee.classes.edge.Edge>`, :class:`MultiDiEdge
     <vertizee.classes.edge.MultiDiEdge>`, and :class:`MultiEdge <vertizee.classes.edge.MultiEdge>`.
 
   edge contraction
@@ -244,13 +262,15 @@ Glossary
   free tree
     A *free tree* :math:`T` is an undirected graph that is :term:`connected` and :term:`acyclic`. A
     free tree of :math:`n` vertices contains :math:`n - 1` edges. :cite:`1983:tarjan`
-    See :class:`Tree <vertex.classes.data_structures.tree.Tree>`.
+    See :class:`Tree <vertizee.classes.data_structures.tree.Tree>`.
 
   graph
-    A *graph* :math:`G = (V, E)` consists of a set of :term:`vertices <vertex>` :math:`V` and a set
-    of :term:`edges <edge>` :math:`E`, where each edge is associated with either one or two
-    vertices called its :term:`endpoints <endpoint>`. An edge with just one endpoint is called a
-    :term:`loop`. :cite:`2010:epp`
+    A graph :math:`G` is defined as :math:`G = (V, E)`, where :math:`V` is a set of points called
+    :term:`vertices <vertex>` (plural of *vertex*) and :math:`E` is a set of :term:`edges <edge>`.
+    An unordered pair of vertices defines an :term:`undirected edge` and an ordered pair of
+    vertices defines a :term:`directed edge`. The vertices associated with an edge are called its
+    :term:`endpoints <endpoint>`. An edge with just one endpoint is called a :term:`loop`.
+    :cite:`2010:epp`
     See :class:`G <vertizee.classes.graph.G>`, :class:`DiGraph <vertizee.classes.graph.DiGraph>`,
     :class:`Graph <vertizee.classes.graph.Graph>`,
     :class:`MultiGraph <vertizee.classes.graph.MultiGraph>`, and
@@ -269,7 +289,7 @@ Glossary
     of minimum key can be carried out in :math:`O(1)` time by accessing the root. Such a heap is
     called a *min heap*. A *max heap* has the opposite heap order where the key of the item in
     :math:`p(x)` is no less than the key of the item in :math:`x`. :cite:`1983:tarjan`
-    See :class:`PriorityQueue <vertex.classes.data_structures.priority_queue.PriorityQueue>`.
+    See :class:`PriorityQueue <vertizee.classes.data_structures.priority_queue.PriorityQueue>`.
 
   in-degree
     The *in-degree* of a :term:`vertex` in a :term:`digraph` is the count of its :term:`incoming
@@ -292,7 +312,7 @@ Glossary
 
   induced subgraph
     An *induced subgraph* is a :term:`subgraph` formed from a subset of the vertices, that includes
-    all edges that connect pairs of vertices in the subset. :cite:`clrs`
+    all edges that connect pairs of vertices in the subset. :cite:`2009:clrs`
 
   in-tree
     A synonym for :term:`anti-arborescence`.
@@ -308,7 +328,16 @@ Glossary
 
   leaf
     A *leaf* vertex (also called an *external node*) is a :term:`tree` vertex with :term:`degree`
-    one. :cite:`clrs` See also :term:`pendant`.
+    one. :cite:`2009:clrs` See also :term:`pendant`.
+
+  lexicographical order
+    Given an alphabet of symbols :math:`A`, we say that :math:`A` is *totally ordered* if for any
+    two symbols :math:`a \in A` and :math:`b \in A`, then if :math:`a \ne b`, either :math:`a < b`
+    or :math:`a > b`. The *words* of :math:`A` are the finite sequences of symbols from :math:`A`.
+    Given two equal-length words from :math:`A` such as :math:`a = a_1 a_2 ... a_k` and
+    :math:`b = b_1 b_2 ... b_k` the order of the words depends on the alphabetic order of the
+    symbols in the first position :math:`i` that the words differ: :math:`a < b` if and only if
+    :math:`a_i < b_i` in the underlying order of the alphabet :math:`A`.
 
   loop
     A *loop* is an :term:`edge` with just one :term:`endpoint`. A loop is also called a *self-loop*,
@@ -350,8 +379,9 @@ Glossary
 
   multiplicity
     The *multiplicity* of a :term:`multiconnection` is the count of its parallel
-    :term:`connections` (also called :term:`parallel edges <parallel edge>`). The *multiplicity* of
-    a :term:`graph` is equal to the largest multiplicity of any of its multiconnections.
+    :term:`connections <connection>` (also called :term:`parallel edges <parallel edge>`). The
+    *multiplicity* of a :term:`graph` is equal to the largest multiplicity of any of its
+    multiconnections.
 
   multivertex
     A *multivertex* (pronounced "multi-vertex") is a :term:`vertex` in a :term:`multigraph` that
@@ -363,7 +393,7 @@ Glossary
   neighbour
     A *neighbor* of a :term:`vertex` :math:`u` is any vertex that is :term:`adjacent` to :math:`u`.
     In a :term:`directed graph` :math:`G(V, E)`, :math:`v` is a neighbor of :math:`u` if
-    :math:`u \\ne v` and either :math:`(u, v) \\in E` or :math:`(v, u) \\in E`. :cite:`2009:clrs`
+    :math:`u \ne v` and either :math:`(u, v) \in E` or :math:`(v, u) \in E`. :cite:`2009:clrs`
 
   neighborhood
   neighbourhood
@@ -374,7 +404,7 @@ Glossary
 
   net flow
     The *net flow* across a :term:`cut` :math:`(S, T)` with a *flow* :math:`f`, is defined as
-    :math:`f(S, T) = \\[ \\sum_{u \\in S} \\sum_{v \\in T} f(u, v) - \\sum_{u \\in S} \\sum_{v \\in T} f(v, u) \\]`
+    :math:`f(S, T) = \sum_{u \in S} \sum_{v \in T} f(u, v) - \sum_{u \in S} \sum_{v \in T} f(v, u)`
     :cite:`2009:clrs`
 
   network
@@ -390,29 +420,30 @@ Glossary
   optimum spanning arborescence
     An *optimum spanning arborescence* is a :term:`spanning arborescence` that has either maximum
     or minimum total :term:`weight`. For a :term:`digraph` :math:`G(V, E)`, let :math:`c_j` be the
-    cost (or :term:`weight`) of :term:`edge` :math:`e_j \\in E`. The maximum spanning arborescence
+    cost (or :term:`weight`) of :term:`edge` :math:`e_j \in E`. The maximum spanning arborescence
     can be found as an :term:`optimum spanning branching` where the :term:`edges <edge>` carry new
-    weights: :math:`c'_j = c_j + h, h \\gt \\sum |c_j|, e_j \\in G`. Constant :math:`h` is larger
-    than the difference in total weights (relative to weights :math:`c_j, e_j \\in G) of any two
+    weights: :math:`c'_j = c_j + h, h \gt \sum |c_j|, e_j \in G`. Constant :math:`h` is larger
+    than the difference in total weights (relative to weights :math:`c_j, e_j \in G`) of any two
     branchings in :math:`G`. A minimum spanning arborescence is the same as a maximum spanning
     arborescence, except that it is relative to weights :math:`c'_j = -c_j`. :cite:`1967:edmonds`
-    See :func:`optimum_directed_forest
-    <vertizee.algorithms.trees.spanning.optimum_directed_forest>`.
+    See :func:`spanning_arborescence <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
 
   optimum spanning branching
     An *optimum spanning branching* is equivalent to an *optimum spanning forest*, except that
     the edges are directed, and instead of being comprised of :term:`trees <tree>`, a
     :term:`branching` is comprised of :term:`arborescences <arborescence>`. :cite:`1967:edmonds`
+    See :func:`optimum_directed_forest
+    <vertizee.algorithms.spanning.directed.optimum_directed_forest>`.
 
   optimum spanning forest
     An *optimum spanning forest* is a :term:`spanning forest` that has either maximum or minimum
     total :term:`weight`. Every graph :math:`G(V, E)` has a *trivial spanning forest*
-    :math:`G'(V', E')` where :math:`V' = V` and :math:`E' = \\emptyset`, since a single vertex
+    :math:`G'(V', E')` where :math:`V' = V` and :math:`E' = \emptyset`, since a single vertex
     defines a *trivial tree*. A trivial spanning forest always has weight zero. Hence, a *minimum
     spanning forest* does not contain any positive edges and a *maximum spanning forest* does not
     contain any negative edges. Note that a spanning forest can never have more than :math:`n - 1`
     edges, where :math:`n = |V|`. :cite:`1967:edmonds`
-    See :func:`optimum_forest <vertizee.algorithms.trees.spanning.optimum_forest>`.
+    See :func:`optimum_forest <vertizee.algorithms.spanning.undirected.optimum_forest>`.
 
   oriented graph
     A synonym for :term:`digraph`.
@@ -438,7 +469,7 @@ Glossary
   path
     A *path* (sometimes called a *trail*) is a :term:`walk` that does not contain a repeated
     :term:`edge`. A path from a vertex :math:`u` to a vertex :math:`v` is written
-    :math:`u \\leadsto v`. See also :term:`simple path`. :cite:`2010:epp`
+    :math:`u \leadsto v`. See also :term:`simple path`. :cite:`2010:epp`
     See :class:`ShortestPath <vertizee.algorithms.algo_utils.path_utils.ShortestPath>`.
 
   pendant
@@ -456,26 +487,27 @@ Glossary
 
   preorder
     A *preorder* traversal refers to traversing a :term:`rooted search tree <rooted tree>` starting
-    with the root vertex and proceeding in the order of vertex discovery.
+    with the root vertex and proceeding in the order of vertex discovery (e.g. during a
+    breadth-first search or depth-first search).
 
   priority queue
     A *priority queue* is a data structure similar to a :term:`queue` or :term:`stack` where each
     element has an associated priority. A minimum priority queue always serves the lowest priority
     element first, whereas a maximum priority queue always serves the highest priority element
     first. Priority queues are most often implemented using a :term:`heap` data structure.
-    See :class:`PriorityQueue <vertex.classes.data_structures.priority_queue.PriorityQueue>`.
+    See :class:`PriorityQueue <vertizee.classes.data_structures.priority_queue.PriorityQueue>`.
 
   queue
     A *queue* is a collection that maintains elements in a sequence. The end of the queue to which
     elements are added is called the :term:`tail` and the end from which elements are removed is
     called the :term:`head`. The operation for adding an element is known as *enqueue* and the
     operation for removing an element is know as *dequeue*. A queue is a first-in-first-out (FIFO)
-    data structure. :cite:`clrs`
+    data structure. :cite:`2009:clrs`
 
   reachable
     If there is a path :math:`p` from a vertex :math:`u` to a vertex :math:`v`, we say that
     :math:`v` is *reachable* from :math:`u` via :math:`p`. In a :term:`directed graph` this is
-    sometimes written :math:`u \\leadsto v`. :cite:`clrs`
+    sometimes written :math:`u \leadsto v`. :cite:`2009:clrs`
 
   reverse
     The *reverse* of a directed graph is the graph formed by reversing the directions of the edges.
@@ -485,19 +517,19 @@ Glossary
     A *rooted tree* is a :term:`free tree` :math:`T` with a distinguished vertex :math:`r`, called
     the *root*. If :math:`u` and :math:`v` are vertices such that :math:`u` is on the path from
     :math:`r` to :math:`v`, :math:`u` is an *ancestor* of :math:`v` and :math:`v` is a *descendent*
-    of :math:`u`. If in addition :math:`u \\ne v` and :math:`u` and :math:`v` are :term:`adjacent`,
+    of :math:`u`. If in addition :math:`u \ne v` and :math:`u` and :math:`v` are :term:`adjacent`,
     then :math:`u` is the *parent* of :math:`v` and :math:`v` is a *child* of :math:`u`. Every
     vertex :math:`u` except the root has a unique parent, generally denoted :math:`p(u)`, and zero
     or more children. The root has no parent and zero or more children. A vertex with no children
     is a :term:`leaf`. :cite:`1983:tarjan`
-    See :class:`Tree <vertex.classes.data_structures.tree.Tree>`.
+    See :class:`Tree <vertizee.classes.data_structures.tree.Tree>`.
 
   self-loop
     A synonym for :term:`loop`.
 
   semi-isolated
     A :term:`vertex` is said to be *semi-isolated* if it has no :term:`incident edges <incident>`
-    except for term:`self-loops <self-loop>`. See also :term:`isolated`.
+    except for :term:`self-loops <loop>`. See also :term:`isolated`.
 
   simple circuit
     A synonym for :term:`cycle`.
@@ -522,30 +554,30 @@ Glossary
   spanning arborescence
     The *spanning arborescence* of a :term:`digraph` :math:`G(V, E)` is an :term:`arborescence`
     that contains :math:`|V| - 1` :term:`edges <edge>`. There are :term:`paths <path>` from the
-    arborescence root :term:`vertex` :math:`r` to every other vertex :math:`v \\in V`.
-    :cite:`1967:edmonds` See :func:`optimum_directed_forest
-    <vertizee.algorithms.trees.spanning.optimum_directed_forest>`
+    arborescence root :term:`vertex` :math:`r` to every other vertex :math:`v \in V`.
+    :cite:`1967:edmonds`
+    See :func:`spanning_arborescence <vertizee.algorithms.spanning.directed.spanning_arborescence>`.
 
   spanning forest
     A :term:`forest` that contains all the :term:`vertices <vertex>` of a :term:`graph`.
     :cite:`1967:edmonds`
-    See :func:`optimum_forest <vertizee.algorithms.trees.spanning.optimum_forest>`
+    See :func:`optimum_forest <vertizee.algorithms.spanning.undirected.optimum_forest>`
 
   spanning subgraph
     A *spanning subgraph* of a :term:`graph` :math:`G`, is a :term:`subgraph` that contains all of
     the vertices of :math:`G`. :cite:`1967:edmonds`
 
   spanning tree
-    A :term:`tree` that contains math:`|V| - 1` :term:`edges <edge>` and includes all the
+    A :term:`tree` that contains :math:`|V| - 1` :term:`edges <edge>` and includes all the
     :term:`vertices <vertex>` of a :term:`graph`. :cite:`2009:clrs`
-    See :func:`spanning_tree <vertizee.algorithms.trees.spanning.spanning_tree>`
+    See :func:`spanning_tree <vertizee.algorithms.spanning.undirected.spanning_tree>`
 
   sparse
     A *sparse* :term:`graph` is a graph in which the number of :term:`edges <edge>` is small
     relative to the maximum possible. For a graph :math:`G(V, E)` with :math:`m = |E|` (the number
     of edges) and :math:`n = |V|` (the number of :term:`vertices <vertex>`), :math:`m = O(n^2)`. If
-    :math:`G` is connected, :math:`m = \\Omega (n)`. Graphs with :math:`m = \\Theta (n)` are called
-    *sparse*, and graphs with :math:`m = \\Theta (n^2)` are called *dense*. :cite:`2013:jungnickel`
+    :math:`G` is connected, :math:`m = \Omega (n)`. Graphs with :math:`m = \Theta (n)` are called
+    *sparse*, and graphs with :math:`m = \Theta (n^2)` are called *dense*. :cite:`2013:jungnickel`
 
   stack
     A *stack* is a data structure that implements two main operations named *push*, which adds an
@@ -559,15 +591,15 @@ Glossary
 
   subgraph
     For a given :term:`graph` :math:`G(V, E)`, :math:`G'(V', E')` is a *subgraph* of :math:`G`
-    if :math:`V' \\subseteq V` and :math:`E' \\subseteq E`. :cite:`2009:clrs`
+    if :math:`V' \subseteq V` and :math:`E' \subseteq E`. :cite:`2009:clrs`
 
   supergraph
     For a given :term:`graph` :math:`G(V, E)`, :math:`G'(V', E')` is a *supergraph* of :math:`G`
-    if :math:`V \\subseteq V'` and :math:`E \\subseteq E'`.
+    if :math:`V \subseteq V'` and :math:`E \subseteq E'`.
 
   tail
     The *tail* is the first :term:`vertex` of a :term:`directed edge` :math:`(u, v)` traveling
-    from :math:`u` (the :term:`tail`) to :math:`v` (the *head*). In a :term:`queue` data structure,
+    from :math:`u` (the tail) to :math:`v` (the :term:`head`). In a :term:`queue` data structure,
     the tail is the end to which elements are added. :cite:`2018:roughgarden`
 
   topological ordering
@@ -590,7 +622,7 @@ Glossary
     A synonym for :term:`reverse`.
 
   tree
-    A synonym for :term:`free tree`. See :class:`Tree <vertex.classes.data_structures.tree.Tree>`.
+    A synonym for :term:`free tree`. See :class:`Tree <vertizee.classes.data_structures.tree.Tree>`.
 
   undirected edge
     An *undirected edge* is an :term:`edge` defined by an unordered pair of
@@ -607,7 +639,7 @@ Glossary
     The *union find* data structure (also known as a *disjoint set data structure*) maintains a
     collection of disjoint sets. The two main operations are 1) merging two sets together (that is,
     creating the *union* of two sets) and 2) *finding* the unique set that contains a given element.
-    :cite:`2009:clrs` See :class:`UnionFind <vertex.classes.data_structures.union_find.UnionFind>`.
+    :cite:`2009:clrs` See :class:`UnionFind <vertizee.classes.data_structures.union_find.UnionFind>`.
 
   valence
     See :term:`degree`.
@@ -646,13 +678,14 @@ Glossary
     :term:`directed edges <directed edge>` with :term:`undirected edges <undirected edge>` produces
     a :term:`connected` :term:`undirected graph`. A :term:`component` in a digraph is *weakly
     connected* if replacing its directed edges with undirected edges produces a
-    :term:`connected component`.
+    :term:`connected component`. All :term:`strongly connected` components are also weakly
+    connected, but *not all* weakly connected components are strongly connected.
 
   weight
     A *weight* is a numerical value assigned to a :term:`vertex` or :term:`edge`. Given a weight
     function :math:`w`, the weight of an :term:`edge-weighted graph <weighted>` :math:`G(V, E)` is
-    :math:`\\sum_{e \\in E} w(e)`; and the weight of a :term:`vertex-weighted graph <weighted>` is
-    :math:`\\sum_{v \\in V} w(v)`.
+    :math:`\sum_{e \in E} w(e)`; and the weight of a :term:`vertex-weighted graph <weighted>` is
+    :math:`\sum_{v \in V} w(v)`.
 
   weighted
     A *weighted* :term:`edge` or :term:`vertex` is an edge or vertex that has been assigned a

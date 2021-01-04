@@ -14,8 +14,12 @@
 
 """Utilities supporting abstract base classes."""
 
+from typing import Type, TypeVar
 
-def check_methods(C, *methods):
+T = TypeVar("T")
+
+
+def check_methods(C: Type[T], *methods: str) -> bool:
     """Function to check if methods are members of a class."""
     mro = C.__mro__
     for method in methods:

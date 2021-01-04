@@ -35,10 +35,9 @@ max-line-length=100
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 disable=invalid-name,
-        bad-continuation,
         pointless-string-statement,
-        protected-name,
         protected-access,
+        protected-name,
         too-few-public-methods,
         too-many-ancestors,
         too-many-arguments,

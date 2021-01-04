@@ -12,22 +12,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Algorithms for connected components."""
+# pylint: disable=line-too-long
+"""
+========================
+Connectivity: components
+========================
+
+Algorithms for :term:`connected components <connected component>`.
+
+**Recommended Tutorial**: :doc:`Connected Components <../../tutorials/connected_components>` - |image-colab-components|
+
+.. |image-colab-components| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/cpeisert/vertizee/blob/master/docs/source/tutorials/connected_components.ipynb
+
+Class summary
+=============
+
+* :class:`Component` - A :term:`component <connected component>` in a :term:`graph`.
+
+Function summary
+================
+
+* :func:`connected_components` - Returns an iterator over the
+  :term:`connected components <connected component>`; if the :term:`graph` is directed, then the
+  components are the :term:`strongly-connected <strongly connected>` components of the
+  :term:`digraph`.
+* :func:`strongly_connected_components` - Returns an iterator over the
+  :term:`strongly-connected <strongly connected>` components of the :term:`digraph`.
+* :func:`weakly_connected_components` - Returns an iterator over the
+  :term:`weakly-connected <weakly connected>` components of the graph.
+
+Detailed documentation
+======================
+"""
 
 from __future__ import annotations
-from typing import Callable, Generic, Iterable, Iterator, Optional, Set, Union
+from typing import Callable, Generic, Iterable, Iterator, Optional, Set, TYPE_CHECKING, Union
 
 from vertizee.algorithms.algo_utils import search_utils
 import vertizee.algorithms.search.depth_first_search as dfs_module
 from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import SetView
-from vertizee.classes.graph import DiGraph, E, G, MultiDiGraph, V
+from vertizee.classes.graph import E, V
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 from vertizee import exception
 
+if TYPE_CHECKING:
+    from vertizee.classes.graph import DiGraph, G, MultiDiGraph
+
 
 class Component(Generic[V, E]):
-    """A component in a graph.
+    """A :term:`component <connected component>` in a :term:`graph`.
 
     Args:
         initial_vertex: The initial vertex comprising the component.
@@ -56,9 +91,9 @@ class Component(Generic[V, E]):
         if data.vertices:
             return data.vertices[0].label in self._vertex_set
 
-        raise ValueError(
-            "expected GraphPrimitive (EdgeType or VertexType); found "
-            f"{type(edge_or_vertex).__name__}"
+        raise TypeError(
+            "expected GraphPrimitive (i.e. EdgeType or VertexType) instance; "
+            f"{type(edge_or_vertex).__name__} found"
         )
 
     def __iter__(self) -> Iterator[V]:
@@ -70,7 +105,7 @@ class Component(Generic[V, E]):
         ``len`` is used."""
         return len(self._vertex_set)
 
-    def edges(self) -> SetView[E]:
+    def edges(self) -> "SetView[E]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
         edges."""
         if self._edge_set:
@@ -84,20 +119,23 @@ class Component(Generic[V, E]):
                         self._edge_set.add(edge)
         return SetView(self._edge_set)
 
-    def vertices(self) -> SetView[V]:
+    def vertices(self) -> "SetView[V]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
         vertices."""
         return SetView(self._vertex_set)
 
 
-def connected_components(graph: G[V, E]) -> Iterator[Component[V, E]]:
-    """Returns an iterator over the connected components; if the graph is directed, then the
-    components are the strongly-connected components of the graph.
+def connected_components(graph: "G[V, E]") -> Iterator["Component[V, E]"]:
+    """Returns an iterator over the :term:`connected components <connected component>`; if the
+    :term:`graph` is directed, then the components are the
+    :term:`strongly-connected <strongly connected>` components of the graph.
 
-    For directed graphs, this function uses Kosaraju's algorithm [R2018]_ to find the strongly
-    connected components (SCC), with the caveat that the SCCs are returned in reverse topological
-    order. This ordering refers to topologically sorting the condensation graph (i.e. the graph
-    created by representing each SCC as a vertex).
+    Note:
+        For :term:`directed graphs <digraph>`, this function uses Kosaraju's algorithm to find the
+        strongly connected components (SCC), with the caveat that the SCCs are returned in reverse
+        :term:`topological order <topological ordering>`. This ordering refers to
+        :term:`topologically sorting <topological sorting>` the :term:`condensation graph
+        <condensation>`.
 
     Args:
         graph (G): The graph to analyze.
@@ -105,10 +143,9 @@ def connected_components(graph: G[V, E]) -> Iterator[Component[V, E]]:
     Yields:
         Component: An iterator of :class:`Component` objects.
 
-    See Also:
-        * :class:`Component`
-        * :func:`strongly_connected_components`
-        * :func:`weakly_connected_components`
+    Note:
+        This implementation of Kosaraju's algorithm is based on the treatment in Roughgarden.
+        :cite:`2018:roughgarden`
     """
     if len(graph) == 0:
         raise exception.Unfeasible("components are undefined for an empty graph")
@@ -117,13 +154,16 @@ def connected_components(graph: G[V, E]) -> Iterator[Component[V, E]]:
     return _plain_depth_first_search(graph.vertices(), adjacency_function=_get_adjacent_to_child)
 
 
-def strongly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterator[Component]:
-    """Returns an iterator over the strongly-connected components of the graph.
+def strongly_connected_components(graph: Union["DiGraph", "MultiDiGraph"]) -> Iterator["Component"]:
+    """Returns an iterator over the :term:`strongly-connected <strongly connected>` components of
+    the :term:`digraph`.
 
-    This function uses Kosaraju's algorithm [R2018]_, with the caveat that the strongly-connected
-    components (SCC) are returned in reverse topological order. This ordering refers to
-    topologically sorting the condensation graph (i.e. the graph created by representing each
-    SCC as a vertex).
+    Note:
+        For :term:`directed graphs <digraph>`, this function uses Kosaraju's algorithm to find the
+        strongly connected components (SCC), with the caveat that the SCCs are returned in reverse
+        :term:`topological order <topological ordering>`. This ordering refers to
+        :term:`topologically sorting <topological sorting>` the :term:`condensation graph
+        <condensation>`.
 
     Args:
         graph (G): The graph to analyze.
@@ -131,10 +171,9 @@ def strongly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterat
     Yields:
         Component: An iterator of :class:`Component` objects.
 
-    See Also:
-        * :class:`Component <vertizee.algorithms.algo_utils.search_utils.Component>`
-        * :func:`connected_components`
-        * :func:`weakly_connected_components`
+    Note:
+        This implementation of Kosaraju's algorithm is based on the treatment in Roughgarden.
+        :cite:`2018:roughgarden`
     """
     if len(graph) == 0:
         raise exception.Unfeasible("components are undefined for an empty graph")
@@ -145,26 +184,15 @@ def strongly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterat
     return _plain_depth_first_search(reversed(postorder), adjacency_function=_get_adjacent_to_child)
 
 
-def weakly_connected_components(graph: Union[DiGraph, MultiDiGraph]) -> Iterator[Component]:
-    """Returns an iterator over the weakly-connected components of the graph.
-
-    A weakly connected component is a component that is connected when the direction of the edges
-    is ignored. All strongly connected components are also weakly connected, but *not all*
-    weakly connected components are strongly connected.
+def weakly_connected_components(graph: Union["DiGraph", "MultiDiGraph"]) -> Iterator["Component"]:
+    """Returns an iterator over the :term:`weakly-connected <weakly connected>` components of the
+    graph.
 
     Args:
         graph (G): The graph to analyze.
 
     Yields:
         Component: An iterator of :class:`Component` objects.
-
-    See Also:
-        * :class:`Component <vertizee.algorithms.algo_utils.search_utils.Component>`
-        * :func:`strongly_connected_components`
-
-    References:
-     .. [R2018] Algorithms Illuminated (Part 2): Graph Algorithms and Data Structures.
-                Tim Roughgarden. Soundlikeyourself Publishing LLC, 2018. (pages 57-63)
     """
     if len(graph) == 0:
         raise exception.Unfeasible("components are undefined for an empty graph")

@@ -99,6 +99,10 @@ First-time contributor
 
      mypy --strict vertizee
 
+ * **Pylance**: if you use VS Code, we recommend installing the Pylance extension, which provides
+   type checking using the `Pyright <https://github.com/microsoft/pyright>`_ static type checker
+   plus additional features such as IntelliCode for AI-assisted completions.
+
 Develop your contribution, including appropriate test cases
 -----------------------------------------------------------
 
@@ -115,7 +119,8 @@ Develop your contribution, including appropriate test cases
 
    * Commit locally as you progress (``git add`` and ``git commit``)
 
-   * Follow our :ref:`Coding Rules <section-coding-rules>` and :ref:`Commit Message Format <section-commit-message_format>`.
+   * Follow our :ref:`Coding Rules <section-coding-rules>` and
+     :ref:`Commit Message Format <section-commit-message_format>`.
 
 Format and Test your contribution
 ---------------------------------
@@ -161,7 +166,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
     git checkout -b my-fix-branch master
 
-5. Create your patch, **including appropriate test cases**.
+5. Create your patch, **including appropriate test cases**. See `Format and Test your contribution`_
 
 6. Follow our :ref:`Coding Rules <section-coding-rules>`.
 
@@ -205,7 +210,8 @@ That's it! Thank you for your contribution!
 After your pull request is merged
 ---------------------------------
 
-After your pull request is merged, you can safely delete your branch and pull the changes from the main (upstream) repository:
+After your pull request is merged, you can safely delete your branch and pull the changes from the
+main (upstream) repository:
 
 * Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows::
 
@@ -232,10 +238,13 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 
 * All features or bug fixes **must be tested** by one or more specs (unit-tests).
 * All public API methods **must be documented**.
-* We follow `Google's Python Style Guide <https://google.github.io/styleguide/pyguide.html>`_, but wrap all code at **100 characters**.
+* We follow `Google's Python Style Guide <https://google.github.io/styleguide/pyguide.html>`_, but
+  wrap all code at **100 characters**.
 
-  * **Visual Studio Code users**: The extension *Python Docstring Generator* can be configured with the
-    template *docstring_template.mustache* in the Vertizee repo. Update the Workspace setting
+  * See Google Python Style Guide section `Comments and Docstrings
+    <https://google.github.io/styleguide/pyguide.html?showone=Comments#38-comments-and-docstrings>`_
+  * **Visual Studio Code users**: The extension *Python Docstring Generator* can be configured with
+    the template *docstring_template.mustache* in the Vertizee repo. Update the Workspace setting
     **Auto Docstring: Custom Template Path** to point to "./docstring_template.mustache"
 
 
@@ -342,7 +351,7 @@ The footer can contain information about breaking changes and is also the place 
    <BLANK LINE>
    <BLANK LINE>
    Fixes #<issue number>
-   PR Close #<issue number>
+   Closes #<issue number>
 
 Breaking Change section should start with the phrase "BREAKING CHANGE: " followed by a summary of the breaking change, a blank line, and a detailed description of the breaking change that also includes migration instructions.
 
@@ -358,22 +367,23 @@ Break changes include the following:
 Revert commits
 --------------------------------
 
-If the commit reverts a previous commit, it should begin with ``revert:``, followed by the header of the reverted commit.
+If the commit reverts a previous commit, it should begin with ``revert:``, followed by the header
+of the reverted commit.
 
 The content of the commit message body should contain:
 
-- information about the SHA of the commit being reverted in the following format: ``This reverts commit <SHA>``,
+- information about the SHA of the commit being reverted in the following format:
+  ``This reverts commit <SHA>``,
 - a clear description of the reason for reverting the commit message.
 
 
 Testing
 -------
 
-Vertizee has an extensive test suite that ensures correct execution on your system.
-The test suite has to pass before a pull request can be merged, and tests should be added to cover any
-modifications to the code base.
-We make use of the `pytest <https://docs.pytest.org/en/latest/>`__ testing framework, with tests located in the various
-``vertizee/package/tests`` folders.
+Vertizee has an extensive test suite that ensures correct execution. The test suite has to pass
+before a pull request can be merged, and tests should be added to cover any modifications to the
+code base. We make use of the `pytest <https://docs.pytest.org/en/latest/>`__ testing framework,
+with tests located in the various ``vertizee/package/tests`` folders.
 
 To run all tests::
 
@@ -396,8 +406,8 @@ For example, run all tests and all doctests using::
 
     $ PYTHONPATH=. pytest --doctest-modules vertizee
 
-Tests for a module should ideally cover all code in that module,
-i.e., statement coverage should be at 100%.
+Tests for a module should ideally cover all code in that module, i.e., statement coverage should
+be at 100%.
 
 To measure the test coverage, run::
 

@@ -1,0 +1,33 @@
+{
+    "include": [
+      "vertizee"
+    ],
+
+    "exclude": [
+      "**/node_modules",
+      "**/__pycache__",
+      "**/.mypy_cache",
+      "vertizee/typestubs"
+    ],
+
+    "ignore": [
+      "vertizee/py.typed"
+    ],
+
+    "stubPath": "src/stubs",
+    "venvPath": "~/anaconda3/envs/",
+
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+
+    "pythonVersion": "3.8",
+    "pythonPlatform": "Linux",
+
+    "executionEnvironments": [
+      {
+        "root": "vertizee"
+      }
+    ]
+  }

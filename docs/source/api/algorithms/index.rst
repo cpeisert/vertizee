@@ -5,11 +5,14 @@ Algorithms
 .. currentmodule:: vertizee
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
 
    algo_utils/index
    components
    cuts
-   search
-   shortest_paths
-   spanning_tree
+   paths_all_pairs
+   paths_single_source
+   search_breadth_first
+   search_depth_first
+   spanning_directed
+   spanning_undirected

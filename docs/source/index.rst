@@ -10,27 +10,28 @@ Features
 * Object-oriented API: vertices and edges are first-class objects
 * Graph theory greatest-hits including:
 
-  * :doc:`Breadth-first-search (BFS) and depth-first search (DFS) <api/algorithms/search>`
+  * :doc:`Breadth-first-search (BFS) <api/algorithms/search_breadth_first>` and
+    :doc:`depth-first search (DFS) <api/algorithms/search_depth_first>`
   * :doc:`Karger and Karger-Stein minimum cuts <api/algorithms/cuts>`
   * All-pairs-shortest paths: the :func:`Floyd-Warshall algorithm
-    <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_floyd_warshall>` and
-    :func:`Johnson's algorithm
-    <vertizee.algorithms.shortest_paths.weighted.all_pairs_shortest_paths_johnson>`
+    <vertizee.algorithms.paths.all_pairs.floyd_warshall>` and
+    :func:`Johnson's algorithm <vertizee.algorithms.paths.all_pairs.johnson>`
   * Shortest-paths: the :func:`Bellman-Ford algorithm
-    <vertizee.algorithms.shortest_paths.weighted.shortest_paths_bellman_ford>` and :func:`Dijkstra's
-    algorithm <vertizee.algorithms.shortest_paths.weighted.shortest_paths_dijkstra>`
+    <vertizee.algorithms.paths.single_source.bellman_ford>` and :func:`Dijkstra's
+    algorithm <vertizee.algorithms.paths.single_source.dijkstra>`
   * Spanning trees: :func:`Kruskal's algorithm
-    <vertizee.algorithms.tree.spanning.spanning_tree_kruskal>` and :func:`Prim's algorithm
-    <vertizee.algorithms.tree.spanning.spanning_tree_prim>`
+    <vertizee.algorithms.spanning.undirected.kruskal_spanning_tree>` and :func:`Prim's algorithm
+    <vertizee.algorithms.spanning.undirected.prim_spanning_tree>`
   * Strongly-connected components: :func:`Kosaraju's algorithm
-    <vertizee.algorithms.components.strongly_connected.kosaraju_strongly_connected_components>`
+    <vertizee.algorithms.connectivity.components.strongly_connected_components>`
 
 * Input/output routines for reading and writing unweighted and weighted graphs
+* Graph theory :doc:`glossary <glossary>`, include special terminology specific to Vertizee
 * Data structures:
 
-  * :doc:`api/classes/data_structures/bk_tree`
   * :doc:`api/classes/data_structures/fibonacci_heap`
   * :doc:`api/classes/data_structures/priority_queue`
+  * :doc:`api/classes/data_structures/tree`
   * :doc:`api/classes/data_structures/union_find`
 
 
@@ -68,25 +69,28 @@ Documentation
 =======================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 5
    :caption: General Information
 
    installation
    glossary
+   bibliography
    license
    release_log
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 5
    :caption: Tutorials
 
    tutorials/getting_started
-   tutorials/components
+   tutorials/connected_components
+   tutorials/cuts
+   tutorials/paths
    tutorials/search
-   tutorials/shortest_paths
+   tutorials/spanning_tree_arborescence
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 5
    :caption: API Reference
 
    api/algorithms/index
@@ -95,7 +99,7 @@ Documentation
    api/io/index
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 5
    :caption: Developer Documentation
 
    developer/contributor_intro

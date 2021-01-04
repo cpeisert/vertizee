@@ -22,7 +22,7 @@ import pytest
 
 from vertizee import NegativeWeightCycle
 from vertizee.algorithms.algo_utils.path_utils import reconstruct_path, ShortestPath
-from vertizee.algorithms.paths.single_source_shortest_paths import (
+from vertizee.algorithms.paths.single_source import (
     bellman_ford,
     dijkstra,
     dijkstra_fibonacci,

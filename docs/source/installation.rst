@@ -79,7 +79,7 @@ top-level source directory::
 Install source with Conda
 -------------------------
 
-.. code-block:: bash
+.. code-block:: console
 
     $ conda activate <YOUR ENVIRONMENT>
     $ conda install pip
@@ -98,7 +98,7 @@ standard version of ``vertizee``.
 Install with Pip
 ----------------
 
-.. code-block:: bash
+.. code-block:: console
 
     $ pip uninstall vertizee
     $ git clone https://github.com/cpeisert/vertizee.git
@@ -108,7 +108,7 @@ Install with Pip
 Install with Conda
 ------------------
 
-.. code-block:: bash
+.. code-block:: console
 
     $ conda remove vertizee
     $ git clone https://github.com/cpeisert/vertizee.git

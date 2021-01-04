@@ -23,8 +23,8 @@ from vertizee import (
     Edge,
     DiGraph,
     DiEdge,
-    ConnectionView,
-    DiConnectionView,
+    EdgeConnectionView,
+    SingleDiEdgeView,
     MultiGraph,
     MultiEdge,
     MultiDiGraph,
@@ -71,11 +71,11 @@ class TestEdgeModuleFunctions:
         ), "edge label should be (t, s)"
 
 
-class Test_EdgeConnectionData:
-    """Tests for _EdgeConnectionData class."""
+class TestEdgeConnectionData:
+    """Tests for EdgeConnectionData class."""
 
     def test_edge_connection_data(self):
-        ecd = edge_module._EdgeConnectionData(weight=99.9)
+        ecd = edge_module.EdgeConnectionData(weight=99.9)
         assert ecd._attr is None, "attributes property should be None"
         assert not ecd.has_attributes_dict(), "attr dictionary should not be initialized"
         ecd.attr["color"] = "blue"
@@ -85,17 +85,17 @@ class Test_EdgeConnectionData:
         assert ecd.attr["color"] == "blue", "edge should have color attribute set to 'blue'"
 
 
-class TestConnectionView:
-    """Tests for edge view classes: ConnectionViewBase, ConnectionView, DiConnectionView."""
+class TestEdgeConnectionView:
+    """Tests for edge view classes: EdgeConnectionView, EdgeConnectionView, SingleDiEdgeView."""
 
     def test_edgeview(self):
         mg = MultiGraph([(1, 1), (1, 1), (3, 2), (2, 3)])
         loops: MultiEdge = mg[1, 1]
-        loop_view: ConnectionView = loops.connections()[0]
+        loop_view: EdgeConnectionView = loops.connections()[0]
         assert loop_view.is_loop(), "edge connection should be a loop"
         assert loop_view.label == "(1, 1)", "label should be '(1, 1)'"
         assert (
-            str(loop_view) == "ConnectionView(1, 1)"
+            str(loop_view) == "EdgeConnectionView(1, 1)"
         ), "__str__() should return '<class name><connection label>'"
         assert loop_view.vertex1 == 1, "vertex1 should have label 1"
         assert loop_view.vertex2 == 1, "vertex2 should have label 1"
@@ -119,14 +119,14 @@ class TestConnectionView:
     def test_diedgeview(self):
         mdg = MultiDiGraph([(3, 2), (3, 2)])
         multiedge: MultiDiEdge = mdg[3, 2]
-        view: DiConnectionView = multiedge.connections()[0]
+        view: SingleDiEdgeView = multiedge.connections()[0]
         assert view.vertex1 == mdg[3], "vertex1 should be vertex 2"
         assert view.vertex2 == mdg[2], "vertex2 should be vertex 3"
         assert view.tail == view.vertex1, "tail should be synonym for vertex1"
         assert view.head == view.vertex2, "head should be synonym for vertex2"
         assert view.label == "(3, 2)", "label should be '(3, 2)'"
         assert (
-            str(view) == "DiConnectionView(3, 2)"
+            str(view) == "SingleDiEdgeView(3, 2)"
         ), "__str__() should return '<class name><connection label>'"
         assert view.weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
         assert not view.is_loop(), "edge connection should not be a loop"

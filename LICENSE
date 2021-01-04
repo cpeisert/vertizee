@@ -195,7 +195,7 @@ APPENDIX: How to apply the Apache License to your work.
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-::
+.. code-block:: none
 
    Copyright [yyyy] [name of copyright owner]
 

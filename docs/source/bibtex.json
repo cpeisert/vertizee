@@ -1,0 +1,57 @@
+{
+    "cited": {
+        "api/algorithms/algo_utils/search_utils": [
+            "2009:clrs"
+        ],
+        "api/algorithms/algo_utils/spanning_utils": [
+            "1967:edmonds"
+        ],
+        "api/algorithms/components": [
+            "2018:roughgarden"
+        ],
+        "api/algorithms/paths_all_pairs": [
+            "2009:clrs"
+        ],
+        "api/algorithms/paths_single_source": [
+            "2009:clrs"
+        ],
+        "api/algorithms/search_breadth_first": [
+            "2009:clrs",
+            "2008:hss",
+            "2015:eppstein",
+            "1985:korf"
+        ],
+        "api/algorithms/search_depth_first": [
+            "2009:clrs",
+            "2008:hss",
+            "2015:eppstein",
+            "1985:korf"
+        ],
+        "api/algorithms/spanning_directed": [
+            "1967:edmonds"
+        ],
+        "api/algorithms/spanning_undirected": [
+            "2009:clrs"
+        ],
+        "api/classes/data_structures/fibonacci_heap": [
+            "2009:clrs",
+            "1987:fredman"
+        ],
+        "api/classes/data_structures/union_find": [
+            "2009:clrs",
+            "2008:hss",
+            "2015:eppstein"
+        ],
+        "glossary": [
+            "2009:clrs",
+            "2010:epp",
+            "1974:deo",
+            "1967:edmonds",
+            "2012:chartrand",
+            "2013:jungnickel",
+            "2018:roughgarden",
+            "1987:fredman",
+            "1983:tarjan"
+        ]
+    }
+}

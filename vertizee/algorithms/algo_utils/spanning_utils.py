@@ -12,29 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utility classes supporting algorithms for findining :term:`spanning trees <spanning tree>`,
+"""
+============================
+Spanning algorithm utilities
+============================
+
+Utility classes supporting algorithms for findining :term:`spanning trees <spanning tree>`,
 :term:`spanning arborescenses <spanning arborescence>`, :term:`spanning forests <spanning forest>`,
 and spanning :term:`branchings <branching>`.
 
-* :func:`get_weight_function` - Returns a function that accepts an edge and returns the
-  corresponding edge weight.
+Class summary
+=============
+
 * :class:`Cycle` - A :term:`cycle` in a graph.
 * :class:`PseudoEdge` - A :term:`directed edge` that has :class:`PseudoVertex` endpoints.
 * :class:`PseudoGraph` - A :term:`digraph` that is comprised of :class:`pseudovertices
   <PseudoVertex>` and :class:`pseudoedges <PseudoEdge>`.
 * :class:`PseudoVertex` - A :term:`vertex` that may either represent a regular vertex or be a new
   vertex formed by contracting a :term:`cycle`.
+
+Function summary
+================
+
+* :func:`get_weight_function` - Returns a function that accepts an edge and returns the
+  corresponding edge weight.
+
+See Also:
+    * :func:`edmonds <vertizee.algorithms.spanning.directed.edmonds>`
+    * :func:`kruskal_optimum_forest
+      <vertizee.algorithms.spanning.undirected.kruskal_optimum_forest>`
+    * :func:`kruskal_spanning_tree <vertizee.algorithms.spanning.undirected.kruskal_spanning_tree>`
+    * :func:`optimum_directed_forest
+      <vertizee.algorithms.spanning.directed.optimum_directed_forest>`
+    * :func:`optimum_forest <vertizee.algorithms.spanning.undirected.optimum_forest>`
+    * :func:`prim_spanning_tree <vertizee.algorithms.spanning.undirected.prim_spanning_tree>`
+    * :func:`prim_fibonacci <vertizee.algorithms.spanning.undirected.prim_fibonacci>`
+    * :func:`spanning_arborescence <vertizee.algorithms.spanning.directed.spanning_arborescence>`
+    * :func:`spanning_tree <vertizee.algorithms.spanning.undirected.spanning_tree>`
+
+Detailed documentation
+======================
 """
 
 from __future__ import annotations
-from typing import Callable, Dict, Final, Generic, List, Optional, Set
+from typing import Callable, cast, Dict, Final, Generic, List, Optional, Set, Union
 
-from vertizee.classes.graph import DiGraph
-from vertizee.classes.edge import _DiEdge, E
-from vertizee.classes.vertex import _DiVertex, V
+from vertizee.classes.graph import DiGraph, G
+from vertizee.classes.edge import _DiEdge, DiEdge, E, Edge, EdgeClass, MultiEdgeBase
+from vertizee.classes.vertex import _DiVertex, V, VertexClass
 
 
-def get_weight_function(weight: str = "Edge__weight", minimum: bool = True) -> Callable[[E], float]:
+def get_weight_function(
+    weight: str = "Edge__weight", minimum: bool = True
+) -> Callable[[EdgeClass], float]:
     """Returns a function that accepts an edge and returns the corresponding edge weight.
 
     If there is no edge weight, then the edge weight is assumed to be one.
@@ -44,8 +74,8 @@ def get_weight_function(weight: str = "Edge__weight", minimum: bool = True) -> C
         is returned.
 
     Args:
-        weight: Optional; The key to use to retrieve the weight from the ``Edge.attr``
-            dictionary. The default value (``Edge_weight``) uses the ``Edge.weight`` property.
+        weight: Optional; The key to use to retrieve the weight from the edge ``attr``
+            dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
         minimum: Optional; For multigraphs, if True, then the minimum weight from the parallel edge
             connections is returned, otherwise the maximum weight. Defaults to True.
 
@@ -54,19 +84,23 @@ def get_weight_function(weight: str = "Edge__weight", minimum: bool = True) -> C
         corresponding edge weight.
     """
 
-    def default_weight_function(edge: E) -> float:
+    def default_weight_function(edge: EdgeClass) -> float:
         if edge._parent_graph.is_multigraph():
             if minimum:
-                return min(c.weight for c in edge.connections())
-            return max(c.weight for c in edge.connections())
+                return min(c.weight for c in cast(MultiEdgeBase, edge).connections())
+            return max(c.weight for c in cast(MultiEdgeBase, edge).connections())
         return edge.weight
 
-    def attr_weight_function(edge: E) -> float:
+    def attr_weight_function(edge: EdgeClass) -> float:
         if edge._parent_graph.is_multigraph():
             if minimum:
-                return min(c.attr.get(weight, 1.0) for c in edge.connections())
-            return max(c.attr.get(weight, 1.0) for c in edge.connections())
-        return edge.attr.get(weight, 1.0)
+                return float(min(
+                    c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase, edge).connections()
+                ))
+            return float(max(
+                c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase, edge).connections()
+            ))
+        return cast(Union[Edge, DiEdge], edge).attr.get(weight, 1.0)
 
     if weight == "Edge__weight":
         return default_weight_function
@@ -77,29 +111,34 @@ class Cycle(Generic[V, E]):
     """A :term:`cycle` in a graph.
 
     Args:
-        initial_vertex: The first vertex added to the pseudovertex.
+        label: The label of the cycle. To generate a new cycle label, use
+            :meth:`PseudoGraph.create_cycle_label`. If there is a pseudovertex that is the
+            contraction of this cycle, then ``label`` should match the label of the pseudovertex.
     """
 
     def __init__(self, label: str) -> None:
-        self.label = label
-        """The label of the cycle matches the label of the vertex that is the contraction of the
-        cycle."""
 
         self.edges: Set[E] = set()
-        self.vertices: Set[V] = set()
+        """The set of edges comprising the cycle."""
 
         self.incoming_edges: Set[E] = set()
         """The set of edges whose tail is outside the cycle and whose head is part of the cycle."""
+
+        self.label = label
+        """The label of the cycle."""
 
         self.outgoing_edges: Set[E] = set()
         """The set of edges whose head is outside the cycle and whose tail is part of the cycle."""
 
         self.outgoing_edge_head_previous_parent: Dict[E, V] = dict()
         """A dictionary mapping the head vertices of outgoing edges to their previous parent
-        vertices prior to this cycle being contracted."""
+        vertices in a search arborescence (prior to this cycle being contracted)."""
 
         self.min_weight_edge: Optional[E] = None
-        """The edge of the cycle that has the min weight."""
+        """The edge of the cycle that has the minimum weight."""
+
+        self.vertices: Set[V] = set()
+        """The set of vertices comprising the cycle."""
 
     def __hash__(self) -> int:
         return hash(self.label)
@@ -115,51 +154,49 @@ class Cycle(Generic[V, E]):
 
 
 class PseudoVertex(_DiVertex):
-    """Pseudovertices are used to support algorithms that :term:`contract` vertices and edges from
-    some graph :math:`G`, where the vertices and edges to be contracted comprise a :term:`cycle` in
-    :math:`G`. The contracted vertices and edges form a new vertex (the pseudovertex)
-    :math:`v_1^{i + 1} in a :term:`subgraph` :math:`H`. Any pseudovertex that is not the
-    contraction of a cycle in :math:`G` is the same as the vertex in :math:`G` with a matching
+    """Pseudovertices are used to support algorithms that :term:`contract <contraction>` vertices
+    and edges from some graph :math:`G`, where the vertices and edges to be contracted comprise a
+    :term:`cycle` in :math:`G`. The contracted vertices and edges form a new vertex (the
+    pseudovertex) :math:`v_1^{i + 1}` in a :term:`subgraph` :math:`H`. Any pseudovertex that is not
+    the contraction of a cycle in :math:`G` is the same as the vertex in :math:`G` with a matching
     label.
 
     If a pseudovertex represents a contracted cycle from :math:`G`, then ``cycle`` will
     refer to the cycle that was contracted to form the new vertex.
 
-    Pseudovertices may also store a reference to an :term:`arborescence` in :math:`G` containing
-    the vertex.
-
     Args:
         label: The label for this vertex. Must be unique to the graph.
         parent_graph: The parent graph to which this vertex belongs.
-        incident_edges: Optional; The edges that are incident on this vertex.
+        incident_edge_labels: Optional; The labels of the edges that are incident on this vertex.
+
+    Note:
+        :class:`PseudoVertex`, :class:`PseudoEdge`, and :class:`PseudoGraph` were designed to
+        provide suitable data structures to implement Edmonds' algorithm as presented in his 1967
+        paper "Optimum Branchings". :cite:`1967:edmonds`
     """
 
     __slots__ = ("cycle", "parent_vertex")
 
     def __init__(
-        self, label: str, parent_graph: PseudoGraph, incident_edge_labels: Set[str] = None
+        self,
+        label: str,
+        parent_graph: "PseudoGraph",
+        incident_edge_labels: Optional[Set[str]] = None
     ) -> None:
-        super().__init__(label, parent_graph)
+        super().__init__(label, cast(G[VertexClass, EdgeClass], parent_graph))
         self._incident_edges._incident_edge_labels = incident_edge_labels
 
-        self.cycle: Optional[Cycle] = None
+        self.cycle: Optional[Cycle[PseudoVertex, PseudoEdge]] = None
+        """The cycle that was contracted to form this vertex. If this vertex is not the contraction
+        of a cycle, then ``cycle`` is None."""
+
         self.parent_vertex: Optional[PseudoVertex] = None
-        """The parent vertex in the arborescence. If this vertex (self) is the root of an
-        arborescence, then parent will be None."""
+        """The parent vertex in the arborescence formed by searching the graph. If this vertex
+        (self) is the root of an arborescence, then parent will be None."""
 
     def contains_cycle(self) -> bool:
         """Returns True if the pseudovertex represents the contraction of a cycle."""
         return self.cycle is not None
-
-    def get_an_original_vertex(self) -> PseudoVertex:
-        """If this vertex does not contain a cycle, then it is an original vertex. If this vertex
-        does contain a cycle, then an arbitrary vertex is chosen from the cycle, and its
-        ``get_an_original_vertex`` method is called.
-        """
-        if not self.contains_cycle():
-            return self
-        cycle_vertex = next(iter(self.cycle.vertices))
-        return cycle_vertex.get_an_original_vertex()
 
 
 class PseudoEdge(_DiEdge):
@@ -170,11 +207,16 @@ class PseudoEdge(_DiEdge):
 
     Args:
         initial_vertex: The first vertex added to the pseudovertex.
+
+    Note:
+        :class:`PseudoVertex`, :class:`PseudoEdge`, and :class:`PseudoGraph` were designed to
+        provide suitable data structures to implement Edmonds' algorithm as presented in his 1967
+        paper "Optimum Branchings". :cite:`1967:edmonds`
     """
 
     __slots__ = ("previous_version",)
 
-    def __init__(self, vertex1: PseudoVertex, vertex2: PseudoVertex, weight: float) -> None:
+    def __init__(self, vertex1: "PseudoVertex", vertex2: "PseudoVertex", weight: float) -> None:
         super().__init__(vertex1, vertex2, weight)
 
         self.previous_version: Optional[PseudoEdge] = None
@@ -186,7 +228,7 @@ class PseudoEdge(_DiEdge):
         previous versions."""
         return self.previous_version is None
 
-    def get_original_edge(self) -> PseudoEdge:
+    def get_original_edge(self) -> "PseudoEdge":
         """If this edge does not contain a previous version, then it is an original edge. If this
         edge does contain a previous version, then the previous version's ``get_original_edge``
         method is called.
@@ -197,13 +239,18 @@ class PseudoEdge(_DiEdge):
 
 
 class PseudoGraph(DiGraph):
-    """PseudoGraph is a graph that supports algorithms that may :term:`contract` vertices and edges,
-    where the vertices and edges to be contracted comprise a :term:`cycle`.
+    """PseudoGraph is a graph that supports algorithms that may :term:`contract <contraction>`
+    vertices and edges, where the vertices and edges to be contracted comprise a :term:`cycle`.
+
+    Note:
+        :class:`PseudoVertex`, :class:`PseudoEdge`, and :class:`PseudoGraph` were designed to
+        provide suitable data structures to implement Edmonds' algorithm as presented in his 1967
+        paper "Optimum Branchings". :cite:`1967:edmonds`
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.cycle_stack: List[Cycle[PseudoVertex, PseudoEdge]] = list()
+        self.cycle_stack: List["Cycle[PseudoVertex, PseudoEdge]"] = list()
         """The cycle stack is a first-in-last-out (FILO) sequence of cycles found in the graph.
         Each cycle on the stack corresponds to a :class:`PseudoVertex` with the same label that
         was formed by contracting the vertices and edges comprising the cycle."""
@@ -211,13 +258,13 @@ class PseudoGraph(DiGraph):
         self.cycle_label_count = 0
         self._CYCLE_LABEL_PREFIX: Final = "__cycle_label_"
 
-    def add_edge_object(self, edge: PseudoEdge):
+    def add_edge_object(self, edge: "PseudoEdge") -> None:
         """Adds a PseudoEdge to the graph."""
         self._edges[edge.label] = edge
         edge.vertex1._add_edge(edge)
         edge.vertex2._add_edge(edge)
 
-    def add_vertex_object(self, vertex: PseudoVertex):
+    def add_vertex_object(self, vertex: "PseudoVertex") -> None:
         """Adds a PseudoVertex to the graph."""
         self._vertices[vertex.label] = vertex
 

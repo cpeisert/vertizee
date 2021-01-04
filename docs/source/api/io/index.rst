@@ -4,6 +4,6 @@ Input/Output
 .. currentmodule:: vertizee
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 5
 
    adj_list

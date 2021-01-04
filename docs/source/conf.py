@@ -1,8 +1,8 @@
-# Sphinx configuration file for the documentation builder.
-#
-# For a full list of Sphinx options see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""Sphinx configuration file for the documentation builder.
 
+For a full list of Sphinx options see the documentation:
+https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -35,6 +35,7 @@ release = f"{version}{_release_candidate}"
 # ones.
 extensions = [
     "nbsphinx",  # Jupyter Notebook Tools for Sphinx
+    "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.doctest",
@@ -45,6 +46,8 @@ extensions = [
     "sphinx.ext.viewcode",
     "recommonmark",  # Markdown support
 ]
+
+bibtex_bibfiles = ["bibtex_vertizee.bib"]
 
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
 autosectionlabel_prefix_document = True

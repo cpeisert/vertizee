@@ -23,7 +23,7 @@ from vertizee.algorithms.algo_utils.search_utils import Direction, Label, Search
 from vertizee.algorithms.search.breadth_first_search import (
     bfs,
     bfs_labeled_edge_traversal,
-    bfs_preorder_traversal,
+    bfs_vertex_traversal,
     INFINITY,
 )
 from vertizee.classes.data_structures.tree import Tree
@@ -268,7 +268,7 @@ class TestBreadthFirstSearch:
         assert depth == INFINITY
 
         # Test depth limit.
-        vertex_generator = bfs_preorder_traversal(g, source=0, depth_limit=2)
+        vertex_generator = bfs_vertex_traversal(g, source=0, depth_limit=2)
         v = next(vertex_generator)
         assert v == 0
         v = next(vertex_generator)
@@ -277,7 +277,7 @@ class TestBreadthFirstSearch:
         with pytest.raises(StopIteration):
             v = next(vertex_generator)
 
-        vertex_generator = bfs_preorder_traversal(g, source=0)
+        vertex_generator = bfs_vertex_traversal(g, source=0)
         v = next(vertex_generator)
         assert v == 0, "first preorder vertex should be 0"
         v = next(vertex_generator)
@@ -290,7 +290,7 @@ class TestBreadthFirstSearch:
     def test_dfs_reverse_traversal(self):
         g = DiGraph([(0, 1), (1, 2)])
 
-        vertices = list(bfs_preorder_traversal(g, source=1))
+        vertices = list(bfs_vertex_traversal(g, source=1))
         assert vertices == [1, 2]
-        vertices = list(bfs_preorder_traversal(g, source=1, reverse_graph=True))
+        vertices = list(bfs_vertex_traversal(g, source=1, reverse_graph=True))
         assert vertices == [1, 0]

@@ -12,19 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A dictionary mapping vertices to values."""
+"""
+=================
+Vertex dictionary
+=================
+
+A dictionary mapping :term:`vertices <vertex>` to values.
+"""
 
 from __future__ import annotations
-from collections import abc
+import collections.abc
 import copy
-from typing import Dict, Iterable, Iterator, MutableMapping, TYPE_CHECKING, TypeVar
+from typing import (
+    Any, cast, Dict, Iterable, Iterator, Mapping, MutableMapping, Optional, Tuple, Type, TypeVar,
+    Union
+)
 
-from vertizee.classes.vertex import Vertex
+from vertizee.classes.vertex import Vertex, VertexType
 
-if TYPE_CHECKING:
-    from vertizee.classes.vertex import VertexType
-
-#:Type variable for values in a generic VertexDict.
 VT = TypeVar("VT")
 
 
@@ -34,15 +39,13 @@ class VertexDict(MutableMapping["VertexType", VT]):
     The dictionary keys are of type :mod:`VertexType <vertizee.classes.vertex>`, which is an
     alias for ``Union[VertexClass, VertexLabel, VertexTupleAttr]``. This means that vertex keys may
     be specified as integers, strings, vertex tuples, or vertex objects. Internally, all vertex keys
-    are coverted to ``str``. The dictionary values may be of any type, and can be explicitly
-    specified using type hints as shown below.
+    are converted to ``str``.
 
-    .. code-block:: python
-
-        vertex_to_path: VertexDict[ShortestPath] = VertexDict()
+    This class has a generic type parameter ``VT``, to support arbitrary dictionary value types.
+    This supports the type-hint usage ``VertexDict[VT]``.
 
     Args:
-        iterable_or_mapping: If a positional argument is given and it is a mapping object, a
+        dictionary: If a positional argument is given and it is a mapping object, a
             dictionary is created with the same key-value pairs as the mapping object. Otherwise,
             the positional argument must be an iterable object. Each item in the iterable must
             itself be an iterable with exactly two objects.
@@ -67,16 +70,16 @@ class VertexDict(MutableMapping["VertexType", VT]):
 
     __slots__ = ("data",)
 
-    def __init__(self, dictionary=None, /, **kwargs) -> None:
+    def __init__(self, dictionary: Optional[Dict[Any, Any]] = None, /, **kwargs: Any) -> None:
         self.data: Dict[str, VT] = {}
         if dictionary is not None:
             self.update(dictionary)
         if kwargs:
             self.update(kwargs)
 
-    # Intentionally omitted `vertex` type-hint due to incompatibility with supertype "Mapping".
-    def __contains__(self, vertex) -> bool:
-        key = _normalize_vertex(vertex)
+    # Intentionally omitted `VertexType` type-hint due to incompatibility with supertype "Mapping".
+    def __contains__(self, vertex: object) -> bool:
+        key = _normalize_vertex(cast(VertexType, vertex))
         return key in self.data
 
     def __delitem__(self, vertex: "VertexType") -> None:
@@ -84,10 +87,10 @@ class VertexDict(MutableMapping["VertexType", VT]):
         del self.data[key]
 
     def __getitem__(self, vertex: "VertexType") -> VT:
-        """Supports index accessor notation to retrieve items.
+        r"""Supports index accessor notation to retrieve items.
 
         Example:
-            x.__getitem__(y) :math:`\\Longleftrightarrow` x[y]
+            x.__getitem__(y) :math:`\Longleftrightarrow` x[y]
         """
         key = _normalize_vertex(vertex)
         if key in self.data:
@@ -108,14 +111,14 @@ class VertexDict(MutableMapping["VertexType", VT]):
     def __repr__(self) -> str:
         return repr(self.data)
 
-    def __copy__(self) -> "VertexDict":
-        inst = self.__class__.__new__(self.__class__)
+    def __copy__(self) -> "VertexDict[VT]":
+        inst = self.__class__.__new__(cast(Type[object], self.__class__))
         inst.__dict__.update(self.__dict__)
         # Create a copy and avoid triggering descriptors
         inst.__dict__["data"] = self.__dict__["data"].copy()
-        return inst
+        return cast(VertexDict[VT], inst)
 
-    def copy(self) -> "VertexDict":
+    def copy(self) -> "VertexDict[VT]":
         """Make a copy of this VertexDict."""
         if self.__class__ is VertexDict:
             return VertexDict(self.data.copy())
@@ -130,7 +133,7 @@ class VertexDict(MutableMapping["VertexType", VT]):
         return c
 
     @classmethod
-    def fromkeys(cls, iterable: Iterable["VertexType"], value: VT) -> "VertexDict":
+    def fromkeys(cls, iterable: Iterable["VertexType"], value: VT) -> "VertexDict[VT]":
         """Create a new dictionary with keys from ``iterable`` and values set to ``value``.
 
         Args:
@@ -148,7 +151,9 @@ class VertexDict(MutableMapping["VertexType", VT]):
             d[key] = value
         return d
 
-    def update(self, other=(), /, **kwds) -> None:
+    def update(  # type: ignore
+        self, other: Union[Mapping[Any, Any], Iterable[Tuple[Any, Any]]], /, **kwds: Any
+    ) -> None:
         """Updates the dictionary from an iterable or mapping object.
 
         Args:
@@ -156,11 +161,8 @@ class VertexDict(MutableMapping["VertexType", VT]):
                 represent vertices.
             **kwds: Keyword arguments.
         """
-        if isinstance(other, abc.Mapping):
+        if isinstance(other, collections.abc.Mapping):
             for vertex in other:
-                self.data[_normalize_vertex(vertex)] = other[vertex]
-        elif hasattr(other, "keys"):
-            for vertex in other.keys():
                 self.data[_normalize_vertex(vertex)] = other[vertex]
         else:
             for vertex, value in other:

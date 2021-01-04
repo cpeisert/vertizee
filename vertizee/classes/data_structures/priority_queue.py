@@ -12,22 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Priority-queue data structure to return the lowest (or highest) priority item as defined by a
-priority function, and whether or not it was initialized as a minimum or maximum priority queue.
+"""
+==============
+Priority Queue
+==============
+
+:term:`Priority-queue <priority queue>` data structure that returns the lowest (or highest)
+priority item, where the priority is defined by a priority function.
 """
 
+import collections.abc
 import heapq
 import itertools
 from typing import Callable, Dict, Final, Generic, List, TypeVar, Union
 
 ITEM_REMOVED: Final = "__priority_queue_item_removed__"
 
-#: TypeVar(T): variable for values in a generic PriorityQueue data structure.
-T = TypeVar("T")
+T = TypeVar("T", bound=collections.abc.Hashable)
 
 
 class _PriorityQueueItem(Generic[T]):
-    """Generic wrapper for items stored in a priority queue."""
+    """Generic wrapper for items stored in a :term:`priority queue`."""
 
     __slots__ = ("priority", "insertion_count", "item")
 
@@ -36,74 +41,55 @@ class _PriorityQueueItem(Generic[T]):
         self.insertion_count = insertion_count
         self.item: T = item
 
-    def __compare(self, other, operator: str) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, _PriorityQueueItem):
             return False
-        compare = False
-        if operator == "==":
-            if self.priority == other.priority and self.insertion_count == other.insertion_count:
-                compare = True
-        elif operator == "<":
-            if self.priority < other.priority:
-                compare = True
-            elif self.priority == other.priority and self.insertion_count < other.insertion_count:
-                compare = True
-        elif operator == "<=":
-            if self.priority <= other.priority:
-                compare = True
-            elif self.priority == other.priority and self.insertion_count <= other.insertion_count:
-                compare = True
-        elif operator == ">":
-            if self.priority > other.priority:
-                compare = True
-            elif self.priority == other.priority and self.insertion_count > other.insertion_count:
-                compare = True
-        elif operator == ">=":
-            if self.priority >= other.priority:
-                compare = True
-            elif self.priority == other.priority and self.insertion_count >= other.insertion_count:
-                compare = True
-        return compare
+        return self.priority == other.priority and self.insertion_count == other.insertion_count
 
-    def __eq__(self, other) -> bool:
-        return self.__compare(other, "==")
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, _PriorityQueueItem):
+            return False
+        if self.priority < other.priority:
+            return True
+        return self.priority == other.priority and self.insertion_count < other.insertion_count
 
-    def __ge__(self, other) -> bool:
-        return self.__compare(other, ">=")
+    def __gt__(self, other: object) -> bool:
+        return (not self < other) and self != other
 
-    def __gt__(self, other) -> bool:
-        return self.__compare(other, ">")
+    def __le__(self, other: object) -> bool:
+        return self < other or self == other
+
+    def __ge__(self, other: object) -> bool:
+        return not self < other
 
     def __hash__(self) -> int:
         return hash((self.priority, self.insertion_count))
 
-    def __le__(self, other) -> bool:
-        return self.__compare(other, "<=")
-
-    def __lt__(self, other) -> bool:
-        return self.__compare(other, "<")
-
-
 class PriorityQueue(Generic[T]):
-    """A priority queue that always serves the item with the lowest (or highest) priority based on
-    the priority returned by a priority function.
+    """A :term:`priority queue` that always serves the item with the lowest (or highest) priority
+    based on the priority returned by a priority function.
 
     ``PriorityQueue`` may be initialized as a minimum (default) or maximum priority queue.
 
-    The priority function accepts an item of generic type ``T`` and returns a numeric priority
-    (int or float). If two items have the same priority, they are served in the order inserted
-    (first in first out).
+    This class has a generic type parameter ``T``, which supports the type-hint usage
+    ``PriorityQueue[T]``.
+
+    ``T = TypeVar("T", bound=collections.abc.Hashable)``
+
+    The priority function accepts an item of type ``T`` and returns a numeric priority (int or
+    float). If two items have the same priority, they are served in the order inserted (first in
+    first out).
 
     This implementation uses the Python standard library ``heapq``, which is a list-based binary
-    heap.
+    :term:`heap`.
 
     Note:
         Items stored in a priority queue must be hashable.
 
     Args:
         priority_function: The item priority function.
-        minimum: Optional; If True, priority queue is a minimum priority queue,
-            otherwise a maximum priority queue. Default value is True.
+        minimum: Optional; If True, priority queue is a minimum priority queue, otherwise a maximum
+            priority queue. Defaults to True.
 
     Example:
         >>> PRIORITY = 'priority_key'
@@ -176,9 +162,9 @@ class PriorityQueue(Generic[T]):
 
     def pop(self) -> T:
         """Removes and returns the lowest (or highest) priority item. Raises ``KeyError`` if
-        empty."""
+        the priority queue is empty."""
         while self._priority_queue:
-            item: _PriorityQueueItem = heapq.heappop(self._priority_queue)
+            item: _PriorityQueueItem[T] = heapq.heappop(self._priority_queue)
             if item.item is not ITEM_REMOVED:
                 self._length = self._length - 1
                 self._heap_item_finder.pop(item.item)
@@ -187,5 +173,5 @@ class PriorityQueue(Generic[T]):
 
     def _mark_item_removed(self, item: T) -> None:
         """Mark an existing item as removed."""
-        queue_item: _PriorityQueueItem = self._heap_item_finder.pop(item)
-        queue_item.item = ITEM_REMOVED
+        queue_item: _PriorityQueueItem[T] = self._heap_item_finder.pop(item)
+        queue_item.item = ITEM_REMOVED  # type: ignore

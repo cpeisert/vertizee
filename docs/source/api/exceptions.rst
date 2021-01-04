@@ -1,4 +1,1 @@
-Exceptions
-------------------
-
 .. automodule:: vertizee.exception
