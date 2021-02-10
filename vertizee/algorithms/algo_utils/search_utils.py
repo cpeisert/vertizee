@@ -51,30 +51,60 @@ Detailed documentation
 """
 
 from __future__ import annotations
-from typing import Final, Generic, List, Iterator, Optional, Set, TYPE_CHECKING
+from typing import cast, Final, Generic, List, Iterator, Optional, Set, TYPE_CHECKING
 
 from vertizee import exception
 from vertizee.classes.collection_views import ListView, SetView
 from vertizee.classes.data_structures.tree import Tree
-from vertizee.classes.edge import E
-from vertizee.classes.vertex import V
+from vertizee.classes.edge import EdgeBase
+from vertizee.classes.vertex import DiVertex, MultiDiVertex, V, V_co
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph import G
+    from vertizee.classes.graph import GraphBase
+
+
+def get_adjacent_to_child(child: V, parent: Optional[V], reverse_graph: bool) -> Iterator[V]:
+    """Helper method to retrieve the vertices adjacent to `child` in the context of a graph search.
+    In :term:`directed graphs <digraph>`, the adjacent vertices are the :term:`head` vertices of
+    the outgoing edges. In :term:`undirected graphs <undirected graph>`, the adjacenet vertices
+    are all of the adjacent vertices, excluding the `parent` vertex, where the `parent` vertex is
+    the vertex from which the `child` vertex was discovered.
+
+    Args:
+        child: The vertex whose adjacent vertices are to be returned.
+        parent: Optional; The `parent` vertex in the search tree from which the `child` vertex was
+            discovered.
+        reverse_graph: If True, then in directed graphs, the adjacent incoming vertices are
+            returned rather than the outgoing adjacent vertices.
+
+    Returns:
+        Iterator[V]: An iterator over the adjacent vertices.
+    """
+    if child._parent_graph.is_directed():
+        assert isinstance(child, (DiVertex, MultiDiVertex))
+        if reverse_graph:
+            return cast(Iterator[V], iter(child.adj_vertices_incoming()))
+        return cast(Iterator[V], iter(child.adj_vertices_outgoing()))
+
+    # undirected graph
+    adj_vertices = set(child.adj_vertices())
+    if parent:
+        adj_vertices = adj_vertices - {parent}
+    return cast(Iterator[V], iter(adj_vertices))
 
 
 class Direction:
     """Container class for constants used to indicate the direction of traversal at each step of a
     graph search."""
 
-    ALREADY_DISCOVERED: Final = "already_discovered"
+    ALREADY_DISCOVERED: Final[str] = "already_discovered"
     """The search traversal found a non-tree edge connecting to a vertex that was already
     discovered."""
 
-    PREORDER: Final = "preorder"
+    PREORDER: Final[str] = "preorder"
     """The search traversal discovered a new vertex."""
 
-    POSTORDER: Final = "postorder"
+    POSTORDER: Final[str] = "postorder"
     """The search traversal finished visiting a vertex."""
 
 
@@ -82,40 +112,31 @@ class Label:
     """Container class for constants used to label the search tree root vertices and edges found
     during a graph search."""
 
-    BACK_EDGE: Final = "back_edge"
+    BACK_EDGE: Final[str] = "back_edge"
     """Label for a back edge :math:`(u, v)` that connects vertex :math:`u` to ancestor :math:`v`
     in a search tree."""
 
-    CROSS_EDGE: Final = "cross_edge"
+    CROSS_EDGE: Final[str] = "cross_edge"
     """Label for a cross edge :math:`(u, v)`, which may connect vertices in the same search tree (as
     long as one vertex is not an ancestor of the other), or connect vertices in different search
     trees (within a forest of search trees)."""
 
-    FORWARD_EDGE: Final = "forward_edge"
+    FORWARD_EDGE: Final[str] = "forward_edge"
     """Label for a forward edge :math:`(u, v)` connecting a vertex :math:`u` to a descendant
     :math:`v` in a search tree."""
 
-    TREE_EDGE: Final = "tree_edge"
+    TREE_EDGE: Final[str] = "tree_edge"
     """Label for a tree edge :math:`(u, v)`, where :math:`v` was first discovered by exploring edge
     :math:`(u, v)`."""
 
-    TREE_ROOT: Final = "tree_root"
+    TREE_ROOT: Final[str] = "tree_root"
     """Label for vertex :math:`u`, where :math:`u` is the root vertex of a search tree. Root
     vertices are often returned as a redundant pair such as :math:`(u, u)` to provide a consistent
     format relative to back, cross, forward, and tree edges."""
 
 
-class SearchResults(Generic[V, E]):
+class SearchResults(Generic[V_co]):
     """Stores the results of a :term:`graph` search.
-
-    This class has generic type parameters ``V`` and ``E``, which enable the type-hint usage
-    ``SearchResults[V, E]``.
-
-    * ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
-      <vertizee.classes.vertex.VertexBase>`.
-    * ``E = TypeVar("E", bound=Union["Connection", "MultiConnection"])`` See
-      :class:`Connection <vertizee.classes.edge.Connection>` and
-      :class:`MultiConnection <vertizee.classes.edge.MultiConnection>`.
 
     A graph search produces the following outputs:
 
@@ -155,43 +176,43 @@ class SearchResults(Generic[V, E]):
             search. False indicates that the search results are based on a breadth-first search.
     """
 
-    def __init__(self, graph: "G[V, E]", depth_first_search: bool) -> None:
+    def __init__(self, graph: "GraphBase[V_co]", depth_first_search: bool) -> None:
         self._depth_first_search = depth_first_search
         self._graph = graph
-        self._edges_in_discovery_order: List[E] = []
-        self._search_tree_forest: Set[Tree[V, E]] = set()
+        self._edges_in_discovery_order: List[EdgeBase[V_co]] = []
+        self._search_tree_forest: Set[Tree[V_co]] = set()
 
         # Edge classification.
-        self._back_edges: Set[E] = set()
-        self._cross_edges: Set[E] = set()
-        self._forward_edges: Set[E] = set()
-        self._tree_edges: Set[E] = set()
-        self._vertices_postorder: List[V] = []
-        self._vertices_preorder: List[V] = []
+        self._back_edges: Set[EdgeBase[V_co]] = set()
+        self._cross_edges: Set[EdgeBase[V_co]] = set()
+        self._forward_edges: Set[EdgeBase[V_co]] = set()
+        self._tree_edges: Set[EdgeBase[V_co]] = set()
+        self._vertices_postorder: List[V_co] = []
+        self._vertices_preorder: List[V_co] = []
 
         self._is_acyclic = True
 
-    def __iter__(self) -> Iterator[V]:
+    def __iter__(self) -> Iterator["V_co"]:
         """Returns an iterator over the preorder vertices found during the graph search. The
         preorder is the order in which the vertices were discovered."""
         yield from self._vertices_preorder
 
-    def back_edges(self) -> "SetView[E]":
+    def back_edges(self) -> "SetView[EdgeBase[V_co]]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the back edges
         found during the graph search."""
         return SetView(self._back_edges)
 
-    def cross_edges(self) -> "SetView[E]":
+    def cross_edges(self) -> "SetView[EdgeBase[V_co]]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the cross edges
         found during the graph search."""
         return SetView(self._cross_edges)
 
-    def edges_in_discovery_order(self) -> "ListView[E]":
+    def edges_in_discovery_order(self) -> "ListView[EdgeBase[V_co]]":
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the edges
         found during the graph search in order of discovery."""
         return ListView(self._edges_in_discovery_order)
 
-    def forward_edges(self) -> "SetView[E]":
+    def forward_edges(self) -> "SetView[EdgeBase[V_co]]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the forward
         edges found during a graph search."""
         return SetView(self._forward_edges)
@@ -219,7 +240,7 @@ class SearchResults(Generic[V, E]):
             )
         return self._is_acyclic
 
-    def graph_search_trees(self) -> "SetView[Tree[V, E]]":
+    def graph_search_trees(self) -> "SetView[Tree[V_co]]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the the
         graph search trees found during the graph search."""
         return SetView(self._search_tree_forest)
@@ -241,22 +262,22 @@ class SearchResults(Generic[V, E]):
         results are from a breadth-first search."""
         return self._depth_first_search
 
-    def tree_edges(self) -> "SetView[E]":
+    def tree_edges(self) -> "SetView[EdgeBase[V_co]]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the tree
         edges found during the graph search."""
         return SetView(self._tree_edges)
 
-    def vertices_postorder(self) -> "ListView[V]":
+    def vertices_postorder(self) -> "ListView[V_co]":
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
         in the search tree in postorder."""
         return ListView(self._vertices_postorder)
 
-    def vertices_preorder(self) -> "ListView[V]":
+    def vertices_preorder(self) -> "ListView[V_co]":
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
         in the search tree in preorder (i.e., in order of discovery)."""
         return ListView(self._vertices_preorder)
 
-    def vertices_topological_order(self) -> "ListView[V]":
+    def vertices_topological_order(self) -> "ListView[V_co]":
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the vertices
         in a :term:`topological ordering`.
 
@@ -281,7 +302,7 @@ class SearchResults(Generic[V, E]):
         return ListView(list(reversed(self._vertices_postorder)))
 
 
-class VertexSearchState:
+class VertexSearchState(Generic[V_co]):
     """A class to save the state of a graph search indicating for some *parent* vertex in a
     search :term:`tree`, which :term:`adjacent` vertices (*children*) have not yet been visited.
 
@@ -298,7 +319,7 @@ class VertexSearchState:
         depth: The depth of ``parent`` relative to the root of the search tree.
     """
 
-    def __init__(self, parent: V, children: Iterator[V], depth: Optional[int] = None) -> None:
+    def __init__(self, parent: V_co, children: Iterator[V_co], depth: Optional[int] = None) -> None:
         self.parent = parent
         self.children = children
         self.depth = depth

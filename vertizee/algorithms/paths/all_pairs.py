@@ -47,23 +47,23 @@ Detailed documentation
 
 from __future__ import annotations
 import math
-from typing import Callable, Final, TYPE_CHECKING
+from typing import Callable, cast, Final, TYPE_CHECKING
 
 from vertizee import exception
 from vertizee.algorithms.algo_utils.path_utils import ShortestPath
 from vertizee.algorithms.paths import single_source
 from vertizee.classes.data_structures.vertex_dict import VertexDict
-from vertizee.classes.edge import E
-from vertizee.classes.graph import G
-from vertizee.classes.vertex import VertexType
+from vertizee.classes.edge import Attributes, EdgeBase, MultiEdgeBase
+from vertizee.classes.vertex import VertexBase, VertexType
 
 if TYPE_CHECKING:
-    from vertizee.classes.vertex import V
+    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.vertex import V_co
 
-INFINITY: Final = float("inf")
+INFINITY: Final[float] = float("inf")
 
 
-def get_weight_function(weight: str = "Edge__weight") -> Callable[[E], float]:
+def get_weight_function(weight: str = "Edge__weight") -> Callable[[EdgeBase[VertexBase]], float]:
     """Returns a function that accepts an edge and returns the corresponding edge weight.
 
     If there is no edge weight, then the edge weight is assumed to be one.
@@ -80,15 +80,18 @@ def get_weight_function(weight: str = "Edge__weight") -> Callable[[E], float]:
         corresponding edge weight.
     """
 
-    def default_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            return min(c.weight for c in edge.connections())
+    def default_weight_function(edge: EdgeBase[VertexBase]) -> float:
+        if edge.vertex1._parent_graph.is_multigraph():
+            return min(c.weight for c in cast(MultiEdgeBase[VertexBase], edge).connections())
         return edge.weight
 
-    def attr_weight_function(edge: E) -> float:
-        if edge._parent_graph.is_multigraph():
-            return min(c.attr.get(weight, 1.0) for c in edge.connections())
-        return edge.attr.get(weight, 1.0)
+    def attr_weight_function(edge: EdgeBase[VertexBase]) -> float:
+        if edge.vertex1._parent_graph.is_multigraph():
+            min_weight = min(
+                c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase[VertexBase], edge).connections()
+            )
+            return cast(float, min_weight)
+        return cast(Attributes, edge).attr.get(weight, 1.0)
 
     if weight == "Edge__weight":
         return default_weight_function
@@ -100,8 +103,8 @@ def get_weight_function(weight: str = "Edge__weight") -> Callable[[E], float]:
 # faster than Johnson's algorithm.
 #
 def all_pairs_shortest_paths(
-    graph: "G[V, E]", save_paths: bool = False, weight: str = "Edge__weight"
-) -> "VertexDict[VertexDict[ShortestPath[V]]]":
+    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph.
 
     This function chooses the fastest available all-pairs-shortest-paths algorithm depending on the
@@ -174,8 +177,8 @@ def all_pairs_shortest_paths(
 
 
 def floyd_warshall(
-    graph: "G[V, E]", save_paths: bool = False, weight: str = "Edge__weight"
-) -> "VertexDict[VertexDict[ShortestPath[V]]]":
+    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph using the Floyd-Warshall
     algorithm.
 
@@ -249,7 +252,7 @@ def floyd_warshall(
         [s, y, t, x]
     """
     weight_function = get_weight_function(weight)
-    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()
+    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath[V_co]]] = VertexDict()
 
     # Initialize the default path lengths for all vertex combinations.
     for i in graph:
@@ -261,7 +264,7 @@ def floyd_warshall(
                 )
                 continue
 
-            edge = graph._get_edge(i, j)
+            edge = graph.get_edge(i, j)
             if edge is None:
                 source_and_destination_to_path[i][j] = ShortestPath(
                     i, j, initial_length=INFINITY, save_path=save_paths
@@ -275,9 +278,9 @@ def floyd_warshall(
     for k in graph:
         for i in graph:
             for j in graph:
-                path_i_j: ShortestPath = source_and_destination_to_path[i][j]
-                path_i_k: ShortestPath = source_and_destination_to_path[i][k]
-                path_k_j: ShortestPath = source_and_destination_to_path[k][j]
+                path_i_j: ShortestPath[V_co] = source_and_destination_to_path[i][j]
+                path_i_k: ShortestPath[V_co] = source_and_destination_to_path[i][k]
+                path_k_j: ShortestPath[V_co] = source_and_destination_to_path[k][j]
                 path_i_j.relax_subpaths(path_i_k, path_k_j)
 
     for v in graph:
@@ -288,8 +291,8 @@ def floyd_warshall(
 
 
 def johnson(
-    graph: "G[V, E]", save_paths: bool = False, weight: str = "Edge__weight"
-) -> "VertexDict[VertexDict[ShortestPath]]":
+    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm.
 
@@ -335,25 +338,25 @@ def johnson(
     """
     weight_function = get_weight_function(weight)
 
-    g_prime: G = graph.deepcopy()
+    g_prime = graph.deepcopy()
     G_PRIME_SOURCE = "__g_prime_src"
     for v in graph.vertices():
         g_prime.add_edge(G_PRIME_SOURCE, v, weight=0)
 
-    bellman_paths: VertexDict[ShortestPath] = single_source.bellman_ford(
+    bellman_paths: VertexDict[ShortestPath[V_co]] = single_source.bellman_ford(
         g_prime, G_PRIME_SOURCE
     )
 
     # pylint: disable=unused-argument
     def new_weight(v1: VertexType, v2: VertexType, reverse_graph: bool = False) -> float:
-        edge: E = graph[v1, v2]
+        edge = graph.get_edge(v1, v2)
         return weight_function(edge) + bellman_paths[v1].length - bellman_paths[v2].length
 
-    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()
+    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath[V_co]]] = VertexDict()
 
     for i in graph:
         source_and_destination_to_path[i] = VertexDict()
-        dijkstra_paths: VertexDict[ShortestPath] = single_source.dijkstra(
+        dijkstra_paths: VertexDict[ShortestPath[V_co]] = single_source.dijkstra(
             graph, source=i, weight=new_weight, save_paths=save_paths
         )
         for j in graph:
@@ -366,8 +369,8 @@ def johnson(
 
 
 def johnson_fibonacci(
-    graph: "G[V, E]", save_paths: bool = False, weight: str = "Edge__weight"
-) -> "VertexDict[VertexDict[ShortestPath]]":
+    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm implemented with a Fibonacci heap version of Dijkstra's algorithm.
 
@@ -404,25 +407,25 @@ def johnson_fibonacci(
     """
     weight_function = get_weight_function(weight)
 
-    g_prime: G = graph.deepcopy()
+    g_prime = graph.deepcopy()
     G_PRIME_SOURCE = "__g_prime_src"
     for v in graph.vertices():
         g_prime.add_edge(G_PRIME_SOURCE, v, weight=0)
 
-    bellman_paths: VertexDict[ShortestPath] = single_source.bellman_ford(
+    bellman_paths: VertexDict[ShortestPath[V_co]] = single_source.bellman_ford(
         g_prime, G_PRIME_SOURCE
     )
 
     # pylint: disable=unused-argument
     def new_weight(v1: VertexType, v2: VertexType, reverse_graph: bool = False) -> float:
-        edge: E = graph[v1, v2]
+        edge = graph.get_edge(v1, v2)
         return weight_function(edge) + bellman_paths[v1].length - bellman_paths[v2].length
 
-    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath]] = VertexDict()
+    source_and_destination_to_path: VertexDict[VertexDict[ShortestPath[V_co]]] = VertexDict()
 
     for i in graph:
         source_and_destination_to_path[i] = VertexDict()
-        dijkstra_paths: VertexDict[ShortestPath] = single_source.dijkstra_fibonacci(
+        dijkstra_paths: VertexDict[ShortestPath[V_co]] = single_source.dijkstra_fibonacci(
             graph, source=i, weight=new_weight, save_paths=save_paths
         )
         for j in graph:

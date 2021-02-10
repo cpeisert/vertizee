@@ -30,7 +30,7 @@ from vertizee.algorithms.paths.all_pairs import (
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.graph import DiGraph, MultiGraph
 
-INFINITY: Final = float("inf")
+INFINITY: Final[float] = float("inf")
 
 
 class TestFloydWarshall:

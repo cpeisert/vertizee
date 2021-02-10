@@ -17,6 +17,7 @@
 # pylint: disable=missing-function-docstring
 
 import timeit
+from typing import cast, Optional
 
 import pytest
 
@@ -30,7 +31,7 @@ from vertizee.algorithms.paths.single_source import (
     breadth_first_search_shortest_paths,
 )
 from vertizee.classes.data_structures.vertex_dict import VertexDict
-from vertizee.classes.edge import E
+from vertizee.classes.edge import Attributes, MultiEdgeBase
 from vertizee.classes.graph import DiGraph, MultiDiGraph, MultiGraph
 from vertizee.classes.vertex import V
 
@@ -314,16 +315,16 @@ class TestDijkstra:
                 ("z", "x"),
             ]
         )
-        g["s", "t"][WEIGHT] = 10
-        g["s", "y"][WEIGHT] = 5
-        g["t", "y"][WEIGHT] = 2
-        g["t", "x"][WEIGHT] = 1
-        g["x", "z"][WEIGHT] = 4
-        g["y", "t"][WEIGHT] = 3
-        g["y", "x"][WEIGHT] = 9
-        g["y", "z"][WEIGHT] = 2
-        g["z", "s"][WEIGHT] = 7
-        g["z", "x"][WEIGHT] = 6
+        g.get_edge("s", "t")[WEIGHT] = 10
+        g.get_edge("s", "y")[WEIGHT] = 5
+        g.get_edge("t", "y")[WEIGHT] = 2
+        g.get_edge("t", "x")[WEIGHT] = 1
+        g.get_edge("x", "z")[WEIGHT] = 4
+        g.get_edge("y", "t")[WEIGHT] = 3
+        g.get_edge("y", "x")[WEIGHT] = 9
+        g.get_edge("y", "z")[WEIGHT] = 2
+        g.get_edge("z", "s")[WEIGHT] = 7
+        g.get_edge("z", "x")[WEIGHT] = 6
 
         path_dict: VertexDict[ShortestPath] = dijkstra(g, "s", weight=WEIGHT)
 
@@ -352,31 +353,40 @@ class TestDijkstra:
             ]
         )
 
-        g["s", "t"][COLOR] = "RED"
-        g["s", "y"][COLOR] = "BLUE"
-        g["t", "y"][COLOR] = "RED"
-        g["t", "x"][COLOR] = "RED"
-        g["x", "z"][COLOR] = "RED"
-        g["y", "t"][COLOR] = "BLUE"
-        g["y", "x"][COLOR] = "RED"
-        g["y", "z"][COLOR] = "BLUE"
-        g["z", "s"][COLOR] = "BLUE"
-        g["z", "x"][COLOR] = "BLUE"
+        g.get_edge("s", "t")[COLOR] = "RED"
+        g.get_edge("s", "y")[COLOR] = "BLUE"
+        g.get_edge("t", "y")[COLOR] = "RED"
+        g.get_edge("t", "x")[COLOR] = "RED"
+        g.get_edge("x", "z")[COLOR] = "RED"
+        g.get_edge("y", "t")[COLOR] = "BLUE"
+        g.get_edge("y", "x")[COLOR] = "RED"
+        g.get_edge("y", "z")[COLOR] = "BLUE"
+        g.get_edge("z", "s")[COLOR] = "BLUE"
+        g.get_edge("z", "x")[COLOR] = "BLUE"
 
         # Exclude blue edges.
-        def get_weight(v1: V, v2: V, reverse_graph: bool) -> float:
+        def get_weight(v1: V, v2: V, reverse_graph: bool) -> Optional[float]:
             graph = v1._parent_graph
             if reverse_graph:
-                edge: E = graph[v2, v1]
+                edge = graph.get_edge(v2, v1)
                 edge_str = f"({v2.label}, {v1.label})"
             else:
-                edge: E = graph[v1, v2]
+                edge = graph.get_edge(v1, v2)
                 edge_str = f"({v1.label}, {v2.label})"
             if edge is None:
                 raise ValueError(f"graph does not have edge {edge_str}")
-            if edge.attr.get(COLOR, "no color attribute") == "BLUE":
+
+            if graph.is_multigraph():
+                assert isinstance(edge, MultiEdgeBase)
+                has_color = any(c.attr.get(COLOR, "no color") == "BLUE" for c in edge.connections())
+                if has_color:
+                    return None
+                return min(c.weight for c in edge.connections())
+
+            if cast(Attributes, edge).attr.get(COLOR, "no color attribute") == "BLUE":
                 return None
             return edge.weight
+
 
         path_dict: VertexDict[ShortestPath] = dijkstra(g, "s", weight=get_weight)
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -469,7 +479,7 @@ class TestShortestPaths:
 
     # shortest_paths(g, source=0)
     bfs_time = timeit.timeit(
-        "shortest_paths(g, source=0)", globals={"shortest_paths": shortest_paths, "g": g}, number=10
+        "shortest_paths(g, source=0)", globals={"shortest_paths": shortest_paths, "g": g}, number=5
     )
 
     for index, edge in enumerate(g.edges()):
@@ -478,6 +488,6 @@ class TestShortestPaths:
     g._is_weighted_graph = True
 
     bellman_ford_time = timeit.timeit(
-        "shortest_paths(g, source=0)", globals={"shortest_paths": shortest_paths, "g": g}, number=10
+        "shortest_paths(g, source=0)", globals={"shortest_paths": shortest_paths, "g": g}, number=5
     )
     assert bfs_time < bellman_ford_time

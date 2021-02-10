@@ -36,8 +36,8 @@ class TestTree:
         assert "1" in tree, "vertex specified as str should be in tree"
         assert 3 not in tree, "vertex 3 should not be in tree"
 
-        tree.add_edge(g[1, 2])
-        assert g[1, 2] in tree
+        tree.add_edge(g.get_edge(1, 2))
+        assert g.get_edge(1, 2) in tree
         assert (1, 2) in tree, "edge specified as tuple should be in tree"
         assert ("1", "2") in tree
         assert (1, 3) not in tree
@@ -46,8 +46,6 @@ class TestTree:
             _ = 4.5 not in g
         with pytest.raises(TypeError):
             _ = (1, 2, 3, 4) not in g
-        with pytest.raises(TypeError):
-            _ = [1, 2] not in g
 
     def test__getitem__(self):
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
@@ -63,7 +61,7 @@ class TestTree:
         with pytest.raises(KeyError):
             _ = tree[3]
 
-        tree.add_edge(g[1, 2])
+        tree.add_edge(g.get_edge(1, 2))
         assert isinstance(tree[1, 2], Edge), "tree should have edge (1, 2)"
         assert isinstance(tree["1", "2"], Edge), "tree should have edge (1, 2)"
         assert isinstance(tree[(1, 2, {})], Edge), "tree should have edge (1, 2)"
@@ -75,16 +73,16 @@ class TestTree:
         edge = tree[1, 2]
         assert isinstance(tree[edge], Edge), "tree should have edge (1, 2)"
         with pytest.raises(TypeError):
-            _ = g[1.0, 2.0]
+            _ = g.get_edge(1.0, 2.0)
         with pytest.raises(KeyError):
-            _ = g[1, 3]
+            _ = g.get_edge(1, 3)
 
     def test__iter__(self):
         g = Graph([(1, 2), (2, 3), (3, 4)])
         tree = Tree(g[1])
-        tree.add_edge(g[1, 2])
-        tree.add_edge(g[2, 3])
-        tree.add_edge(g[3, 4])
+        tree.add_edge(g.get_edge(1, 2))
+        tree.add_edge(g.get_edge(2, 3))
+        tree.add_edge(g.get_edge(3, 4))
         count = sum(1 for _ in tree)
         assert count == 4, "tree should iterate over its 4 vertices"
         assert set([tree[1], tree[2], tree[3], tree[4]]) == set(
@@ -94,34 +92,34 @@ class TestTree:
     def test__len__(self):
         g = Graph([(1, 2), (2, 3), (3, 4)])
         tree = Tree(g[1])
-        tree.add_edge(g[1, 2])
-        tree.add_edge(g[2, 3])
-        tree.add_edge(g[3, 4])
+        tree.add_edge(g.get_edge(1, 2))
+        tree.add_edge(g.get_edge(2, 3))
+        tree.add_edge(g.get_edge(3, 4))
         assert len(tree) == 4, "tree should contain 4 vertices"
 
     def test_add_edge(self):
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
         tree = Tree(g[1])
-        tree.add_edge(g[1, 2])
+        tree.add_edge(g.get_edge(1, 2))
         assert (1, 2) in tree
 
-        tree.add_edge(g[2, 3])
+        tree.add_edge(g.get_edge(2, 3))
         with pytest.raises(exception.Unfeasible):
             # Raise exception due to (4, 5) not containing a vertex already in the tree.
-            tree.add_edge(g[4, 5])
+            tree.add_edge(g.get_edge(4, 5))
 
-        tree.add_edge(g[3, 4])
+        tree.add_edge(g.get_edge(3, 4))
         with pytest.raises(exception.Unfeasible):
             # Raises exception due to cycle.
-            tree.add_edge(g[1, 4])
+            tree.add_edge(g.get_edge(1, 4))
 
     def test_merge(self):
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
         tree1 = Tree(g[1])
         tree5 = Tree(g[5])
 
-        tree1.add_edge(g[1, 4])
-        tree1.add_edge(g[4, 3])
-        tree5.add_edge(g[5, 4])
+        tree1.add_edge(g.get_edge(1, 4))
+        tree1.add_edge(g.get_edge(4, 3))
+        tree5.add_edge(g.get_edge(5, 4))
         tree1.merge(tree5)
         assert tree1._vertex_set == {tree1[1], tree1[3], tree1[4], tree1[5]}

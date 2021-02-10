@@ -57,7 +57,7 @@ class TestEdgeData:
 
         g = Graph()
         g.add_edge(1, 2)
-        edge_data2 = pp_module.EdgeData.from_edge_obj(g[1, 2])
+        edge_data2 = pp_module.EdgeData.from_edge_obj(g.get_edge(1, 2))
         assert not edge_data2.attr, "there should be no attributes from edge (1, 2)"
         edge_data2.attr["color"] = "blue"
         assert edge_data2.attr["color"] == "blue", "should have 'color' attribute set to 'blue'"
@@ -71,7 +71,7 @@ class TestEdgeData:
 
         g = DiGraph()
         g.add_edge(2, 1)
-        edge_data2 = pp_module.EdgeData.from_edge_obj(g[2, 1])
+        edge_data2 = pp_module.EdgeData.from_edge_obj(g.get_edge(2, 1))
         assert edge_data2.get_label(is_directed=False) == "(1, 2)", "label should be (1, 2)"
         assert edge_data2.get_label(is_directed=True) == "(2, 1)", "label should be (2, 1)"
 
@@ -84,18 +84,18 @@ class TestEdgeData:
 
         g = DiGraph()
         g.add_edge(2, 1)
-        edge_data2 = pp_module.EdgeData.from_edge_obj(g[2, 1])
+        edge_data2 = pp_module.EdgeData.from_edge_obj(g.get_edge(2, 1))
         assert edge_data2.vertex1.label == "2", "vertex1 should be 2"
         assert edge_data2.vertex2.label == "1", "vertex2 should be 1"
 
     def test_weight(self):
         g = Graph()
         g.add_edge(1, 2)
-        edge_data1 = pp_module.EdgeData.from_edge_obj(g[1, 2])
+        edge_data1 = pp_module.EdgeData.from_edge_obj(g.get_edge(1, 2))
         assert edge_data1.weight == edge_module.DEFAULT_WEIGHT, "weight should be default"
 
         g.add_edge(3, 4, 9.5)
-        edge_data2 = pp_module.EdgeData.from_edge_obj(g[3, 4])
+        edge_data2 = pp_module.EdgeData.from_edge_obj(g.get_edge(3, 4))
         assert edge_data2.weight == 9.5, "weight should be 9.5"
 
         v5 = pp_module.VertexData("5")
@@ -110,12 +110,12 @@ class TestPrimitivesParsingModuleFunctions:
     def test_parse_edge_type(self):
         g = Graph()
         g.add_edge(1, 2)
-        edge_data1 = pp_module.parse_edge_type(g[1, 2])
+        edge_data1 = pp_module.parse_edge_type(g.get_edge(1, 2))
         assert edge_data1.vertex1.label == "1"
         assert edge_data1.vertex2.label == "2"
 
         mg = MultiGraph([(3, 4), (3, 4)])
-        edge_data2 = pp_module.parse_edge_type(mg[3, 4])
+        edge_data2 = pp_module.parse_edge_type(mg.get_edge(3, 4))
         assert edge_data2.vertex1.label == "3"
         assert edge_data2.vertex2.label == "4"
 

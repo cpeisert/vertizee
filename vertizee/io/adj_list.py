@@ -110,14 +110,14 @@ import re
 from typing import Any, Counter, Dict, List, Tuple, TYPE_CHECKING, TypeVar, Union
 
 from vertizee.classes import edge as edge_module
-from vertizee.classes.edge import E, EdgeTuple, EdgeTupleWeighted, MultiEdgeBase
-from vertizee.classes.vertex import V
+from vertizee.classes.edge import EdgeBase, EdgeTuple, EdgeTupleWeighted, MultiEdgeBase
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph import G
+    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.vertex import V, VertexBase
 
 
-def read_adj_list(path: str, new_graph: "G[V, E]", delimiters: str = r",\s*|\s+") -> None:
+def read_adj_list(path: str, new_graph: "GraphBase[V]", delimiters: str = r",\s*|\s+") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then :term:`vertices <vertex>` and :term:`edges <edge>` are
@@ -163,7 +163,7 @@ def read_adj_list(path: str, new_graph: "G[V, E]", delimiters: str = r",\s*|\s+"
         new_graph.add_edges_from(edge_tuples)
 
 
-def read_weighted_adj_list(path: str, new_graph: "G[V, E]") -> None:
+def read_weighted_adj_list(path: str, new_graph: "GraphBase[V]") -> None:
     """Reads a :term:`weighted` adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then :term:`vertices <vertex>` and :term:`edges <edge>` are
@@ -207,7 +207,7 @@ def read_weighted_adj_list(path: str, new_graph: "G[V, E]") -> None:
 
 def write_adj_list_to_file(
     path: str,
-    graph: "G[V, E]",
+    graph: "GraphBase[V]",
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -238,17 +238,12 @@ def write_adj_list_to_file(
     for vertex in sorted_vertices:
         source_vertex_label = vertex.label
         line = f"{source_vertex_label}"
-        # if vertex.loop_edge is not None:
-        #     loop_edge = vertex.loop_edge
-        #     line = _add_loop_edges_to_line(
-        #         line, loop_edge, delimiter, include_weights, weights_are_integers
-        #     )
 
         if vertex.incident_edges() is None:
             lines.append(line)
             continue
 
-        sorted_edges = sorted(vertex.incident_edges(), key=lambda e: e.__str__())
+        sorted_edges = sorted(vertex.incident_edges())
         for edge in sorted_edges:
             line = _add_edge_to_line(
                 line, edge, vertex, delimiter, include_weights, weights_are_integers
@@ -263,8 +258,8 @@ def write_adj_list_to_file(
 
 def _add_edge_to_line(
     line: str,
-    edge: E,
-    source_vertex: V,
+    edge: EdgeBase[VertexBase],
+    source_vertex: VertexBase,
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,
@@ -297,64 +292,6 @@ def _add_edge_to_line(
                 line += f"{delimiter}{destination_label}"
     return line
 
-
-# def _add_loop_edges_to_line(
-#     line: str,
-#     loop_edge: E,
-#     delimiter: str = "\t",
-#     include_weights: bool = False,
-#     weights_are_integers: bool = False,
-# ) -> str:
-
-#     source_vertex_label = loop_edge.vertex1.label
-
-#     if include_weights:
-#         if weights_are_integers:
-#             weight = str(int(loop_edge.weight))
-#         else:
-#             weight = str(loop_edge.weight)
-#         line += f"{delimiter}{source_vertex_label},{weight}"
-
-
-#         for i in range(0, loop_edge.parallel_edge_count):
-#             if weights_are_integers:
-#                 weight = str(int(loop_edge._parallel_edge_weights[i]))
-#             else:
-#                 weight = str(loop_edge._parallel_edge_weights[i])
-#             line += f"{delimiter}{source_vertex_label},{weight}"
-#     else:
-#         line += f"{delimiter}{source_vertex_label}"
-#         for i in range(1, loop_edge.multiplicity):
-#             line += f"{delimiter}{source_vertex_label}"
-#     return line
-
-
-# def _get_incident_edges_excluding_loops(
-#     graph: G, vertex: V, reverse_graph: bool = False
-# ) -> SetView[E]:
-#     """Helper function to retrieve the incident edges of a vertex, excluding self loops.
-
-#     If `reverse_graph` is True and it is a directed graph, then the child's incoming adjacency
-#     edges are returned rather than the outgoing edges. This is equivalent to reversing the
-#     direction of all edges in the digraph.
-
-#     Args:
-#         graph (G): The graph to search.
-#         vertex (Vertex): The vertex whose incident edges are to be retrieved.
-#         reverse_graph (bool, optional): For directed graphs, setting to True will yield a traversal
-#             as if the graph were reversed (i.e. the :term:`reverse graph <reverse>`). Defaults to
-#             False.
-#     """
-#     if graph.is_directed():
-#         if reverse_graph:
-#             return vertex.incident_edges_incoming
-#         return vertex.incident_edges_outgoing()
-
-#     # undirected graph
-#     if vertex.loop_edge is not None:
-#         edges = vertex.incident_edges()
-#         return edges - {vertex.loop_edge}
-#     return vertex.incident_edges()
 
 T = TypeVar("T", bound=Union[Tuple[Any, Any], Tuple[Any, Any, Any]])
 

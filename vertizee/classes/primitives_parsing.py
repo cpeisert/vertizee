@@ -28,16 +28,10 @@ integers or strings as well as instances of classes derived from either :class:`
 Class and type-alias summary
 ============================
 
-* :class:`V` - a generic type parameter defined as ``TypeVar("V", bound="VertexBase")``. See
-  :class:`VertexBase <vertizee.classes.vertex.VertexBase>`.
-* :class:`E` - a generic type parameter defined as
-  ``TypeVar("E", bound=Union["Connection", "MultiConnection"])``. See :class:`Connection
-  <vertizee.classes.edge.Connection>` and :class:`MultiConnection
-  <vertizee.classes.edge.MultiConnection>`.
 * :mod:`EdgeType <vertizee.classes.edge>` - A type alias defined as ``Union[E, EdgeLiteral]``. See
   definition in :mod:`vertizee.classes.edge.EdgeType <vertizee.classes.edge>`.
 * :mod:`VertexType <vertizee.classes.vertex>` - A type alias defined as
-  ``Union[V, VertexLabel, VertexTupleAttr]``. See
+  ``Union[V, VertexLabel, VertexTuple]``. See
   definition in :mod:`vertizee.classes.vertex.VertexType <vertizee.classes.vertex>`.
 * :class:`GraphPrimitive` - Type alias defined as ``Union["EdgeType", "VertexType"]``.
 * :class:`VertexData` - Lightweight class to store parsed primitives representing a vertex.
@@ -68,8 +62,8 @@ from typing import Any, cast, Dict, Iterable, List, Optional, Union
 from vertizee import exception
 from vertizee.classes import edge as edge_module
 from vertizee.classes import vertex as vertex_module
-from vertizee.classes.edge import DiEdge, Edge, EdgeBase, EdgeClass, EdgeType
-from vertizee.classes.vertex import VertexClass, VertexBase, VertexType
+from vertizee.classes.edge import DiEdge, Edge, MutableEdgeBase, EdgeType
+from vertizee.classes.vertex import VertexBase, VertexType
 
 # Type aliases
 GraphPrimitive = Union[EdgeType, VertexType]
@@ -81,10 +75,10 @@ class VertexData:
     def __init__(self, label: str) -> None:
         self.label = label
         self._attr: Dict[str, Any] = dict()
-        self._vertex_object: Optional[VertexClass] = None
+        self._vertex_object: Optional[VertexBase] = None
 
     @classmethod
-    def from_vertex_obj(cls, vertex: VertexClass) -> VertexData:
+    def from_vertex_obj(cls, vertex: VertexBase) -> VertexData:
         """Factory method to create a ``VertexData`` instance from a vertex object."""
         vertex_data: VertexData = VertexData(vertex.label)
         vertex_data._vertex_object = vertex
@@ -99,7 +93,7 @@ class VertexData:
         return self._attr
 
     @property
-    def vertex_object(self) -> Optional[VertexClass]:
+    def vertex_object(self) -> Optional[VertexBase]:
         """If an vertex object was parsed, refers to original object, otherwise None."""
         return self._vertex_object
 
@@ -112,23 +106,24 @@ class EdgeData:
         self._vertex2 = vertex2
         self._weight: float = edge_module.DEFAULT_WEIGHT
         self._attr: Dict[str, Any] = dict()
-        self._edge_object: Optional[EdgeClass] = None
+        self._edge_object: Optional[MutableEdgeBase[VertexBase]] = None
 
     @property
     def attr(self) -> Dict[str, Any]:
         """The attributes dictionary. If an edge object was parsed that did not contain an
         attributes dictionary, an new empty ``dict`` is returned."""
-        if self._edge_object and isinstance(self._edge_object, (DiEdge, Edge)):
-            return self._edge_object.attr
+        if isinstance(self._edge_object, (Edge, DiEdge)):
+            # cast below are due to MyPy bug https://github.com/python/mypy/issues/8252
+            return cast(Edge, self._edge_object).attr
         return self._attr
 
     @property
-    def edge_object(self) -> Optional[EdgeClass]:
+    def edge_object(self) -> Optional[MutableEdgeBase[VertexBase]]:
         """If an edge object was parsed, refers to original object, otherwise None."""
         return self._edge_object
 
     @classmethod
-    def from_edge_obj(cls, edge: EdgeClass) -> EdgeData:
+    def from_edge_obj(cls, edge: MutableEdgeBase[VertexBase]) -> EdgeData:
         """Factory method to create an ``EdgeData`` instance from an edge object."""
         vertex1 = VertexData.from_vertex_obj(edge.vertex1)
         vertex2 = VertexData.from_vertex_obj(edge.vertex2)
@@ -180,8 +175,8 @@ def parse_edge_type(edge: "EdgeType") -> "EdgeData":
     Returns:
         EdgeData: The parsed edge.
     """
-    if isinstance(edge, EdgeBase):
-        edge_data = EdgeData.from_edge_obj(edge)
+    if isinstance(edge, MutableEdgeBase):
+        edge_data = EdgeData.from_edge_obj(cast(MutableEdgeBase[VertexBase], edge))
     elif isinstance(edge, tuple):
         if len(edge) < 2 or len(edge) > 4:
             raise exception.VertizeeException(
@@ -223,9 +218,7 @@ def parse_edge_type(edge: "EdgeType") -> "EdgeData":
                     f"attribute dictionary; {type(edge[3]).__name__} found"
                 )
     else:
-        raise TypeError(
-            "expected tuple edge object instance;" f" found {type(edge).__name__}"
-        )
+        raise TypeError("expected tuple edge object instance;" f" found {type(edge).__name__}")
 
     return edge_data
 
@@ -275,7 +268,7 @@ def parse_graph_primitives_from(
 
 
 def parse_vertex_type(vertex_type: "VertexType") -> "VertexData":
-    """Parses a ``VertexType``, which is defined as ``Union[V, VertexLabel, VertexTupleAttr]``. See
+    """Parses a ``VertexType``, which is defined as ``Union[V, VertexLabel, VertexTuple]``. See
     definition in :mod:`vertizee.classes.vertex.VertexType <vertizee.classes.vertex>`.
 
     Args:
@@ -285,26 +278,33 @@ def parse_vertex_type(vertex_type: "VertexType") -> "VertexData":
         VertexData: The parsed vertex.
     """
     if isinstance(vertex_type, VertexBase):
-        vertex_data: VertexData = VertexData.from_vertex_obj(cast(VertexClass, vertex_type))
+        vertex_data: VertexData = VertexData.from_vertex_obj(vertex_type)
         if vertex_type._attr:
             vertex_data._attr = copy.deepcopy(vertex_type.attr)
     elif isinstance(vertex_type, tuple):
         if len(vertex_type) != 2:
             raise TypeError(
                 "vertex tuple expected length 2 of the form Tuple[VertexLabel, AttributesDict];"
-                f" tuple of length {len(vertex_type)} found")
+                f" tuple of length {len(vertex_type)} found"
+            )
         if not isinstance(vertex_type[0], int) and not isinstance(vertex_type[0], str):
-            raise TypeError("vertex label expected (str or int instance); "
-                f"{type(vertex_type[0]).__name__} found")
+            raise TypeError(
+                "vertex label expected (str or int instance); "
+                f"{type(vertex_type[0]).__name__} found"
+            )
         if not isinstance(vertex_type[1], collections.abc.Mapping):
-            raise TypeError("vertex attr dictionary expected Mapping instance; "
-                f"{type(vertex_type[1]).__name__} found")
+            raise TypeError(
+                "vertex attr dictionary expected Mapping instance; "
+                f"{type(vertex_type[1]).__name__} found"
+            )
         vertex_data = VertexData(str(vertex_type[0]))
         vertex_data._attr = copy.deepcopy(vertex_type[1])
     else:
         if not isinstance(vertex_type, (str, int)):
-            raise TypeError("vertex label expected (str or int instance); "
-                f"{type(vertex_type).__name__} found")
+            raise TypeError(
+                "vertex label expected (str or int instance); "
+                f"{type(vertex_type).__name__} found"
+            )
         vertex_data = VertexData(str(vertex_type))
 
     return vertex_data

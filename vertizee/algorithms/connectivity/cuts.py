@@ -29,12 +29,11 @@ Detailed documentation
 ======================
 """
 
-import math
-from typing import Dict, Optional
+from typing import Optional
 
 from vertizee.classes.edge import Edge
-from vertizee.classes.graph import G
-from vertizee.classes.vertex import Vertex
+from vertizee.classes.graph import GraphBase
+from vertizee.classes.vertex import V_co
 
 
 # TODO(cpeisert): simplify return type of cut algorithms.
@@ -51,16 +50,16 @@ class KargerResults:
 
     def __init__(
         self,
-        contracted_graph: Optional[G] = None,
+        contracted_graph: Optional[GraphBase[V_co]] = None,
         cut_edge: Optional[Edge] = None,
         karger_contract_run_count: int = 0,
     ):
-        self.contracted_graph: Optional[G] = contracted_graph
+        self.contracted_graph: Optional[GraphBase[V_co]] = contracted_graph
         self.cut_edge: Optional[Edge] = cut_edge
         self.karger_contract_run_count = karger_contract_run_count
 
 
-def brute_force_min_cut(graph: G) -> KargerResults:
+def brute_force_min_cut(graph: GraphBase[V_co]) -> KargerResults:
     r"""Uses multiple iterations of the Karger algorithm to find the minimum cut of the graph.
 
     Note that for the Karger algorithm to be guaranteed of finding a minimum cut on a graph with
@@ -76,20 +75,20 @@ def brute_force_min_cut(graph: G) -> KargerResults:
     See Also:
         `Karger algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
     """
-    n = graph.vertex_count
-    run_iterations = 4
-    if n > 2:
-        run_iterations = int((n ** 2) * math.log2(n))
+    # n = graph.vertex_count
+    # run_iterations = 4
+    # if n > 2:
+    #     run_iterations = int((n ** 2) * math.log2(n))
 
-    cuts: Dict[int, Edge] = {}
-    for _ in range(run_iterations):
-        results: KargerResults = karger_contract(graph)
-        if results.cut_edge is not None:
-            cut_size = results.cut_edge.parallel_edge_count + 1
-            cuts[cut_size] = results.cut_edge
+    # cuts: Dict[int, Edge] = {}
+    # for _ in range(run_iterations):
+    #     results: KargerResults = karger_contract(graph)
+    #     if results.cut_edge is not None:
+    #         cut_size = results.cut_edge.parallel_edge_count + 1
+    #         cuts[cut_size] = results.cut_edge
 
-    min_cut_size = min(cuts.keys())
-    return KargerResults(cut_edge=cuts[min_cut_size], karger_contract_run_count=run_iterations)
+    # min_cut_size = min(cuts.keys())
+    # return KargerResults(cut_edge=cuts[min_cut_size], karger_contract_run_count=run_iterations)
 
 
 """
@@ -101,7 +100,7 @@ def brute_force_min_cut(graph: G) -> KargerResults:
     """
 
 
-def fast_min_cut(graph: G) -> KargerResults:
+def fast_min_cut(graph: GraphBase[V_co]) -> KargerResults:
     """Uses the Karger-Stein algorithm to find the minimum cut of the graph.
 
     Args:
@@ -114,33 +113,33 @@ def fast_min_cut(graph: G) -> KargerResults:
     See Also:
         `Karger-Stein algorithm <https://en.wikipedia.org/wiki/Karger%27s_algorithm>`_
     """
-    if graph.vertex_count <= 6:
-        return brute_force_min_cut(graph)
+    # if graph.vertex_count <= 6:
+    #     return brute_force_min_cut(graph)
 
-    t = math.ceil(1 + (graph.vertex_count / math.sqrt(2)))
-    results1: KargerResults = karger_contract(graph, t)
-    results2: KargerResults = karger_contract(graph, t)
-    assert results1.contracted_graph is not None  # For mypy static type checker.
-    assert results2.contracted_graph is not None
+    # t = math.ceil(1 + (graph.vertex_count / math.sqrt(2)))
+    # results1: KargerResults = karger_contract(graph, t)
+    # results2: KargerResults = karger_contract(graph, t)
+    # assert results1.contracted_graph is not None  # For mypy static type checker.
+    # assert results2.contracted_graph is not None
 
-    fmc_results1 = fast_min_cut(results1.contracted_graph)
-    fmc_results2 = fast_min_cut(results2.contracted_graph)
-    assert fmc_results1.cut_edge is not None  # For mypy static type checker.
-    assert fmc_results2.cut_edge is not None
+    # fmc_results1 = fast_min_cut(results1.contracted_graph)
+    # fmc_results2 = fast_min_cut(results2.contracted_graph)
+    # assert fmc_results1.cut_edge is not None  # For mypy static type checker.
+    # assert fmc_results2.cut_edge is not None
 
-    total_contract_runs = (
-        2 + fmc_results1.karger_contract_run_count + fmc_results2.karger_contract_run_count
-    )
-    if fmc_results1.cut_edge.parallel_edge_count <= fmc_results2.cut_edge.parallel_edge_count:
-        return KargerResults(
-            cut_edge=fmc_results1.cut_edge, karger_contract_run_count=total_contract_runs
-        )
-    return KargerResults(
-        cut_edge=fmc_results2.cut_edge, karger_contract_run_count=total_contract_runs
-    )
+    # total_contract_runs = (
+    #     2 + fmc_results1.karger_contract_run_count + fmc_results2.karger_contract_run_count
+    # )
+    # if fmc_results1.cut_edge.parallel_edge_count <= fmc_results2.cut_edge.parallel_edge_count:
+    #     return KargerResults(
+    #         cut_edge=fmc_results1.cut_edge, karger_contract_run_count=total_contract_runs
+    #     )
+    # return KargerResults(
+    #     cut_edge=fmc_results2.cut_edge, karger_contract_run_count=total_contract_runs
+    # )
 
 
-def karger_contract(graph: G, minimum_vertices: int = 2) -> KargerResults:
+def karger_contract(graph: GraphBase[V_co], minimum_vertices: int = 2) -> KargerResults:
     """Use the Karger algorithm to contract the graph by repeatedly selecting a random edge,
     removing the edge, and merging the vertices of the deleted edge.
 
@@ -157,21 +156,21 @@ def karger_contract(graph: G, minimum_vertices: int = 2) -> KargerResults:
         The minimum cut, which is the final Edge object containing the last two vertices after
         all other vertices have been merged through the edge contraction process.
     """
-    if graph.edge_count < 1:
-        return KargerResults(contracted_graph=graph, cut_edge=None)
-    if minimum_vertices < 2:
-        minimum_vertices = 2
+    # if graph.edge_count < 1:
+    #     return KargerResults(contracted_graph=graph, cut_edge=None)
+    # if minimum_vertices < 2:
+    #     minimum_vertices = 2
 
-    contracted_graph = graph.deepcopy()
-    while contracted_graph.vertex_count > minimum_vertices:
-        random_edge: Optional[Edge] = contracted_graph.get_random_edge()
-        assert random_edge is not None
-        merged_vertex: Vertex = random_edge.vertex1
-        contracted_graph.remove_edge_from(random_edge)
-        contracted_graph.contract_edge(merged_vertex, random_edge.vertex2)
-        merged_vertex.remove_loops()
+    # contracted_graph = graph.deepcopy()
+    # while contracted_graph.vertex_count > minimum_vertices:
+    #     random_edge: Optional[Edge] = contracted_graph.get_random_edge()
+    #     assert random_edge is not None
+    #     merged_vertex: Vertex = random_edge.vertex1
+    #     contracted_graph.remove_edge_from(random_edge)
+    #     contracted_graph.contract_edge(merged_vertex, random_edge.vertex2)
+    #     merged_vertex.remove_loops()
 
-    cut_edge = None
-    if len(contracted_graph.edges) == 1:
-        cut_edge = contracted_graph.edges.pop()
-    return KargerResults(contracted_graph=contracted_graph, cut_edge=cut_edge)
+    # cut_edge = None
+    # if len(contracted_graph.edges) == 1:
+    #     cut_edge = contracted_graph.edges.pop()
+    # return KargerResults(contracted_graph=contracted_graph, cut_edge=cut_edge)

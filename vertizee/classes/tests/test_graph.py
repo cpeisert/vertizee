@@ -30,8 +30,8 @@ from vertizee.classes.graph import DiGraph, G, Graph, MultiDiGraph, MultiGraph
 from vertizee.classes.vertex import Vertex
 
 
-def _check_for_memory_leak(cls_graph: Type[G]):
-    def count_objects_of_type(_type):
+def _check_for_memory_leak(cls_graph: Type[G]) -> None:
+    def count_objects_of_type(_type: type) -> int:
         return sum(1 for obj in gc.get_objects() if isinstance(obj, _type))
 
     # Graph/DiGraph instances will ignore attempt to create parallel edge.
@@ -47,7 +47,7 @@ def _check_for_memory_leak(cls_graph: Type[G]):
     assert before == after, "unassigned graph reference should have been garbage collected"
 
     # Test subclassing.
-    class MyGraph(cls_graph):
+    class MyGraph(cls_graph):  # type: ignore
         """cls_graph subclass."""
 
     gc.collect()
@@ -72,7 +72,7 @@ class TestG:
         assert "1" in g, "vertex specified as str should be in graph"
         assert 3 not in g, "vertex 3 should not be in graph"
 
-        assert g[1, 2] in g, "edge (1, 2) should be in graph"
+        assert g.get_edge(1, 2) in g, "edge (1, 2) should be in graph"
         assert (1, 2) in g, "edge specified as tuple should be in graph"
         assert ("1", "2") in g, "edge specified as tuple should be in graph"
         assert (1, 3) not in g, "edge (1, 3) should not be in graph"
@@ -81,8 +81,6 @@ class TestG:
             _ = 4.5 not in g
         with pytest.raises(TypeError):
             _ = (1, 2, 3, 4) not in g
-        with pytest.raises(TypeError):
-            _ = [1, 2] not in g
 
     def test__getitem__(self):
         g = Graph()
@@ -94,24 +92,17 @@ class TestG:
         v1 = g[1]
         assert isinstance(g[v1], Vertex), "graph should have vertex 1"
         with pytest.raises(TypeError):
-            _ = g[2.0]
+            _ = g.get_edge(2.0)
         with pytest.raises(KeyError):
             _ = g[3]
 
-        assert isinstance(g[1, 2], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g["1", "2"], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g[(1, 2, {})], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g[1, 2, {}], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g[(1, 2, 1.0)], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g[1, 2, 1.0], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g[(1, 2, 1.0, {})], Edge), "graph should have edge (1, 2)"
-        assert isinstance(g[1, 2, 1.0, {}], Edge), "graph should have edge (1, 2)"
-        edge = g[1, 2]
-        assert isinstance(g[edge], Edge), "graph should have edge (1, 2)"
+        assert isinstance(g.get_edge(1, 2), Edge), "graph should have edge (1, 2)"
+        assert isinstance(g.get_edge("1", "2"), Edge), "graph should have edge (1, 2)"
+        _ = g.get_edge(1, 2)
         with pytest.raises(TypeError):
-            _ = g[1.0, 2.0]
+            _ = g.get_edge(1.0, 2.0)
         with pytest.raises(KeyError):
-            _ = g[1, 3]
+            _ = g.get_edge(1, 3)
 
     def test__iter__(self):
         g = Graph([(1, 2), (2, 3), (3, 4)])
@@ -180,14 +171,14 @@ class TestG:
         ), "graph copy vertex objects should be distinct from original graph"
 
         assert set(g.edges()) == set(g_copy.edges()), "graph copy should have same edges"
-        assert (
-            g[1, 2] is not g_copy[1, 2]
+        assert g.get_edge(1, 2) is not g_copy.get_edge(
+            1, 2
         ), "graph copy edge objects should be distinct from original graph"
         assert (
-            g[1, 2]._attr == g_copy[1, 2]._attr
+            g.get_edge(1, 2)._attr == g_copy.get_edge(1, 2)._attr
         ), "graph copy edge object `_attr` dictionary should contain logically equal contents"
         assert (
-            g[1, 2]._attr is not g_copy[1, 2]._attr
+            g.get_edge(1, 2)._attr is not g_copy.get_edge(1, 2)._attr
         ), "graph copy edge object `_attr` dictionary should be distinct from original graph"
 
     def test_has_vertex(self):
@@ -292,18 +283,22 @@ class TestGraph:
 
         g = Graph(mg)
         assert g.has_edge(1, 2), "graph should have edge (1, 2) copied from multigraph"
-        assert g[1, 2]["color"] == "red", "edge (1, 2) should have 'color' attribute set to red"
-        assert g[1, 2].weight == 5.0, "edge (1, 2) should have weight 5.0"
+        assert (
+            g.get_edge(1, 2)["color"] == "red"
+        ), "edge (1, 2) should have 'color' attribute set to red"
+        assert g.get_edge(1, 2).weight == 5.0, "edge (1, 2) should have weight 5.0"
         assert g.has_edge(3, 4), "graph should have edge (3, 4) copied from multigraph"
         assert g.edge_count == 2, "graph should have two edges"
         assert g.weight == 6.0, "graph should have weight 6.0"
-        assert g[1, 2] is not mg[1, 2], "graph should have deep copies of edges and vertices"
+        assert g.get_edge(1, 2) is not mg.get_edge(
+            1, 2
+        ), "graph should have deep copies of edges and vertices"
 
     def test_add_edge(self):
         g = Graph()
         edge = g.add_edge(1, 2, weight=4.5, color="blue", mass=42)
         assert isinstance(edge, Edge), "new edge should an Edge object"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
         assert edge["color"] == "blue", "edge should have 'color' attribute set to 'blue'"
         assert edge["mass"] == 42, "edge should have 'mass' attribute set to 42"
 
@@ -313,8 +308,12 @@ class TestGraph:
         ), "adding an edge with same vertices as existing edge should return existing edge"
 
         g.add_edge(3, 4)
-        assert g[3, 4].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        assert not g[3, 4].has_attributes_dict(), "edge should not have attributes dictionary"
+        assert (
+            g.get_edge(3, 4).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        assert not g.get_edge(
+            3, 4
+        ).has_attributes_dict(), "edge should not have attributes dictionary"
 
     def test_add_edges_from(self):
         g = Graph()
@@ -329,19 +328,23 @@ class TestGraph:
         )
 
         assert g.edge_count == 4, "graph should have 4 edges"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
-        assert g[1, 2]["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
-        assert g[1, 2]["mass"] == 42, "edge (1, 2) should have 'mass' set to 42"
-        assert not g[3, 4].has_attributes_dict(), "edge (3, 4) should not have attributes dict"
-        assert g[5, 6].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        assert g[7, 8] is g[8, 7], "order of vertices should not matter"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2)["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
+        assert g.get_edge(1, 2)["mass"] == 42, "edge (1, 2) should have 'mass' set to 42"
+        assert not g.get_edge(
+            3, 4
+        ).has_attributes_dict(), "edge (3, 4) should not have attributes dict"
+        assert (
+            g.get_edge(5, 6).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        assert g.get_edge(7, 8) is g.get_edge(8, 7), "order of vertices should not matter"
 
     def test_edges_and_edge_count(self):
         g = Graph([(1, 2), (2, 1), (2, 3), (3, 4)])
         assert set(g.edges()) == {
-            g[1, 2],
-            g[2, 3],
-            g[3, 4],
+            g.get_edge(1, 2),
+            g.get_edge(2, 3),
+            g.get_edge(3, 4),
         }, "edges should be (1, 2), (2, 3), (3, 4)"
         assert g.edge_count == 3, "graph should have 3 edges"
 
@@ -352,9 +355,9 @@ class TestGraph:
         for _ in range(1000):
             rand_edge = g.get_random_edge()
             cnt[rand_edge] += 1
-        assert cnt[g[1, 2]] > 270, r"~33% of random samples should be edge (1, 2)"
-        assert cnt[g[3, 4]] > 270, r"~33% of random samples should be edge (3, 4)"
-        assert cnt[g[5, 6]] > 270, r"~33% of random samples should be edge (5, 6)"
+        assert cnt[g.get_edge(1, 2)] > 270, r"~33% of random samples should be edge (1, 2)"
+        assert cnt[g.get_edge(3, 4)] > 270, r"~33% of random samples should be edge (3, 4)"
+        assert cnt[g.get_edge(5, 6)] > 270, r"~33% of random samples should be edge (5, 6)"
 
 
 class TestDiGraph:
@@ -369,18 +372,22 @@ class TestDiGraph:
 
         dg = DiGraph(g)
         assert dg.has_edge(2, 1), "digraph should have edge (2, 1) copied from graph"
-        assert dg[2, 1]["color"] == "red", "edge (2, 1) should have 'color' attribute set to red"
-        assert dg[2, 1].weight == 5.0, "edge (2, 1) should have weight 5.0"
+        assert (
+            dg.get_edge(2, 1)["color"] == "red"
+        ), "edge (2, 1) should have 'color' attribute set to red"
+        assert dg.get_edge(2, 1).weight == 5.0, "edge (2, 1) should have weight 5.0"
         assert dg.has_edge(4, 3), "graph should have edge (4, 3) copied from graph"
         assert dg.edge_count == 2, "graph should have two edges"
         assert dg.weight == 6.0, "graph should have weight 6.0"
-        assert dg[2, 1] is not g[2, 1], "digraph should have deep copies of edges and vertices"
+        assert dg.get_edge(2, 1) is not g.get_edge(
+            2, 1
+        ), "digraph should have deep copies of edges and vertices"
 
     def test_add_edge(self):
         g = DiGraph()
         edge = g.add_edge(2, 1, weight=4.5, color="blue", mass=42)
         assert isinstance(edge, DiEdge), "new edge should an DiEdge object"
-        assert g[2, 1].weight == 4.5, "edge (2, 1) should have weight 4.5"
+        assert g.get_edge(2, 1).weight == 4.5, "edge (2, 1) should have weight 4.5"
         assert edge["color"] == "blue", "edge should have 'color' attribute set to 'blue'"
         assert edge["mass"] == 42, "edge should have 'mass' attribute set to 42"
 
@@ -390,8 +397,12 @@ class TestDiGraph:
         ), "adding an edge with same vertices as existing edge should return existing edge"
 
         g.add_edge(3, 4)
-        assert g[3, 4].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        assert not g[3, 4].has_attributes_dict(), "edge should not have attributes dictionary"
+        assert (
+            g.get_edge(3, 4).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        assert not g.get_edge(
+            3, 4
+        ).has_attributes_dict(), "edge should not have attributes dictionary"
         assert not g.has_edge(1, 2), "digraph should not have edge (1, 2)"
 
     def test_add_edges_from(self):
@@ -407,19 +418,25 @@ class TestDiGraph:
         )
 
         assert g.edge_count == 5, "digraph should have 5 edges"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
-        assert g[1, 2]["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
-        assert g[1, 2]["mass"] == 42, "edge (1, 2) should have 'mass' set to 42"
-        assert not g[4, 3].has_attributes_dict(), "edge (3, 4) should not have attributes dict"
-        assert g[5, 6].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        assert g[7, 8] != g[8, 7], "order of vertices should specify different edges"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2)["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
+        assert g.get_edge(1, 2)["mass"] == 42, "edge (1, 2) should have 'mass' set to 42"
+        assert not g.get_edge(
+            4, 3
+        ).has_attributes_dict(), "edge (3, 4) should not have attributes dict"
+        assert (
+            g.get_edge(5, 6).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        assert g.get_edge(7, 8) != g.get_edge(
+            8, 7
+        ), "order of vertices should specify different edges"
 
     def test_edges_and_edge_count(self):
         g = DiGraph([(1, 2), (2, 1), (2, 3)])
         assert set(g.edges()) == {
-            g[1, 2],
-            g[2, 1],
-            g[2, 3],
+            g.get_edge(1, 2),
+            g.get_edge(2, 1),
+            g.get_edge(2, 3),
         }, "edges should be (1, 2), (2, 1), (2, 3)"
         assert g.edge_count == 3, "graph should have 3 edges"
 
@@ -430,9 +447,9 @@ class TestDiGraph:
         for _ in range(1000):
             rand_edge = g.get_random_edge()
             cnt[rand_edge] += 1
-        assert cnt[g[1, 2]] > 270, r"~33% of random samples should be edge (1, 2)"
-        assert cnt[g[2, 1]] > 270, r"~33% of random samples should be edge (2, 1)"
-        assert cnt[g[5, 6]] > 270, r"~33% of random samples should be edge (5, 6)"
+        assert cnt[g.get_edge(1, 2)] > 270, r"~33% of random samples should be edge (1, 2)"
+        assert cnt[g.get_edge(2, 1)] > 270, r"~33% of random samples should be edge (2, 1)"
+        assert cnt[g.get_edge(5, 6)] > 270, r"~33% of random samples should be edge (5, 6)"
 
 
 class TestMultiGraph:
@@ -446,23 +463,25 @@ class TestMultiGraph:
 
         g = MultiGraph(g0)
         assert g.has_edge(1, 2), "multigraph should have edge (1, 2) copied from graph"
-        connection12 = g[1, 2].connections()[0]
+        connection12 = g.get_edge(1, 2).connections()[0]
         assert (
             connection12["color"] == "red"
         ), "edge connection (1, 2) should have 'color' attribute set to red"
-        assert g[1, 2].weight == 5.0, "edge (1, 2) should have weight 5.0"
+        assert g.get_edge(1, 2).weight == 5.0, "edge (1, 2) should have weight 5.0"
         assert g.has_edge(3, 4), "graph should have edge (3, 4) copied from graph"
         assert g.edge_count == 2, "graph should have two edges"
         assert g.weight == 6.0, "graph should have weight 6.0"
-        assert g[1, 2] is not g0[1, 2], "multigraph should have deep copies of edges and vertices"
+        assert g.get_edge(1, 2) is not g0.get_edge(
+            1, 2
+        ), "multigraph should have deep copies of edges and vertices"
 
     def test_add_edge(self):
         g = MultiGraph()
         edge = g.add_edge(1, 2, weight=4.5, color="blue", mass=42)
         assert isinstance(edge, MultiEdge), "new edge should a MultiEdge object"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
 
-        connection12 = g[1, 2].connections()[0]
+        connection12 = g.get_edge(1, 2).connections()[0]
         assert connection12["color"] == "blue", "edge should have 'color' attribute set to 'blue'"
         assert connection12["mass"] == 42, "edge should have 'mass' attribute set to 42"
 
@@ -471,12 +490,14 @@ class TestMultiGraph:
             edge is edge_dup
         ), "adding an edge with same vertices as existing edge should return existing edge"
         assert (
-            g[1, 2].multiplicity == 2
+            g.get_edge(1, 2).multiplicity == 2
         ), "after adding parallel connection, edge multiplicity should be 2"
 
         g.add_edge(3, 4)
-        assert g[3, 4].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        connection34 = g[3, 4].connections()[0]
+        assert (
+            g.get_edge(3, 4).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        connection34 = g.get_edge(3, 4).connections()[0]
         assert not connection34.has_attributes_dict(), "edge should not have attributes dictionary"
 
     def test_add_edges_from(self):
@@ -491,43 +512,49 @@ class TestMultiGraph:
             ]
         )
 
-        connection12 = g[1, 2].connections()[0]
-        connection34 = g[3, 4].connections()[0]
+        connection12 = g.get_edge(1, 2).connections()[0]
+        connection34 = g.get_edge(3, 4).connections()[0]
         assert g.edge_count == 5, "graph should have 5 edge connections"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
         assert connection12["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
         assert connection12["mass"] == 42, "edge (1, 2) should have 'mass' set to 42"
         assert not connection34.has_attributes_dict(), "edge (3, 4) should not have attributes dict"
-        assert g[5, 6].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        assert g[7, 8] is g[8, 7], "order of vertices should not matter"
-        assert g[7, 8].multiplicity == 2, "edge (7, 8) should have two parallel connections"
+        assert (
+            g.get_edge(5, 6).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        assert g.get_edge(7, 8) is g.get_edge(8, 7), "order of vertices should not matter"
+        assert (
+            g.get_edge(7, 8).multiplicity == 2
+        ), "edge (7, 8) should have two parallel connections"
 
     def test_edges_and_edge_count(self):
         g = MultiGraph([(1, 2), (2, 1), (2, 3), (3, 4)])
         assert set(g.edges()) == {
-            g[1, 2],
-            g[2, 3],
-            g[3, 4],
+            g.get_edge(1, 2),
+            g.get_edge(2, 3),
+            g.get_edge(3, 4),
         }, "multiedges should be (1, 2), (2, 3), (3, 4)"
         assert g.edge_count == 4, "graph should have 4 edge connections"
-        assert g[1, 2].multiplicity == 2, "multiedge (1, 2) should have two parallel connections"
+        assert (
+            g.get_edge(1, 2).multiplicity == 2
+        ), "multiedge (1, 2) should have two parallel connections"
 
     def test_get_random_edge(self):
         g = MultiGraph([(1, 2), (1, 2), (3, 4)])
 
         cnt1 = Counter()
         for _ in range(1000):
-            rand_edge = g.get_random_edge(ignore_multiplicity=False)
+            rand_edge = g.get_random_edge_weighted_by_multiplicity()
             cnt1[rand_edge] += 1
-        assert cnt1[g[1, 2]] > 600, r"~66% of random samples should be edge (1, 2)"
-        assert cnt1[g[3, 4]] < 400, r"~33% of random samples should be edge (3, 4)"
+        assert cnt1[g.get_edge(1, 2)] > 600, r"~66% of random samples should be edge (1, 2)"
+        assert cnt1[g.get_edge(3, 4)] < 400, r"~33% of random samples should be edge (3, 4)"
 
         cnt2 = Counter()
         for _ in range(1000):
-            rand_edge = g.get_random_edge(ignore_multiplicity=True)
+            rand_edge = g.get_random_edge()
             cnt2[rand_edge] += 1
-        assert cnt2[g[1, 2]] > 420, r"~50% of random samples should be edge (1, 2)"
-        assert cnt2[g[3, 4]] > 420, r"~50% of random samples should be edge (3, 4)"
+        assert cnt2[g.get_edge(1, 2)] > 420, r"~50% of random samples should be edge (1, 2)"
+        assert cnt2[g.get_edge(3, 4)] > 420, r"~50% of random samples should be edge (3, 4)"
 
 
 class TestMultiDiGraph:
@@ -541,22 +568,24 @@ class TestMultiDiGraph:
 
         g = MultiDiGraph(g0)
         assert g.has_edge(2, 1), "multigraph should have edge (2, 1) copied from graph"
-        connection21 = g[2, 1].connections()[0]
+        connection21 = g.get_edge(2, 1).connections()[0]
         assert (
             connection21["color"] == "red"
         ), "first connection of edge (2, 1) should have 'color' attribute set to red"
-        assert g[2, 1].weight == 7.5, "multiedge (2, 1) should have weight 7.5"
+        assert g.get_edge(2, 1).weight == 7.5, "multiedge (2, 1) should have weight 7.5"
         assert g.edge_count == 2, "graph should have two edges"
         assert g.weight == 7.5, "graph should have weight 6.0"
-        assert g[2, 1] is not g0[2, 1], "multigraph should have deep copies of edges and vertices"
+        assert g.get_edge(2, 1) is not g0.get_edge(
+            2, 1
+        ), "multigraph should have deep copies of edges and vertices"
 
     def test_add_edge(self):
         g = MultiDiGraph()
         edge = g.add_edge(1, 2, weight=4.5, color="blue", mass=42)
         assert isinstance(edge, MultiDiEdge), "new edge should a MultiDiEdge object"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
 
-        connection12 = g[1, 2].connections()[0]
+        connection12 = g.get_edge(1, 2).connections()[0]
         assert connection12["color"] == "blue", "edge should have 'color' attribute set to 'blue'"
         assert connection12["mass"] == 42, "edge should have 'mass' attribute set to 42"
 
@@ -565,12 +594,14 @@ class TestMultiDiGraph:
             edge is edge_dup
         ), "adding an edge with same vertices as existing edge should return existing edge"
         assert (
-            g[1, 2].multiplicity == 2
+            g.get_edge(1, 2).multiplicity == 2
         ), "after adding parallel connection, edge multiplicity should be 2"
 
         g.add_edge(3, 4)
-        assert g[3, 4].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        connection34 = g[3, 4].connections()[0]
+        assert (
+            g.get_edge(3, 4).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        connection34 = g.get_edge(3, 4).connections()[0]
         assert not connection34.has_attributes_dict(), "edge should not have attributes dictionary"
 
     def test_add_edges_from(self):
@@ -586,44 +617,52 @@ class TestMultiDiGraph:
             ]
         )
 
-        connection12 = g[1, 2].connections()[0]
-        connection43 = g[4, 3].connections()[0]
+        connection12 = g.get_edge(1, 2).connections()[0]
+        connection43 = g.get_edge(4, 3).connections()[0]
 
         assert g.edge_count == 6, "graph should have 6 edges"
-        assert g[1, 2].weight == 4.5, "edge (1, 2) should have weight 4.5"
+        assert g.get_edge(1, 2).weight == 4.5, "edge (1, 2) should have weight 4.5"
         assert connection12["color"] == "blue", "edge (1, 2) should have 'color' set to 'blue'"
         assert connection12["mass"] == 42, "edge (1, 2) should have 'mass' set to 42"
         assert (
             not connection43.has_attributes_dict()
         ), "edge connection (4, 3) should not have attributes dict"
-        assert g[5, 6].weight == edge_module.DEFAULT_WEIGHT, "edge should have default weight"
-        assert g[7, 8] is not g[8, 7], "order of vertices define different directed edges"
-        assert g[8, 7].multiplicity == 2, "edge (8, 7) should have two parallel connections"
+        assert (
+            g.get_edge(5, 6).weight == edge_module.DEFAULT_WEIGHT
+        ), "edge should have default weight"
+        assert g.get_edge(7, 8) is not g.get_edge(
+            8, 7
+        ), "order of vertices define different directed edges"
+        assert (
+            g.get_edge(8, 7).multiplicity == 2
+        ), "edge (8, 7) should have two parallel connections"
 
     def test_edges_and_edge_count(self):
         g = MultiDiGraph([(1, 2), (2, 1), (2, 3), (3, 4)])
         assert set(g.edges()) == {
-            g[1, 2],
-            g[2, 1],
-            g[2, 3],
-            g[3, 4],
+            g.get_edge(1, 2),
+            g.get_edge(2, 1),
+            g.get_edge(2, 3),
+            g.get_edge(3, 4),
         }, "multiedges should be (1, 2), (2, 1), (2, 3), (3, 4)"
         assert g.edge_count == 4, "graph should have 4 edge connections"
-        assert g[1, 2].multiplicity == 1, "multiedge (1, 2) should have one edge connection"
+        assert (
+            g.get_edge(1, 2).multiplicity == 1
+        ), "multiedge (1, 2) should have one edge connection"
 
     def test_get_random_edge(self):
         g = MultiDiGraph([(1, 2), (1, 2), (3, 4)])
 
         cnt1 = Counter()
         for _ in range(1000):
-            rand_edge = g.get_random_edge(ignore_multiplicity=False)
+            rand_edge = g.get_random_edge_weighted_by_multiplicity()
             cnt1[rand_edge] += 1
-        assert cnt1[g[1, 2]] > 600, r"~66% of random samples should be edge (1, 2)"
-        assert cnt1[g[3, 4]] < 400, r"~33% of random samples should be edge (3, 4)"
+        assert cnt1[g.get_edge(1, 2)] > 600, r"~66% of random samples should be edge (1, 2)"
+        assert cnt1[g.get_edge(3, 4)] < 400, r"~33% of random samples should be edge (3, 4)"
 
         cnt2 = Counter()
         for _ in range(1000):
-            rand_edge = g.get_random_edge(ignore_multiplicity=True)
+            rand_edge = g.get_random_edge()
             cnt2[rand_edge] += 1
-        assert cnt2[g[1, 2]] > 400, r"~50% of random samples should be edge (1, 2)"
-        assert cnt2[g[3, 4]] > 400, r"~50% of random samples should be edge (3, 4)"
+        assert cnt2[g.get_edge(1, 2)] > 400, r"~50% of random samples should be edge (1, 2)"
+        assert cnt2[g.get_edge(3, 4)] > 400, r"~50% of random samples should be edge (3, 4)"

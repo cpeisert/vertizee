@@ -26,7 +26,7 @@ import heapq
 import itertools
 from typing import Callable, Dict, Final, Generic, List, TypeVar, Union
 
-ITEM_REMOVED: Final = "__priority_queue_item_removed__"
+ITEM_REMOVED: Final[str] = "__priority_queue_item_removed__"
 
 T = TypeVar("T", bound=collections.abc.Hashable)
 
@@ -64,6 +64,7 @@ class _PriorityQueueItem(Generic[T]):
 
     def __hash__(self) -> int:
         return hash((self.priority, self.insertion_count))
+
 
 class PriorityQueue(Generic[T]):
     """A :term:`priority queue` that always serves the item with the lowest (or highest) priority

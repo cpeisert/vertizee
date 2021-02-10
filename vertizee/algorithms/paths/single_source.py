@@ -48,7 +48,7 @@ Detailed documentation
 """
 
 from __future__ import annotations
-from typing import Callable, Final, Iterator, Optional, TYPE_CHECKING, Union
+from typing import Callable, cast, Final, Optional, TYPE_CHECKING, Union
 
 from vertizee import exception
 from vertizee.algorithms.algo_utils.path_utils import ShortestPath
@@ -57,18 +57,18 @@ from vertizee.algorithms.search import breadth_first_search
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.vertex_dict import VertexDict
+from vertizee.classes.edge import Attributes, MultiEdgeBase
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import E
-    from vertizee.classes.graph import G
-    from vertizee.classes.vertex import V, VertexType
+    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.vertex import V, V_co, VertexType
 
-INFINITY: Final = float("inf")
+INFINITY: Final[float] = float("inf")
 
 
 def get_weight_function(
-    weight: Union[Callable, str] = "Edge__weight"
-) -> Callable[[V, V, bool], float]:
+    weight: Union[str, Callable[[V, V, bool], Optional[float]]] = "Edge__weight"
+) -> Callable[[V, V, bool], Optional[float]]:
     """Returns a function that accepts two :term:`vertices <vertex>` and a boolean indicating if
     the :term:`graph` should be treated as if it were :term:`reversed <reverse>` and returns the
     corresponding :term:`edge` weight.
@@ -85,16 +85,16 @@ def get_weight_function(
 
         .. code-block:: python
 
-            def get_weight(v1: V, v2: V, reverse_graph: bool) -> float:
-                graph: G[V, E] = v1._parent_graph
+            def get_weight(v1: V, v2: V, reverse_graph: bool) -> Optional[float]:
+                graph: G[V, E[V]] = v1._parent_graph
                 if reverse_graph:
                     if not graph.has_edge(v2, v1):
                         raise AlgorithmError(f"edge ({v2.label}, {v1.label}) not in graph")
-                    edge = graph[v2, v1]
+                    edge = graph.get_edge(v2, v1)
                 else:
                     if not graph.has_edge(v1, v2):
                         raise AlgorithmError(f"edge ({v1.label}, {v2.label}) not in graph")
-                    edge = graph[v1, v2]
+                    edge = graph.get_edge(v1, v2)
 
                 <YOUR CODE HERE>
 
@@ -126,18 +126,20 @@ def get_weight_function(
     if not isinstance(weight, str):
         raise ValueError("'weight' must be a callable function or a string")
 
-    def get_weight(v1: V, v2: V, reverse_graph: bool) -> float:
-        graph: G[V, E] = v1._parent_graph
+    def get_weight(v1: V, v2: V, reverse_graph: bool) -> Optional[float]:
+        graph = v1._parent_graph
         if reverse_graph:
             if not graph.has_edge(v2, v1):
                 raise exception.AlgorithmError(f"edge ({v2.label}, {v1.label}) not in graph")
-            edge = graph[v2, v1]
+            edge = graph.get_edge(v2, v1)
         else:
             if not graph.has_edge(v1, v2):
                 raise exception.AlgorithmError(f"edge ({v1.label}, {v2.label}) not in graph")
-            edge = graph[v1, v2]
+            edge = graph.get_edge(v1, v2)
 
+        assert isinstance(weight, str)
         if graph.is_multigraph():
+            assert isinstance(edge, MultiEdgeBase)
             if weight == "Edge__weight":
                 min_weight = min(c.weight for c in edge.connections())
             else:
@@ -146,7 +148,7 @@ def get_weight_function(
             if weight == "Edge__weight":
                 min_weight = edge.weight
             else:
-                min_weight = edge.attr.get(weight, 1.0)
+                min_weight = cast(Attributes, edge).attr.get(weight, 1.0)
 
         return min_weight
 
@@ -154,12 +156,12 @@ def get_weight_function(
 
 
 def shortest_paths(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight",
-) -> VertexDict[ShortestPath[V]]:
+    weight: Union[str, Callable[[V_co, V_co, bool], Optional[float]]] = "Edge__weight",
+) -> VertexDict[ShortestPath[V_co]]:
     r"""Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to
     all reachable vertices.
 
@@ -230,7 +232,7 @@ def shortest_paths(
             ('y', 't', 3), ('y', 'x', 9), ('y', 'z', 2),
             ('z', 's', 7), ('z', 'x', 6)
         ])
-        >>> path_dict: vz.VertexDict[ShortestPath] = shortest_paths(g, 's', save_paths=True)
+        >>> path_dict: vz.VertexDict[ShortestPath[V_co]] = shortest_paths(g, 's', save_paths=True)
         >>> len(path_dict)
         5
         >>> path_dict['s'].length
@@ -256,12 +258,12 @@ def shortest_paths(
 
 
 def bellman_ford(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight",
-) -> VertexDict[ShortestPath[V]]:
+    weight: Union[str, Callable[[V_co, V_co, bool], Optional[float]]] = "Edge__weight",
+) -> VertexDict[ShortestPath[V_co]]:
     """Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to all
     reachable vertices in a weighted graph using the Bellman-Ford algorithm.
 
@@ -292,7 +294,7 @@ def bellman_ford(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Returns:
-        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
+        VertexDict[ShortestPath[V_co]]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     Raises:
@@ -306,19 +308,19 @@ def bellman_ford(
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
     """
     try:
-        s: V = graph[source]
+        s: V_co = graph[source]
     except KeyError as error:
         raise exception.VertexNotFound(f"source '{source}' not in graph") from error
 
     weight_function = get_weight_function(weight)
-    vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
+    vertex_to_path_map: VertexDict[ShortestPath[V_co]] = VertexDict()
 
     for v in graph:
         vertex_to_path_map[v] = ShortestPath(s, v, initial_length=INFINITY, save_path=save_paths)
     vertex_to_path_map[s].reinitialize(initial_length=0)
 
-    u_path: ShortestPath
-    w_path: ShortestPath
+    u_path: ShortestPath[V_co]
+    w_path: ShortestPath[V_co]
     for _ in range(graph.vertex_count):
         for e in graph.edges():
             u_path = vertex_to_path_map[e.vertex1]
@@ -341,15 +343,18 @@ def bellman_ford(
             u_path, w_path = w_path, u_path
             u, w = w, u
         weight_u_w = weight_function(u, w, reverse_graph)
-        if w_path.length > u_path.length + weight_u_w:
+        if weight_u_w and w_path.length > u_path.length + weight_u_w:
             raise exception.NegativeWeightCycle("found a negative weight cycle")
 
     return vertex_to_path_map
 
 
 def breadth_first_search_shortest_paths(
-    graph: G[V, E], source: VertexType, save_paths: bool = False, reverse_graph: bool = False
-) -> VertexDict[ShortestPath[V]]:
+    graph: GraphBase[V_co],
+    source: VertexType,
+    save_paths: bool = False,
+    reverse_graph: bool = False,
+) -> VertexDict[ShortestPath[V_co]]:
     """Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to all
     reachable vertices in an unweighted graph using a breadth-first search.
 
@@ -372,7 +377,7 @@ def breadth_first_search_shortest_paths(
             False.
 
     Returns:
-        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
+        VertexDict[ShortestPath[V_co]]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
@@ -387,7 +392,7 @@ def breadth_first_search_shortest_paths(
         >>> from vertizee.algorithms.paths import breadth_first_search_shortest_paths, ShortestPath
         >>> g = vz.Graph()
         >>> g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        >>> path_dict: vz.VertexDict[ShortestPath] = breadth_first_search_shortest_paths(g, 0)
+        >>> path_dict: vz.VertexDict[ShortestPath[V_co]] = breadth_first_search_shortest_paths(g, 0)
         >>> path_dict[4].path()
         [0, 1, 3, 4]
         >>> path_dict[4].length
@@ -398,10 +403,10 @@ def breadth_first_search_shortest_paths(
         True
     """
     try:
-        s: V = graph[source]
+        s: V_co = graph[source]
     except KeyError as error:
         raise exception.VertexNotFound(f"source vertex '{source}' not found in graph") from error
-    vertex_to_path_map: VertexDict[ShortestPath[V]] = VertexDict()
+    vertex_to_path_map: VertexDict[ShortestPath[V_co]] = VertexDict()  # type: ignore
 
     for v in graph:
         vertex_to_path_map[v] = ShortestPath(s, v, initial_length=INFINITY, save_path=save_paths)
@@ -423,12 +428,12 @@ def breadth_first_search_shortest_paths(
 
 
 def dijkstra(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight",
-) -> VertexDict[ShortestPath[V]]:
+    weight: Union[str, Callable[[V_co, V_co, bool], Optional[float]]] = "Edge__weight",
+) -> VertexDict[ShortestPath[V_co]]:
     r"""Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to
     all reachable vertices in a graph with positive edge weights using Dijkstra's algorithm.
 
@@ -472,7 +477,7 @@ def dijkstra(
             ``weight``.
 
     Returns:
-        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
+        VertexDict[ShortestPath[V_co]]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
@@ -483,13 +488,13 @@ def dijkstra(
         * :class:`VertexDict <vertizee.classes.data_structures.vertex_dict.VertexDict>`
     """
     try:
-        s: V = graph[source]
+        s: V_co = graph[source]
     except KeyError as error:
         raise exception.VertexNotFound(f"source '{source}' not in graph") from error
     weight_function = get_weight_function(weight)
 
-    vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
-    priority_queue: PriorityQueue[ShortestPath] = PriorityQueue(lambda path: path.length)
+    vertex_to_path_map: VertexDict[ShortestPath[V_co]] = VertexDict()
+    priority_queue: PriorityQueue[ShortestPath[V_co]] = PriorityQueue(lambda path: path.length)
 
     for v in graph:
         vertex_path = ShortestPath(s, v, initial_length=INFINITY, save_path=save_paths)
@@ -502,9 +507,9 @@ def dijkstra(
 
     while priority_queue:
         u_path = priority_queue.pop()
-        u: V = u_path.destination
+        u = u_path.destination
         set_of_min_path_vertices.add(u)
-        u_adj_iter = __get_adjacent_to_child(
+        u_adj_iter = search_utils.get_adjacent_to_child(
             child=u, parent=u_path.predecessor, reverse_graph=reverse_graph
         )
         for w in u_adj_iter:
@@ -519,12 +524,12 @@ def dijkstra(
 
 
 def dijkstra_fibonacci(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
-    weight: Union[Callable, str] = "Edge__weight",
-) -> VertexDict[ShortestPath[V]]:
+    weight: Union[str, Callable[[V_co, V_co, bool], Optional[float]]] = "Edge__weight",
+) -> VertexDict[ShortestPath[V_co]]:
     r"""Finds the shortest :term:`paths <path>` and associated lengths from the source vertex to
     all reachable vertices in a graph with positive edge weights using Dijkstra's algorithm.
 
@@ -566,7 +571,7 @@ def dijkstra_fibonacci(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Returns:
-        VertexDict[ShortestPath]: A dictionary mapping vertices to their shortest paths relative to
+        VertexDict[ShortestPath[V_co]]: A dictionary mapping vertices to their shortest paths relative to
         the ``source`` vertex.
 
     See Also:
@@ -580,13 +585,13 @@ def dijkstra_fibonacci(
     # TODO(cpeisert): run benchmarks.
     #
     try:
-        s: V = graph[source]
+        s: V_co = graph[source]
     except KeyError as error:
         raise exception.VertexNotFound(f"source '{source}' not in graph") from error
     weight_function = get_weight_function(weight)
 
-    vertex_to_path_map: VertexDict[ShortestPath] = VertexDict()
-    fib_heap: FibonacciHeap[ShortestPath] = FibonacciHeap(lambda path: path.length)
+    vertex_to_path_map: VertexDict[ShortestPath[V_co]] = VertexDict()
+    fib_heap: FibonacciHeap[ShortestPath[V_co]] = FibonacciHeap(lambda path: path.length)
 
     for v in graph:
         vertex_path = ShortestPath(s, v, initial_length=INFINITY, save_path=save_paths)
@@ -600,9 +605,9 @@ def dijkstra_fibonacci(
     while len(fib_heap) > 0:
         u_path = fib_heap.extract_min()
         assert u_path is not None  # For mypy static type checker.
-        u: V = u_path.destination
+        u = u_path.destination
         set_of_min_path_vertices.add(u)
-        u_adj_iter = __get_adjacent_to_child(
+        u_adj_iter = search_utils.get_adjacent_to_child(
             child=u, parent=u_path.predecessor, reverse_graph=reverse_graph
         )
         for w in u_adj_iter:
@@ -614,18 +619,3 @@ def dijkstra_fibonacci(
                 fib_heap.update_item_with_decreased_priority(w_path)
 
     return vertex_to_path_map
-
-
-# Double underscore used due to pylint "disable=duplicate-code" not working. This method is also
-# found in the module depth_first_search.py.
-def __get_adjacent_to_child(child: V, parent: Optional[V], reverse_graph: bool) -> Iterator[V]:
-    if child._parent_graph.is_directed():
-        if reverse_graph:
-            return iter(child.adj_vertices_incoming())
-        return iter(child.adj_vertices_outgoing())
-
-    # undirected graph
-    adj_vertices = child.adj_vertices()
-    if parent:
-        adj_vertices = adj_vertices - {parent}
-    return iter(adj_vertices)

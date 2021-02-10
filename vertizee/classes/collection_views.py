@@ -63,21 +63,8 @@ Detailed documentation
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import collections.abc
-from typing import (
-    cast,
-    Collection,
-    Dict,
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    overload,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union
-)
+from typing import cast, Collection, Dict, Generic, Iterable, Iterator, List, Optional, overload
+from typing import Set, Tuple, Type, TypeVar, Union
 
 from vertizee.classes.comparable import Comparable
 
@@ -86,7 +73,7 @@ KT = TypeVar("KT", covariant=True)  # Key type.
 VT = TypeVar("VT", covariant=True)  # Value type.
 
 
-class CollectionView(ABC, collections.abc.Collection[T], Comparable, Generic[T]):
+class CollectionView(ABC, Collection[T], Comparable, Generic[T]):
     """Generic, abstract base class defining a dynamic, immutable view of a collection."""
 
     __slots__ = ("_collection",)
@@ -124,12 +111,12 @@ class CollectionView(ABC, collections.abc.Collection[T], Comparable, Generic[T])
         return self.__repr__()
 
     @classmethod
-    def _from_iterable(cls: Type[CollectionView[T]], it: Iterator[T]) -> CollectionView[T]:
+    def _from_iterable(cls: Type[CollectionView[T]], it: Iterable[T]) -> CollectionView[T]:
         """Construct an instance of the class from any iterable input."""
         return cls(list(it))
 
 
-class ItemsView(collections.abc.Set[VT], Generic[KT, VT]):
+class ItemsView(collections.abc.Set, Generic[KT, VT]):  # type: ignore
     """Generic class defining a dynamic, immutable, set-like view of items in a dictionary."""
 
     __slots__ = ("_mapping",)
@@ -149,7 +136,7 @@ class ItemsView(collections.abc.Set[VT], Generic[KT, VT]):
         else:
             return v is value or v == value
 
-    def __iter__(self) -> Iterator[Tuple[KT, VT]]:  # type: ignore
+    def __iter__(self) -> Iterator[Tuple[KT, VT]]:
         """Yields key-value pair tuples from the dictionary."""
         for key in self._mapping:
             yield (key, self._mapping[key])
@@ -164,7 +151,7 @@ class ItemsView(collections.abc.Set[VT], Generic[KT, VT]):
 
     @classmethod
     def _from_iterable(
-        cls: Type[ItemsView[KT, VT]], it: Iterator[Tuple[KT, VT]]
+        cls: Type[ItemsView[KT, VT]], it: Iterable[Tuple[KT, VT]]
     ) -> ItemsView[KT, VT]:
         return cls(dict(it))
 
@@ -221,10 +208,10 @@ class ListView(CollectionView[T], Generic[T]):
             other_list = cast(List[T], other._collection)
         else:
             return NotImplemented
-        return cast(List[T], self._collection) <  other_list
+        return cast(List[T], self._collection) < other_list
 
     @classmethod
-    def _from_iterable(cls: Type[ListView[T]], it: Iterator[T]) -> ListView[T]:
+    def _from_iterable(cls: Type[ListView[T]], it: Iterable[T]) -> ListView[T]:
         """Construct an instance of the class from any iterable input."""
         return cls(list(it))
 
@@ -246,7 +233,7 @@ class ListView(CollectionView[T], Generic[T]):
         return cast(List[object], self._collection).index(x, start, end)
 
 
-class SetView(collections.abc.Set[T], CollectionView[T], Generic[T]):
+class SetView(collections.abc.Set, CollectionView[T], Generic[T]):  # type: ignore
     """Generic class defining a dynamic, immutable, set-like view of a collection. All of the
     nonmutating set operations are supported."""
 
@@ -285,5 +272,5 @@ class SetView(collections.abc.Set[T], CollectionView[T], Generic[T]):
         return len(self._collection)
 
     @classmethod
-    def _from_iterable(cls: Type[SetView[T]], it: Iterator[T]) -> SetView[T]:
+    def _from_iterable(cls: Type[SetView[T]], it: Iterable[T]) -> SetView[T]:
         return cls(set(it))

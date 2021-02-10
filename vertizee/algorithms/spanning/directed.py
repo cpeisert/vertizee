@@ -46,7 +46,7 @@ Detailed documentation
 """
 
 from __future__ import annotations
-from typing import Dict, Final, Iterator, TYPE_CHECKING, Union
+from typing import cast, Dict, Final, Iterator, Set, TYPE_CHECKING, Union
 
 from vertizee import exception
 
@@ -55,18 +55,18 @@ from vertizee.algorithms.algo_utils.spanning_utils import (
     get_weight_function,
     PseudoEdge,
     PseudoGraph,
-    PseudoVertex
+    PseudoVertex,
 )
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.data_structures.tree import Tree
-from vertizee.classes.edge import E
-from vertizee.classes.vertex import V
+from vertizee.classes.edge import MutableEdgeBase
+from vertizee.classes.vertex import DiVertex, MultiDiVertex, VertexType
 
 if TYPE_CHECKING:
     from vertizee.classes.graph import DiGraph, MultiDiGraph
 
 
-INFINITY: Final = float("inf")
+INFINITY: Final[float] = float("inf")
 
 
 def edmonds(
@@ -74,7 +74,7 @@ def edmonds(
     minimum: bool = True,
     find_spanning_arborescence: bool = False,
     weight: str = "Edge__weight",
-) -> Iterator[Tree[V, E]]:
+) -> Iterator[Tree[Union[DiVertex, MultiDiVertex]]]:
     """Iterates over the :term:`optimum spanning arborescence` or the
     :term:`optimum spanning branching` of a :term:`digraph` using Edmonds' algorithm.
     :cite:`1967:edmonds`
@@ -106,7 +106,8 @@ def edmonds(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
-        Iterator[Tree[V, E]]: An iterator over the minimum (or maximum) arborescences.
+        Iterator[Tree[Union[DiVertex, MultiDiVertex]]]: An iterator over the minimum (or maximum)
+        arborescences.
 
     Raises:
         Unfeasible: If ``find_spanning_arborescence`` is set to True and the graph does not contain
@@ -130,7 +131,7 @@ def edmonds(
     arborescence_vertex_sets: UnionFind[PseudoVertex] = UnionFind()
     """A collection of disjoint sets of pseudovertices, where each set comprises an arborescence."""
 
-    representative_vertex_to_arborescence: Dict[PseudoVertex, Tree] = dict()
+    representative_vertex_to_arborescence: Dict[PseudoVertex, Tree[PseudoVertex]] = dict()
     """A mapping from the representative vertex of each set of vertices in
     ``arborescence_vertex_sets`` to a tree object representation of the arborescence."""
 
@@ -146,8 +147,8 @@ def edmonds(
         representative_vertex_to_arborescence[pv] = Tree(pv)
 
     for e in digraph.edges():
-        v1 = pseudograph[e.vertex1]
-        v2 = pseudograph[e.vertex2]
+        v1 = cast(PseudoVertex, pseudograph[e.vertex1])
+        v2 = cast(PseudoVertex, pseudograph[e.vertex2])
         pe = PseudoEdge(vertex1=v1, vertex2=v2, weight=(sign * weight_function(e)))
         pseudograph.add_edge_object(pe)
 
@@ -161,7 +162,7 @@ def edmonds(
     # E_i. Repeat this step until (a) E_i no longer comprises a branching in G_i, or until (b) every
     # node of G_i is in D_i, and E_i comprises the edges of a branching. When case (a) occurs, apply
     # step (2).
-    vertices = set(pseudograph.vertices())
+    vertices: Set[PseudoVertex] = set(pseudograph.vertices())
     while vertices:
         vertex = vertices.pop()
         if not vertex.incident_edges_incoming():
@@ -187,7 +188,8 @@ def edmonds(
             if optimum_edge.weight < 0:
                 continue
 
-        parent_candidate: PseudoVertex = optimum_edge.tail
+        assert isinstance(optimum_edge, PseudoEdge)
+        parent_candidate = optimum_edge.vertex1
         if arborescence_vertex_sets.in_same_set(vertex, parent_candidate):
             # Step (2): Store cycle Q_i and the edge of the cycle with minimum weight. Obtain
             # a new graph by "shrinking" to a single new vertex v_1^{i + 1} the cycle Q_i and
@@ -198,7 +200,8 @@ def edmonds(
                 union_find=arborescence_vertex_sets,
                 vertex_to_arborescence=representative_vertex_to_arborescence,
             )
-            vertices.discard(new_vertex.cycle.vertices)
+            assert new_vertex.cycle is not None
+            vertices.difference_update(new_vertex.cycle.vertices)
             vertices.add(new_vertex)
             continue
 
@@ -219,7 +222,9 @@ def edmonds(
         parent_arborescence = representative_vertex_to_arborescence[parent_representative]
         child_arborescence = representative_vertex_to_arborescence[child_representative]
         parent_arborescence.merge(child_arborescence)
-        parent_arborescence._edges[optimum_edge.label] = optimum_edge
+        parent_arborescence._edges[optimum_edge.label] = cast(
+            MutableEdgeBase[PseudoVertex], optimum_edge
+        )
 
         representative_vertex_to_arborescence.pop(parent_representative)
         representative_vertex_to_arborescence.pop(child_representative)
@@ -246,24 +251,26 @@ def edmonds(
     # an optimum branching, delete from cycle_i+1 the cycle edge with minimum weight.
     while pseudograph.cycle_stack:
         cycle: Cycle = pseudograph.cycle_stack.pop()
-        vertex_cycle: PseudoVertex = pseudograph[cycle.label]
+        vertex_cycle = cast(PseudoVertex, pseudograph[cycle.label])
         edge_to_delete = None
 
         if vertex_cycle.parent_vertex and pseudograph.has_edge(
             vertex_cycle.parent_vertex, vertex_cycle
         ):
             # vertex_cycle_i+1 is _not_ the root of an arborescence
-            incoming_edge: PseudoEdge = pseudograph[vertex_cycle.parent_vertex, vertex_cycle]
+            incoming_edge: PseudoEdge = cast(
+                PseudoEdge, pseudograph.get_edge(vertex_cycle.parent_vertex, vertex_cycle)
+            )
             if not incoming_edge.previous_version:
                 raise exception.AlgorithmError(
                     f"edge {incoming_edge} directed toward cycle "
                     f"{cycle.label} does not have a previous version; this should not be possible"
                 )
-            head_i = incoming_edge.previous_version.head
+            head_i = incoming_edge.previous_version.vertex2
 
             edge_i_2 = None
             for cycle_edge in cycle.edges:
-                if cycle_edge.head == head_i:
+                if cycle_edge.vertex2 == head_i:
                     edge_i_2 = cycle_edge
                     break
             if not edge_i_2:
@@ -278,6 +285,7 @@ def edmonds(
 
         representative_vertex = arborescence_vertex_sets[vertex_cycle]
         arborescence = representative_vertex_to_arborescence[representative_vertex]
+        assert isinstance(edge_to_delete, PseudoEdge)
         _undo_cycle_contraction(
             pseudograph, cycle, edge_to_delete=edge_to_delete, arborescence=arborescence
         )
@@ -291,19 +299,21 @@ def edmonds(
                 "digraph does not contain a spanning arborescence; see optimum_directed_forest()"
             )
 
-        arborescence = Tree(digraph._vertices[pseudo_arborescence.root.label])
+        final_arborescence: Tree[Union[DiVertex, MultiDiVertex]] = Tree(
+            digraph._vertices[pseudo_arborescence.root.label]
+        )
         for vertex in pseudo_arborescence.vertices():
             if vertex.contains_cycle():
                 continue
-            arborescence._vertex_set.add(digraph._vertices[vertex.label])
-        for edge in pseudo_arborescence.edges():
-            arborescence._edges[edge.label] = digraph._edges[edge.label]
-        yield arborescence
+            final_arborescence._vertices[vertex.label] = digraph._vertices[vertex.label]
+        for pseudoedge in pseudo_arborescence.edges():
+            final_arborescence._edges[pseudoedge.label] = digraph._edges[pseudoedge.label]
+        yield final_arborescence
 
 
 def optimum_directed_forest(
     digraph: Union[DiGraph, MultiDiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Tree[V, E]]:
+) -> Iterator[Tree[Union[DiVertex, MultiDiVertex]]]:
     """Iterates over a minimum (or maximum) :term:`directed forest` of a weighted,
     :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds` A directed forest is also
     called a :term:`branching`.
@@ -335,7 +345,7 @@ def optimum_directed_forest(
 
 def spanning_arborescence(
     digraph: Union[DiGraph, MultiDiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Tree[V, E]:
+) -> Tree[Union[DiVertex, MultiDiVertex]]:
     """Returns a minimum (or maximum) :term:`spanning arborescence` of a weighted,
     :term:`directed graph` using Edmonds' algorithm. :cite:`1967:edmonds`
 
@@ -369,8 +379,8 @@ def spanning_arborescence(
 def _contract_cycle(
     graph: PseudoGraph,
     cycle_edge: PseudoEdge,
-    union_find: UnionFind,
-    vertex_to_arborescence: Dict[PseudoVertex, Tree],
+    union_find: UnionFind[PseudoVertex],
+    vertex_to_arborescence: Dict[PseudoVertex, Tree[PseudoVertex]],
 ) -> PseudoVertex:
     """Helper method to contract a cycle in a graph to a new vertex. The ``cycle_edge`` is the last
     edge that was discovered forming the cycle. The cycle may be followed by using the
@@ -408,10 +418,10 @@ def _contract_cycle(
     Returns:
         PseudoVertex: A new pseudovertex comprising the contracted vertices and edges of the cycle.
     """
-    cycle_start = cycle_edge.tail
-    cycle_end = cycle_edge.head
+    cycle_start = cycle_edge.vertex1  # the tail vertex
+    cycle_end = cycle_edge.vertex2  # the head vertex
     representative_vertex = union_find[cycle_start]
-    arborescence: Tree = vertex_to_arborescence[representative_vertex]
+    arborescence: Tree[PseudoVertex] = vertex_to_arborescence[representative_vertex]
 
     label = graph.create_cycle_label()
     cycle = Cycle(label)
@@ -420,31 +430,36 @@ def _contract_cycle(
 
     new_vertex = PseudoVertex(label, parent_graph=graph)
     new_vertex.cycle = cycle
-    arborescence._vertex_set.add(new_vertex)
+    arborescence._vertices[new_vertex.label] = new_vertex
     graph.add_vertex_object(new_vertex)
 
     vertex: PseudoVertex = cycle_start
     cycle.min_weight_edge = cycle_edge
     while vertex != cycle_end:
-        next_cycle_edge = graph[vertex.parent_vertex, vertex]
+        next_edge = graph.get_edge(cast(VertexType, vertex.parent_vertex), vertex)
+        next_cycle_edge = cast(PseudoEdge, next_edge)
+
         if next_cycle_edge.weight < cycle.min_weight_edge.weight:
             cycle.min_weight_edge = next_cycle_edge
         cycle.add_cycle_edge(next_cycle_edge)
+        # In order to form a cycle, there must be a parent_vertex link for each vertex on the cycle.
+        assert vertex.parent_vertex is not None
         vertex = vertex.parent_vertex
 
     for vertex in cycle.vertices:
-        for edge in vertex.incident_edges_incoming():
+        for e in vertex.incident_edges_incoming():
+            edge = cast(PseudoEdge, e)
             if edge in cycle.edges or edge not in graph:
                 continue
 
-            if edge in arborescence and edge.tail not in cycle.vertices:
-                new_vertex.parent_vertex = edge.tail
+            if edge in arborescence and edge.vertex1 not in cycle.vertices:
+                new_vertex.parent_vertex = edge.vertex1
 
-            cycle_vertex = edge.head
+            cycle_vertex = edge.vertex2
             incoming_cycle_edge = None
-            for e in cycle_vertex.incident_edges_incoming():
-                if e in cycle.edges:
-                    incoming_cycle_edge = e
+            for incident_edge in cycle_vertex.incident_edges_incoming():
+                if incident_edge in cycle.edges:
+                    incoming_cycle_edge = incident_edge
                     break
             if not incoming_cycle_edge:
                 raise exception.AlgorithmError(
@@ -452,44 +467,47 @@ def _contract_cycle(
                 )
 
             new_weight = edge.weight + cycle.min_weight_edge.weight - incoming_cycle_edge.weight
-            if edge.tail in cycle.vertices:
+            if edge.vertex1 in cycle.vertices:
                 new_edge = PseudoEdge(new_vertex, new_vertex, weight=new_weight)
             else:
-                new_edge = PseudoEdge(edge.tail, new_vertex, weight=new_weight)
+                new_edge = PseudoEdge(edge.vertex1, new_vertex, weight=new_weight)
+
             new_edge.previous_version = edge
             cycle.incoming_edges.add(new_edge)
             new_vertex._add_edge(new_edge)
 
             if edge in arborescence:
                 arborescence._edges.pop(edge.label, None)
-                arborescence._edges[new_edge.label] = new_edge
+                arborescence._edges[new_edge.label] = cast(MutableEdgeBase[PseudoVertex], new_edge)
             graph.remove_edge(edge.vertex1, edge.vertex2)
             graph.add_edge_object(new_edge)
 
-        for edge in vertex.incident_edges_outgoing():
+        for e in vertex.incident_edges_outgoing():
+            edge = cast(PseudoEdge, e)
             if edge in cycle.edges or edge not in graph:
                 continue
 
-            head: PseudoVertex = edge.head
+            head = edge.vertex2
             cycle.outgoing_edge_head_previous_parent[edge] = head.parent_vertex
 
-            if head.parent_vertex and head.parent_vertex == edge.tail:
+            if head.parent_vertex and head.parent_vertex == edge.vertex1:
                 head.parent_vertex = new_vertex
 
-            if edge.head in cycle.vertices:
+            if edge.vertex2 in cycle.vertices:
                 new_edge = PseudoEdge(new_vertex, new_vertex, weight=0)
             else:
-                new_edge = PseudoEdge(new_vertex, edge.head, weight=edge.weight)
+                new_edge = PseudoEdge(new_vertex, edge.vertex2, weight=edge.weight)
             new_edge.previous_version = edge
             cycle.outgoing_edges.add(new_edge)
             new_vertex._add_edge(new_edge)
 
             if edge in arborescence:
                 arborescence._edges.pop(edge.label, None)
-                arborescence._edges[new_edge.label] = new_edge
+                arborescence._edges[new_edge.label] = cast(MutableEdgeBase[PseudoVertex], new_edge)
             graph.remove_edge(edge.vertex1, edge.vertex2)
             graph.add_edge_object(new_edge)
 
+        assert vertex.parent_vertex is not None
         vertex = vertex.parent_vertex
 
     for edge in cycle.edges:
@@ -512,15 +530,15 @@ def _contract_cycle(
 
 
 def _undo_cycle_contraction(
-    graph: PseudoGraph, cycle: Cycle, edge_to_delete: PseudoEdge, arborescence: Tree
+    graph: PseudoGraph, cycle: Cycle, edge_to_delete: PseudoEdge, arborescence: Tree[PseudoVertex]
 ) -> None:
     """
-    This is a helper function that undoes a cycle contraction by add the cycle edges back to the
+    This is a helper function that undoes a cycle contraction by adding the cycle edges back to the
     graph and removing one of the cycle edges, thus breaking the cycle. In addition, each incoming
     and outgoing cycle edge is rolled back to its previous version prior to the cycle contraction.
     """
     for edge in cycle.edges:
-        arborescence._edges[edge.label] = edge
+        arborescence._edges[edge.label] = cast(MutableEdgeBase[PseudoVertex], edge)
         graph.add_edge_object(edge)
 
     arborescence._edges.pop(edge_to_delete.label)
@@ -534,19 +552,29 @@ def _undo_cycle_contraction(
 
     for edge in cycle.incoming_edges:
         if edge in arborescence:
+            assert edge is not None
+            assert edge.previous_version is not None
             arborescence._edges.pop(edge.label, None)
-            arborescence._edges[edge.previous_version.label] = edge.previous_version
+            arborescence._edges[edge.previous_version.label] = cast(
+                MutableEdgeBase[PseudoVertex], edge.previous_version
+            )
         if edge in graph:
             graph.remove_edge(edge.vertex1, edge.vertex2)
+            assert edge.previous_version is not None
             graph.add_edge_object(edge.previous_version)
     for edge in cycle.outgoing_edges:
         if edge in arborescence:
+            assert edge.previous_version is not None
             arborescence._edges.pop(edge.label, None)
-            arborescence._edges[edge.previous_version.label] = edge.previous_version
+            arborescence._edges[edge.previous_version.label] = cast(
+                MutableEdgeBase[PseudoVertex], edge.previous_version
+            )
         if edge in graph:
             graph.remove_edge(edge.vertex1, edge.vertex2)
+            assert edge.previous_version is not None
             graph.add_edge_object(edge.previous_version)
-        edge.head.parent_vertex = cycle.outgoing_edge_head_previous_parent[edge.previous_version]
+        assert edge.previous_version is not None
+        edge.vertex2.parent_vertex = cycle.outgoing_edge_head_previous_parent[edge.previous_version]
 
-    arborescence._vertex_set.remove(cycle_vertex)
+    arborescence._vertices.pop(cycle_vertex.label)
     graph.remove_vertex(cycle_vertex)

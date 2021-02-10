@@ -19,6 +19,7 @@ from typing_extensions import Protocol
 
 class Comparable(Protocol):
     """Protocol defining an interface for comparable types."""
+
     @abstractmethod
     def __eq__(self, other: object) -> bool:
         pass

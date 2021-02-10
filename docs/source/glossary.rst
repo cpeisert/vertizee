@@ -132,7 +132,7 @@ Glossary
     :math:`(u, w)` and :math:`(v, w)` is in :math:`E` and adding the new edge :math:`(x, w)`.
     In effect, :math:`u` and :math:`v` are "contracted" into a single vertex :math:`x`.
     :cite:`2009:clrs`
-    See :meth:`EdgeBase.contract <vertizee.classes.edge.EdgeBase.contract>`.
+    See :meth:`MutableEdgeBase.contract <vertizee.classes.edge.MutableEdgeBase.contract>`.
 
   converse
     A synonym for :term:`reverse`.

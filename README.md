@@ -29,7 +29,7 @@ set()
 >>> g["s"].incident_edges_outgoing
 {(s, t), (s, y)}
 >>> # Get DiEdge (directed edge) object for edge (s, y) and access its `weight` property.
->>> g["s", "y"].weight
+>>> g.get_edge("s", "y").weight
 5.0
 >>> from vertizee.algorithms import shortest_paths_dijkstra
 >>> # `s_paths` is a dictionary mapping path-destination vertices (the dictionary keys) to

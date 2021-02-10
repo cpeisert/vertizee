@@ -45,34 +45,45 @@ Detailed documentation
 """
 
 from __future__ import annotations
-from typing import Final, Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
+from typing import (
+    Any,
+    cast,
+    Final,
+    Iterator,
+    Optional,
+    Set,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+    ValuesView,
+)
 
-from vertizee import exception
 from vertizee.algorithms.algo_utils.search_utils import (
     Direction,
+    get_adjacent_to_child,
     Label,
     SearchResults,
     VertexSearchState,
 )
+from vertizee import exception
 from vertizee.classes import edge as edge_module
+from vertizee.classes.edge import MultiEdgeBase
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import E
-    from vertizee.classes.graph import G
-    from vertizee.classes.vertex import V, VertexType
+    from vertizee.classes.edge import EdgeBase
+    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.vertex import V, V_co, VertexType
 
-BLACK: Final = "black"
-GRAY: Final = "gray"
-WHITE: Final = "white"
-
-INFINITY: Final = float("inf")
+BLACK: Final[str] = "black"
+GRAY: Final[str] = "gray"
+WHITE: Final[str] = "white"
 
 
 def dfs(
-    graph: G[V, E], source: Optional[VertexType] = None, reverse_graph: bool = False
-) -> SearchResults[V, E]:
+    graph: GraphBase[V_co], source: Optional[VertexType] = None, reverse_graph: bool = False
+) -> SearchResults[V_co]:
     """Performs a depth-first-search and provides detailed results (e.g. a forest of
     depth-first-search trees, cycle detection, and edge classification).
 
@@ -119,6 +130,7 @@ def dfs(
         graph, source=source, reverse_graph=reverse_graph
     )
 
+    dfs_tree: Optional[Tree[V_co]] = None
     for (parent, child, label, direction) in labeled_edge_tuple_iterator:
         vertex = child
 
@@ -134,8 +146,9 @@ def dfs(
             dfs_results._vertices_postorder.append(vertex)
 
         if label == Label.TREE_EDGE and direction == Direction.PREORDER:
-            edge = graph[parent, child]
+            edge = graph.get_edge(parent, child)
             dfs_results._tree_edges.add(edge)
+            assert dfs_tree is not None
             dfs_tree.add_edge(edge)
             dfs_results._edges_in_discovery_order.append(edge)
             dfs_results._vertices_preorder.append(vertex)
@@ -143,21 +156,21 @@ def dfs(
                 _check_for_parallel_edge_cycle(graph, dfs_results, edge)
         elif label == Label.BACK_EDGE:
             dfs_results._is_acyclic = False
-            dfs_results._back_edges.add(graph[parent, child])
+            dfs_results._back_edges.add(graph.get_edge(parent, child))
         elif label == Label.CROSS_EDGE:
-            dfs_results._cross_edges.add(graph[parent, child])
+            dfs_results._cross_edges.add(graph.get_edge(parent, child))
         elif label == Label.FORWARD_EDGE:
-            dfs_results._forward_edges.add(graph[parent, child])
+            dfs_results._forward_edges.add(graph.get_edge(parent, child))
 
     return dfs_results
 
 
 def dfs_labeled_edge_traversal(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
-) -> Iterator[Tuple[V, V, str, str]]:
+) -> Iterator[Tuple[V_co, V_co, str, str]]:
     """Iterates over the labeled edges of a depth-first search traversal.
 
     Running time: :math:`O(m + n)`
@@ -259,22 +272,21 @@ def dfs_labeled_edge_traversal(
         vertex_color[vertex] = WHITE
 
     if source is None:
-        vertices = graph.vertices()
+        vertices: Union[ValuesView[V_co], Set[Any]] = graph.vertices()
     else:
-        s: V = graph[source]
+        s: V_co = graph[source]
         vertices = {s}
-    if depth_limit is None:
-        depth_limit = INFINITY
 
     for vertex in vertices:
+        vertex = cast(V_co, vertex)  # Without cast, Pylance assumes type Union[V_co, Any]
         if vertex_color[vertex] != WHITE:  # Already discovered?
             continue
 
         vertex_color[vertex] = GRAY  # Mark discovered.
         vertex_discovery_order[vertex] = len(vertex_discovery_order)
 
-        children = _get_adjacent_to_child(child=vertex, parent=None, reverse_graph=reverse_graph)
-        stack: List[VertexSearchState] = [VertexSearchState(vertex, children, depth_limit)]
+        children = get_adjacent_to_child(child=vertex, parent=None, reverse_graph=reverse_graph)
+        stack = [VertexSearchState(vertex, children, depth_limit)]
 
         yield vertex, vertex, Label.TREE_ROOT, Direction.PREORDER
 
@@ -304,10 +316,12 @@ def dfs_labeled_edge_traversal(
                 classified_edges.add(edge_label)
                 yield parent, child, Label.TREE_EDGE, Direction.PREORDER
 
-                grandchildren = _get_adjacent_to_child(
+                grandchildren = get_adjacent_to_child(
                     child=child, parent=parent, reverse_graph=reverse_graph
                 )
-                if depth_now > 1:
+                if depth_now is None:
+                    stack.append(VertexSearchState(child, grandchildren, depth_now))
+                elif depth_now > 1:
                     stack.append(VertexSearchState(child, grandchildren, depth_now - 1))
             elif vertex_color[child] == GRAY:  # In the process of being visited?
                 if edge_label not in classified_edges:
@@ -327,11 +341,11 @@ def dfs_labeled_edge_traversal(
 
 
 def dfs_postorder_traversal(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
-) -> Iterator[V]:
+) -> Iterator[V_co]:
     """Iterates over vertices of a depth-first search in :term:`postorder`.
 
     Note:
@@ -369,11 +383,11 @@ def dfs_postorder_traversal(
 
 
 def dfs_preorder_traversal(
-    graph: G[V, E],
+    graph: GraphBase[V_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
-) -> Iterator[V]:
+) -> Iterator[V_co]:
     """Iterates over vertices in depth-first search in :term:`preorder`.
 
     Note:
@@ -405,28 +419,16 @@ def dfs_preorder_traversal(
 
 
 def _check_for_parallel_edge_cycle(
-    graph: G[V, E], dfs_results: SearchResults[V, E], edge: E
+    graph: GraphBase[V_co], dfs_results: SearchResults[V_co], edge: EdgeBase[V_co]
 ) -> None:
     """Helper function to check for parallel edge cycles."""
     if edge is None:
         return
     if not graph.is_directed() and graph.is_multigraph():
-        if edge.multiplicity > 1:
+        multiplicity = cast(MultiEdgeBase[V_co], edge).multiplicity
+        if multiplicity > 1:
             dfs_results._is_acyclic = False
     elif graph.is_directed() and dfs_results.is_acyclic():
         # Check if parallel edge in opposite direction.
         if graph.has_edge(edge.vertex2, edge.vertex1):
             dfs_results._is_acyclic = False
-
-
-def _get_adjacent_to_child(child: V, parent: Optional[V], reverse_graph: bool) -> Iterator[V]:
-    if child._parent_graph.is_directed():
-        if reverse_graph:
-            return iter(child.adj_vertices_incoming())
-        return iter(child.adj_vertices_outgoing())
-
-    # undirected graph
-    adj_vertices = child.adj_vertices()
-    if parent:
-        adj_vertices = adj_vertices - {parent}
-    return iter(adj_vertices)

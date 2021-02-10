@@ -48,20 +48,20 @@ class TestVertexModuleFunctions:
 
     def test_is_vertex_type(self):
         g = Graph()
-        v_obj: Vertex = g.add_vertex(1)
-        assert vertex_module.is_vertex_type(v_obj), "Vertex object should be a VertexType"
+        v: Vertex = g.add_vertex(1)
+        assert vertex_module.is_vertex_type(v), "Vertex object should be a VertexType"
 
         g2 = DiGraph()
-        v_obj: DiVertex = g2.add_vertex(1)
-        assert vertex_module.is_vertex_type(v_obj), "DiVertex object should be a VertexType"
+        di_v: DiVertex = g2.add_vertex(1)
+        assert vertex_module.is_vertex_type(di_v), "DiVertex object should be a VertexType"
 
         g3 = MultiGraph()
-        v_obj: MultiVertex = g3.add_vertex(1)
-        assert vertex_module.is_vertex_type(v_obj), "MultiVertex object should be a VertexType"
+        multi_v: MultiVertex = g3.add_vertex(1)
+        assert vertex_module.is_vertex_type(multi_v), "MultiVertex object should be a VertexType"
 
         g4 = MultiDiGraph()
-        v_obj: MultiDiVertex = g4.add_vertex(1)
-        assert vertex_module.is_vertex_type(v_obj), "MultiDiVertex object should be a VertexType"
+        multi_di_v: MultiDiVertex = g4.add_vertex(1)
+        assert vertex_module.is_vertex_type(multi_di_v), "MultiDiVertex should be a VertexType"
 
         assert vertex_module.is_vertex_type(10), "int vertex label should be a VertexType"
         assert vertex_module.is_vertex_type("s"), "str vertex label should be a VertexType"
@@ -75,7 +75,7 @@ class TestVertexModuleFunctions:
         ), "edge tuple with edge weight should not be a VertexType"
         g.add_edge("s", "t")
         assert not vertex_module.is_vertex_type(
-            g["s", "t"]
+            g.get_edge("s", "t")
         ), "edge object should not be a VertexType"
 
 
@@ -206,7 +206,9 @@ class TestVertex:
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"
 
         g.add_edge(1, 1)
-        assert g[1].incident_edges() == {g[1, 1]}, "vertex 1 should have self loop as incident edge"
+        assert g[1].incident_edges() == {
+            g.get_edge(1, 1)
+        }, "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
 
         g.add_edge(1, 2)
@@ -277,16 +279,18 @@ class TestDiVertex:
         g.add_edge(1, 2)
         g.add_edge(3, 1)
         assert g[1].incident_edges() == {
-            g[1, 0],
-            g[1, 2],
-            g[3, 1],
+            g.get_edge(1, 0),
+            g.get_edge(1, 2),
+            g.get_edge(3, 1),
         }, "incident edges should be (1, 0), (1, 2), and (3, 1)"
 
-        assert g[1].incident_edges_incoming() == {g[3, 1]}, "incoming edge should be (3, 1)"
+        assert g[1].incident_edges_incoming() == {
+            g.get_edge(3, 1)
+        }, "incoming edge should be (3, 1)"
 
         assert g[1].incident_edges_outgoing() == {
-            g[1, 0],
-            g[1, 2],
+            g.get_edge(1, 0),
+            g.get_edge(1, 2),
         }, "outgoing edges should include (1, 0) and (1, 2)"
 
     def test_loop_edge(self):
@@ -295,7 +299,9 @@ class TestDiVertex:
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"
 
         g.add_edge(1, 1)
-        assert g[1].incident_edges() == {g[1, 1]}, "vertex 1 should have self loop as incident edge"
+        assert g[1].incident_edges() == {
+            g.get_edge(1, 1)
+        }, "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
 
 
@@ -341,7 +347,9 @@ class TestMultiVertex:
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"
 
         g.add_edges_from([(1, 1), (1, 1), (2, 3), (2, 3)])
-        assert g[1].incident_edges() == {g[1, 1]}, "vertex 1 should have self loop as incident edge"
+        assert g[1].incident_edges() == {
+            g.get_edge(1, 1)
+        }, "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
 
         assert len(g[2].incident_edges()) == 1, "vertex 2 should have one incident multiedge"
@@ -396,11 +404,15 @@ class TestMultiDiVertex:
 
     def test_incident_edges(self):
         g = MultiDiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
-        assert g[1].incident_edges() == {g[1, 1]}, "vertex 1 should be incident on (1, 1)"
-        assert g[1].incident_edges_incoming() == {g[1, 1]}, "incoming edge should be (1, 1)"
-        assert g[1].incident_edges_outgoing() == {g[1, 1]}, "outgoing edge should be (1, 1)"
+        assert g[1].incident_edges() == {g.get_edge(1, 1)}, "vertex 1 should be incident on (1, 1)"
+        assert g[1].incident_edges_incoming() == {
+            g.get_edge(1, 1)
+        }, "incoming edge should be (1, 1)"
+        assert g[1].incident_edges_outgoing() == {
+            g.get_edge(1, 1)
+        }, "outgoing edge should be (1, 1)"
 
-        assert g[2].incident_edges_outgoing() == {g[2, 3]}, "outgoing edges should (2, 3)"
+        assert g[2].incident_edges_outgoing() == {g.get_edge(2, 3)}, "outgoing edges should (2, 3)"
         assert not g[2].incident_edges_incoming(), "should be no incoming edges"
 
     def test_loop_edge(self):
@@ -410,6 +422,8 @@ class TestMultiDiVertex:
 
         g.add_edge(1, 1)
         g.add_edge(1, 1)
-        assert g[1].incident_edges() == {g[1, 1]}, "vertex 1 should have self loop as incident edge"
+        assert g[1].incident_edges() == {
+            g.get_edge(1, 1)
+        }, "vertex 1 should have self loop as incident edge"
         assert g[1].loop_edge, "vertex 1 should have a self loop"
         assert g[1].loop_edge.multiplicity == 2, "vertex 1 should have two loops"

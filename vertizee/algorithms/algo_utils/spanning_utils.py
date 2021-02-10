@@ -55,16 +55,16 @@ Detailed documentation
 """
 
 from __future__ import annotations
-from typing import Callable, cast, Dict, Final, Generic, List, Optional, Set, Union
+from typing import Callable, cast, Dict, Final, List, Optional, Set, Union, ValuesView
 
-from vertizee.classes.graph import DiGraph, G
-from vertizee.classes.edge import _DiEdge, DiEdge, E, Edge, EdgeClass, MultiEdgeBase
-from vertizee.classes.vertex import _DiVertex, V, VertexClass
+from vertizee.classes.graph import DiGraph, GraphBase
+from vertizee.classes.edge import _DiEdge, DiEdge, Edge, MultiEdgeBase, MutableEdgeBase
+from vertizee.classes.vertex import _DiVertex, V_co, VertexBase
 
 
 def get_weight_function(
     weight: str = "Edge__weight", minimum: bool = True
-) -> Callable[[EdgeClass], float]:
+) -> Callable[[MutableEdgeBase[V_co]], float]:
     """Returns a function that accepts an edge and returns the corresponding edge weight.
 
     If there is no edge weight, then the edge weight is assumed to be one.
@@ -80,26 +80,29 @@ def get_weight_function(
             connections is returned, otherwise the maximum weight. Defaults to True.
 
     Returns:
-        Callable[[E], float]: A function that accepts an edge and returns the
+        Callable[[MutableEdgeBase[V_co]], float]: A function that accepts an edge and returns the
         corresponding edge weight.
     """
 
-    def default_weight_function(edge: EdgeClass) -> float:
+    def default_weight_function(edge: MutableEdgeBase[V_co]) -> float:
         if edge._parent_graph.is_multigraph():
             if minimum:
-                return min(c.weight for c in cast(MultiEdgeBase, edge).connections())
-            return max(c.weight for c in cast(MultiEdgeBase, edge).connections())
+                return min(c.weight for c in cast(MultiEdgeBase[V_co], edge).connections())
+            return max(c.weight for c in cast(MultiEdgeBase[V_co], edge).connections())
         return edge.weight
 
-    def attr_weight_function(edge: EdgeClass) -> float:
+    def attr_weight_function(edge: MutableEdgeBase[V_co]) -> float:
         if edge._parent_graph.is_multigraph():
             if minimum:
-                return float(min(
-                    c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase, edge).connections()
-                ))
-            return float(max(
-                c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase, edge).connections()
-            ))
+                return float(
+                    min(
+                        c.attr.get(weight, 1.0)
+                        for c in cast(MultiEdgeBase[V_co], edge).connections()
+                    )
+                )
+            return float(
+                max(c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase[V_co], edge).connections())
+            )
         return cast(Union[Edge, DiEdge], edge).attr.get(weight, 1.0)
 
     if weight == "Edge__weight":
@@ -107,7 +110,7 @@ def get_weight_function(
     return attr_weight_function
 
 
-class Cycle(Generic[V, E]):
+class Cycle:
     """A :term:`cycle` in a graph.
 
     Args:
@@ -118,32 +121,32 @@ class Cycle(Generic[V, E]):
 
     def __init__(self, label: str) -> None:
 
-        self.edges: Set[E] = set()
+        self.edges: Set[PseudoEdge] = set()
         """The set of edges comprising the cycle."""
 
-        self.incoming_edges: Set[E] = set()
+        self.incoming_edges: Set[PseudoEdge] = set()
         """The set of edges whose tail is outside the cycle and whose head is part of the cycle."""
 
         self.label = label
         """The label of the cycle."""
 
-        self.outgoing_edges: Set[E] = set()
+        self.outgoing_edges: Set[PseudoEdge] = set()
         """The set of edges whose head is outside the cycle and whose tail is part of the cycle."""
 
-        self.outgoing_edge_head_previous_parent: Dict[E, V] = dict()
-        """A dictionary mapping the head vertices of outgoing edges to their previous parent
-        vertices in a search arborescence (prior to this cycle being contracted)."""
+        self.outgoing_edge_head_previous_parent: Dict[PseudoEdge, Optional[PseudoVertex]] = dict()
+        """A dictionary mapping outgoing edges to their previous parent vertices in a search
+        arborescence (prior to this cycle being contracted)."""
 
-        self.min_weight_edge: Optional[E] = None
+        self.min_weight_edge: Optional[PseudoEdge] = None
         """The edge of the cycle that has the minimum weight."""
 
-        self.vertices: Set[V] = set()
+        self.vertices: Set[PseudoVertex] = set()
         """The set of vertices comprising the cycle."""
 
     def __hash__(self) -> int:
         return hash(self.label)
 
-    def add_cycle_edge(self, edge: E) -> None:
+    def add_cycle_edge(self, edge: PseudoEdge) -> None:
         """Adds an edge (and associated vertices) to the cycle."""
         if not self.min_weight_edge:
             self.min_weight_edge = edge
@@ -181,12 +184,12 @@ class PseudoVertex(_DiVertex):
         self,
         label: str,
         parent_graph: "PseudoGraph",
-        incident_edge_labels: Optional[Set[str]] = None
+        incident_edge_labels: Optional[Set[str]] = None,
     ) -> None:
-        super().__init__(label, cast(G[VertexClass, EdgeClass], parent_graph))
+        super().__init__(label, cast(GraphBase[VertexBase], parent_graph))
         self._incident_edges._incident_edge_labels = incident_edge_labels
 
-        self.cycle: Optional[Cycle[PseudoVertex, PseudoEdge]] = None
+        self.cycle: Optional[Cycle] = None
         """The cycle that was contracted to form this vertex. If this vertex is not the contraction
         of a cycle, then ``cycle`` is None."""
 
@@ -237,6 +240,18 @@ class PseudoEdge(_DiEdge):
             return self.previous_version.get_original_edge()
         return self
 
+    @property
+    def vertex1(self) -> PseudoVertex:
+        """The tail vertex (type :class:`DiVertex <vertizee.classes.vertex.DiVertex>`), which is
+        the origin of the :term:`directed edge`."""
+        return cast(PseudoVertex, self._vertex1)
+
+    @property
+    def vertex2(self) -> PseudoVertex:
+        """The head vertex (type :class:`DiVertex <vertizee.classes.vertex.DiVertex>`), which is
+        the destination of the :term:`directed edge`."""
+        return cast(PseudoVertex, self._vertex2)
+
 
 class PseudoGraph(DiGraph):
     """PseudoGraph is a graph that supports algorithms that may :term:`contract <contraction>`
@@ -250,13 +265,13 @@ class PseudoGraph(DiGraph):
 
     def __init__(self) -> None:
         super().__init__()
-        self.cycle_stack: List["Cycle[PseudoVertex, PseudoEdge]"] = list()
+        self.cycle_stack: List["Cycle"] = list()
         """The cycle stack is a first-in-last-out (FILO) sequence of cycles found in the graph.
         Each cycle on the stack corresponds to a :class:`PseudoVertex` with the same label that
         was formed by contracting the vertices and edges comprising the cycle."""
 
         self.cycle_label_count = 0
-        self._CYCLE_LABEL_PREFIX: Final = "__cycle_label_"
+        self._CYCLE_LABEL_PREFIX: Final[str] = "__cycle_label_"
 
     def add_edge_object(self, edge: "PseudoEdge") -> None:
         """Adds a PseudoEdge to the graph."""
@@ -272,3 +287,7 @@ class PseudoGraph(DiGraph):
         """Creates a cycle label that is unique to this graph instance."""
         self.cycle_label_count += 1
         return f"{self._CYCLE_LABEL_PREFIX}{self.cycle_label_count}__"
+
+    def vertices(self) -> ValuesView[PseudoVertex]:
+        """A view of the graph vertices."""
+        return cast(ValuesView[PseudoVertex], self._vertices.values())

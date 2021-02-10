@@ -22,42 +22,38 @@ A :term:`tree <free tree>` is a :term:`graph` that is connected and does not con
 """
 
 from __future__ import annotations
-from typing import cast, Dict, Generic, Iterator, overload, TYPE_CHECKING, Union, ValuesView
+from typing import cast, Dict, Generic, Iterator, TYPE_CHECKING, ValuesView
 
 from vertizee import exception
 from vertizee.classes import primitives_parsing
 from vertizee.classes import edge as edge_module
 from vertizee.classes.comparable import Comparable
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData, VertexData
-from vertizee.classes.edge import E, MultiEdgeBase
-from vertizee.classes.vertex import V
+from vertizee.classes.edge import EdgeBase, MultiEdgeBase
+from vertizee.classes.vertex import V_co
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import EdgeType
     from vertizee.classes.vertex import VertexType
 
 
-class Tree(Comparable, Generic[V, E]):
+class Tree(Comparable, Generic[V_co]):
     """A :term:`tree <free tree>` is a :term:`graph` that is :term:`connected` and does not contain
     :term:`circuits <circuit>`.
 
     For any positive integer :math:`n`, a tree with :math:`n` vertices has :math:`n - 1` edges.
 
-    This class has generic type parameters ``V`` and ``E``, which enable the type-hint usage
-    ``Tree[V, E]``.
+    This class has generic type parameter ``V_co``, which enable the type-hint usage
+    ``Tree[V_co]``.
 
-    * ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
+    * ``V_co = TypeVar("V", bound="VertexBase", covariant=True)`` See :class:`VertexBase
       <vertizee.classes.vertex.VertexBase>`.
-    * ``E = TypeVar("E", bound=Union["Connection", "MultiConnection"])`` See
-      :class:`Connection <vertizee.classes.edge.Connection>` and
-      :class:`MultiConnection <vertizee.classes.edge.MultiConnection>`.
 
     Note:
         A tree is not intended to be used as a standalone graph, but rather as a container to
         organize trees. The edges and vertices of a tree belong to an instance of
-        :class:`G <vertizee.classes.graph.G>` (or one of its subclasses). However, ``Tree``
-        implements the basic graph API, such as ``contains``, ``iter``, and ``len`` as well as
-        index notation to get vertices and edges.
+        :class:`GraphBase <vertizee.classes.graph.GraphBase>` (or one of its subclasses). However,
+        ``Tree`` implements the basic graph API, such as ``contains``, ``iter``, and ``len`` as
+        well as index notation to get vertices and edges.
 
     Args:
         root: The root vertex of the tree.
@@ -65,14 +61,14 @@ class Tree(Comparable, Generic[V, E]):
 
     __slots__ = ("_edges", "_root", "_vertices")
 
-    def __init__(self, root: V) -> None:
+    def __init__(self, root: V_co) -> None:
         super().__init__()
-        self._root: V = root
-        self._edges: Dict[str, E] = dict()
+        self._root = root
+        self._edges: Dict[str, EdgeBase[V_co]] = dict()
         """A dictionary mapping edge labels to edge objects. See :func:`create_edge_label
         <vertizee.classes.edge.create_edge_label>`."""
 
-        self._vertices: Dict[str, V] = dict()
+        self._vertices: Dict[str, V_co] = dict()
         """A dictionary mapping vertex labels to vertex objects."""
 
         self._vertices[root.label] = root
@@ -96,12 +92,14 @@ class Tree(Comparable, Generic[V, E]):
             return True
         if self._root == other._root and self._vertices.keys() < other._vertices.keys():
             return True
-        if (self._root == other._root and self._vertices.keys() == other._vertices.keys()
-            and self._edges.keys() < other._edges.keys()):
+        if (
+            self._root == other._root
+            and self._vertices.keys() == other._vertices.keys()
+            and self._edges.keys() < other._edges.keys()
+        ):
             return True
 
         return False
-
 
     def __contains__(self, edge_or_vertex: GraphPrimitive) -> bool:
         graph = self._root._parent_graph
@@ -119,57 +117,35 @@ class Tree(Comparable, Generic[V, E]):
             f"{type(edge_or_vertex).__name__} found"
         )
 
-    @overload
-    def __getitem__(self, vertex: "VertexType") -> V:
-        ...
-
-    @overload
-    def __getitem__(self, edge: "EdgeType") -> E:
-        ...
-
-    def __getitem__(self, keys: Union["VertexType", "EdgeType"]) -> Union[V, E]:
-        """Supports index accessor notation to retrieve vertices and edges.
+    def __getitem__(self, vertex: "VertexType") -> V_co:
+        """Supports index accessor notation to retrieve vertices.
 
         Args:
-            keys: Usually one vertex (to retrieve a vertex) or two vertices (to retrieve an edge).
-                However, any valid ``VertexType`` or ``EdgeType`` may be used.
+            vertex: The vertex to retrieve, usually using the vertex label.
 
         Returns:
-            Union[V, E, None]: The vertex specified by the vertex label or the edge specified by
-            two vertices. If no matching vertex or edge found, returns None.
+            V: The specified vertex.
 
         Raises:
-            KeyError: If the graph does not contain a vertex or an edge matching ``keys``.
-            VertizeeException: If ``keys`` is not a valid ``GraphPrimitive`` (that is a
-                ``VertexType`` or an ``EdgeType``).
+            KeyError: If the tree does not contain a vertex or an edge matching ``keys``.
+            VertizeeException: If ``vertex`` is not a valid ``VertexType``.
 
-        See Also:
-            * :mod:`EdgeType <vertizee.classes.edge>`
-            * :mod:`VertexType <vertizee.classes.vertex>`
+        Example:
+            >>> import vertizee as vz
+            >>> g = vz.Graph()
+            >>> g.add_edge(1, 2)
+            (1, 2)
+            >>> g[1]  # __getitem__(1)
+            1
         """
-        graph = self._root._parent_graph
-        data: ParsedEdgeAndVertexData = primitives_parsing.parse_graph_primitive(keys)
-        if data.edges:
-            edge_label = edge_module.create_edge_label(
-                data.edges[0].vertex1.label, data.edges[0].vertex2.label, self.is_directed()
-            )
-            return self._edges[edge_label]
-        if data.vertices:
-            vertex = graph._vertices[data.vertices[0].label]
-            if vertex.label in self._vertices:
-                return self._vertices[vertex.label]
-            raise KeyError(keys)
-
-        raise TypeError(
-            "expected GraphPrimitive (i.e. EdgeType or VertexType) instance; "
-            f"{type(keys).__name__} found"
-        )
+        vertex_data: VertexData = primitives_parsing.parse_vertex_type(vertex)
+        return self._vertices[vertex_data.label]
 
     def __hash__(self) -> int:
         """Supports adding trees to set-like collections."""
         return hash(self._vertices)
 
-    def __iter__(self) -> Iterator[V]:
+    def __iter__(self) -> Iterator[V_co]:
         """Iterates over the vertices of the tree."""
         yield from self._vertices.values()
 
@@ -178,7 +154,7 @@ class Tree(Comparable, Generic[V, E]):
         ``len`` is used."""
         return len(self._vertices)
 
-    def add_edge(self, edge: E) -> None:
+    def add_edge(self, edge: EdgeBase[V_co]) -> None:
         """Adds a new edge to the tree.
 
         Exactly one of the edge's vertices must already be in the tree. If neither of the edge's
@@ -215,10 +191,10 @@ class Tree(Comparable, Generic[V, E]):
     def edge_count(self) -> int:
         """The number of edges, including parallel edge connections."""
         if self.is_multigraph():
-            return sum(cast(MultiEdgeBase, e).multiplicity for e in self._edges.values())
+            return sum(cast(MultiEdgeBase[V_co], e).multiplicity for e in self._edges.values())
         return len(self._edges)
 
-    def edges(self) -> ValuesView[E]:
+    def edges(self) -> ValuesView[EdgeBase[V_co]]:
         """A view of the tree edges."""
         return self._edges.values()
 
@@ -265,13 +241,13 @@ class Tree(Comparable, Generic[V, E]):
         """Returns True if this is a multigraph (i.e. a graph that allows parallel edges)."""
         return self._root._parent_graph.is_multigraph()
 
-    def merge(self, other: "Tree[V, E]") -> None:
+    def merge(self, other: "Tree[V_co]") -> None:
         """Merges ``other`` into this tree."""
         self._edges.update(other._edges)
         self._vertices.update(other._vertices)
 
     @property
-    def root(self) -> V:
+    def root(self) -> V_co:
         """The root vertex of the tree."""
         return self._root
 
@@ -280,7 +256,7 @@ class Tree(Comparable, Generic[V, E]):
         """The count of vertices in the tree."""
         return len(self._vertices)
 
-    def vertices(self) -> ValuesView[V]:
+    def vertices(self) -> ValuesView[V_co]:
         """A ValuesView of the tree vertices."""
         return self._vertices.values()
 

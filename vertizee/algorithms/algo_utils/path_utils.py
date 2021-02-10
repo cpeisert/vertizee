@@ -57,16 +57,16 @@ from typing import Callable, cast, Final, Generic, List, Optional, Union
 from vertizee import exception
 from vertizee.classes.collection_views import ListView
 from vertizee.classes.data_structures.vertex_dict import VertexDict
-from vertizee.classes.vertex import VertexClass, VertexType
+from vertizee.classes.vertex import V_co, VertexType
 
-INFINITY: Final = float("inf")
+INFINITY: Final[float] = float("inf")
 
 
 def reconstruct_path(
     source: "VertexType",
     destination: "VertexType",
-    paths: Union["VertexDict[ShortestPath]", "VertexDict[VertexDict[ShortestPath]]"],
-) -> List[VertexClass]:
+    paths: Union["VertexDict[ShortestPath[V_co]]", "VertexDict[VertexDict[ShortestPath[V_co]]]"],
+) -> List[V_co]:
     r"""Reconstructs the shortest path between two vertices based on the predecessors stored in the
     shortest paths dictionary (or a dictionary of shortest paths dictionaries).
 
@@ -87,17 +87,17 @@ def reconstruct_path(
             have a source vertex matching ``source``.
 
     Returns:
-        List[V]: The list of vertices comprising the path ``source`` :math:`\leadsto`
+        List[V_co]: The list of vertices comprising the path ``source`` :math:`\leadsto`
         ``destination``, or an empty list if no such path exists.
     """
-    path_dict = cast(VertexDict[ShortestPath], paths)
+    path_dict = cast(VertexDict[ShortestPath[V_co]], paths)
     if source in paths and isinstance(paths[source], VertexDict):
-        path_dict = cast(VertexDict[ShortestPath], paths[source])
+        path_dict = cast(VertexDict[ShortestPath[V_co]], paths[source])
 
     path = []
     v: Optional[VertexType] = destination
     while v is not None:
-        path_v: Optional[ShortestPath] = path_dict.get(v, None)
+        path_v: Optional[ShortestPath[V_co]] = path_dict.get(v, None)
         if path_v is None:
             break
         if path_v.source != source:
@@ -115,12 +115,12 @@ def reconstruct_path(
     return path
 
 
-class ShortestPath:
+class ShortestPath(Generic[V_co]):
     r"""Data structure representing a shortest path between a source vertex and a destination
     vertex.
 
     This class has a generic type parameter ``V``, which supports the type-hint usage
-    ``ShortestPath[V]``.
+    ``ShortestPath[V_co]``.
 
     ``V = TypeVar("V", bound="VertexBase")`` See :class:`VertexBase
     <vertizee.classes.vertex.VertexBase>`.
@@ -192,23 +192,26 @@ class ShortestPath:
     """
 
     def __init__(
-        self, source: VertexClass, destination: VertexClass, initial_length: float = INFINITY,
-        save_path: bool = False
+        self,
+        source: V_co,
+        destination: V_co,
+        initial_length: float = INFINITY,
+        save_path: bool = False,
     ) -> None:
         if source is None:
             raise exception.VertizeeException("no source vertex specified")
         if destination is None:
             raise exception.VertizeeException("no destination vertex specified")
-        self._source: VertexClass = source
-        self._destination: VertexClass = destination
+        self._source = source
+        self._destination = destination
 
         self._edge_count: int = 0
         self._length: float = initial_length
-        self._predecessor: Optional[VertexClass] = None
+        self._predecessor: Optional[V_co] = None
         self._store_full_path = save_path
 
         if self._store_full_path:
-            self._path: Optional[List[VertexClass]] = [self.source]
+            self._path: Optional[List[V_co]] = [self.source]
         else:
             self._path = None
 
@@ -220,7 +223,7 @@ class ShortestPath:
         return self._length
 
     @property
-    def destination(self) -> VertexClass:
+    def destination(self) -> V_co:
         """The destination vertex of the path."""
         return self._destination
 
@@ -239,7 +242,7 @@ class ShortestPath:
         path connecting source to destination, then the length is infinity."""
         return self._length
 
-    def path(self) -> "ListView[VertexClass]":
+    def path(self) -> "ListView[V_co]":
         """A :class:`ListView <vertizee.classes.collection_views.ListView>` of vertices comprising
         the path.
 
@@ -255,7 +258,7 @@ class ShortestPath:
         return ListView(self._path)
 
     @property
-    def predecessor(self) -> Optional[VertexClass]:
+    def predecessor(self) -> Optional[V_co]:
         """The vertex immediately preceding the destination vertex."""
         return self._predecessor
 
@@ -276,8 +279,8 @@ class ShortestPath:
 
     def relax_edge(
         self,
-        predecessor_path: "ShortestPath",
-        weight_function: Callable[[VertexClass, VertexClass, bool], float],
+        predecessor_path: "ShortestPath[V_co]",
+        weight_function: Callable[[V_co, V_co, bool], Optional[float]],
         reverse_graph: bool = False,
     ) -> bool:
         """Tests whether there is a shorter path from the source vertex through ``predecessor_path``
@@ -314,8 +317,8 @@ class ShortestPath:
         if predecessor_path.length == INFINITY:
             return False
 
-        j: VertexClass = predecessor_path.destination
-        k: VertexClass = self.destination
+        j = predecessor_path.destination
+        k = self.destination
 
         edge_len = weight_function(j, k, reverse_graph)
         if edge_len is None:  # This can happen if the weight function is designed as a filter.
@@ -335,7 +338,9 @@ class ShortestPath:
 
         return False
 
-    def relax_subpaths(self, path_s_k: "ShortestPath", path_k_d: "ShortestPath") -> bool:
+    def relax_subpaths(
+        self, path_s_k: "ShortestPath[V_co]", path_k_d: "ShortestPath[V_co]"
+    ) -> bool:
         r"""Tests whether some vertex :math:`k` yields two subpaths, that when combined, provide a
         shorter path from the source :math:`s` to destination :math:`d` than the current estimate
         :math:`d.length`, and if so, updates the path by combing the two subpaths.
@@ -375,7 +380,7 @@ class ShortestPath:
         return True
 
     @property
-    def source(self) -> VertexClass:
+    def source(self) -> V_co:
         """The source vertex of the path."""
         return self._source
 

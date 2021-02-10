@@ -24,8 +24,18 @@ from __future__ import annotations
 import collections.abc
 import copy
 from typing import (
-    Any, cast, Dict, Iterable, Iterator, Mapping, MutableMapping, Optional, Tuple, Type, TypeVar,
-    Union
+    Any,
+    cast,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
 )
 
 from vertizee.classes.vertex import Vertex, VertexType
@@ -37,7 +47,7 @@ class VertexDict(MutableMapping["VertexType", VT]):
     """A dictionary mapping vertices to values.
 
     The dictionary keys are of type :mod:`VertexType <vertizee.classes.vertex>`, which is an
-    alias for ``Union[VertexClass, VertexLabel, VertexTupleAttr]``. This means that vertex keys may
+    alias for ``Union[VertexClass, VertexLabel, VertexTuple]``. This means that vertex keys may
     be specified as integers, strings, vertex tuples, or vertex objects. Internally, all vertex keys
     are converted to ``str``.
 

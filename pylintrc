@@ -47,7 +47,7 @@ disable=invalid-name,
         too-many-locals,
         too-many-public-methods,
         too-many-statements,
-        unsubscriptable-object
+        unsubscriptable-object  # See https://github.com/PyCQA/pylint/issues/2822
 
 # unsubscriptable-object is disabled due to pylint bug.
 # See pylint issue #2822: https://github.com/PyCQA/pylint/issues/2822

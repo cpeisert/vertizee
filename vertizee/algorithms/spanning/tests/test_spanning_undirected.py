@@ -91,15 +91,15 @@ class TestKruskal:
 
         min_tree = list(undirected.kruskal_spanning_tree(g, minimum=True))
         assert len(min_tree) == 3
-        assert min_tree[0] == g["a", "c"]
-        assert min_tree[1] == g["c", "d"]
-        assert min_tree[2] == g["a", "b"]
+        assert min_tree[0] == g.get_edge("a", "c")
+        assert min_tree[1] == g.get_edge("c", "d")
+        assert min_tree[2] == g.get_edge("a", "b")
 
         max_tree = list(undirected.kruskal_spanning_tree(g, minimum=False))
         assert len(max_tree) == 3
-        assert max_tree[0] == g["c", "d"]
-        assert max_tree[1] == g["b", "d"]
-        assert max_tree[2] == g["a", "b"]
+        assert max_tree[0] == g.get_edge("c", "d")
+        assert max_tree[1] == g.get_edge("b", "d")
+        assert max_tree[2] == g.get_edge("a", "b")
 
     def test_kruskal_optimum_forest_single_tree(self):
         g = Graph(test_edges)
@@ -172,15 +172,15 @@ class TestPrim:
 
         min_tree = list(undirected.prim_spanning_tree(g, root="a", minimum=True))
         assert len(min_tree) == 3
-        assert min_tree[0] == g["a", "c"]
-        assert min_tree[1] == g["c", "d"]
-        assert min_tree[2] == g["a", "b"]
+        assert min_tree[0] == g.get_edge("a", "c")
+        assert min_tree[1] == g.get_edge("c", "d")
+        assert min_tree[2] == g.get_edge("a", "b")
 
         max_tree = list(undirected.prim_spanning_tree(g, root="a", minimum=False))
         assert len(max_tree) == 3
-        assert max_tree[0] == g["a", "b"]
-        assert max_tree[1] == g["b", "d"]
-        assert max_tree[2] == g["c", "d"]
+        assert max_tree[0] == g.get_edge("a", "b")
+        assert max_tree[1] == g.get_edge("b", "d")
+        assert max_tree[2] == g.get_edge("c", "d")
 
     def test_prim_fibonacci_max_spanning_tree(self):
         g = Graph(test_edges)

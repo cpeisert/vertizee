@@ -70,24 +70,27 @@ from vertizee.algorithms.spanning.undirected import (
 
 from vertizee.classes.collection_views import ItemsView, ListView, SetView
 from vertizee.classes.edge import (
-    Connection,
+    Attributes,
+    create_edge_label,
     DiEdge,
-    SingleDiEdgeView,
-    E,
     Edge,
-    EdgeType,
+    EdgeBase,
+    EdgeConnectionData,
     EdgeConnectionView,
-    MultiConnection,
+    EdgeType,
     MultiDiEdge,
     MultiEdge,
+    MultiEdgeBase,
+    MutableEdgeBase,
 )
-from vertizee.classes.graph import DiGraph, G, Graph, MultiDiGraph, MultiGraph
+from vertizee.classes.graph import DiGraph, G, Graph, GraphBase, MultiDiGraph, MultiGraph
 from vertizee.classes.primitives_parsing import GraphPrimitive
 from vertizee.classes.vertex import (
     DiVertex,
     MultiDiVertex,
     MultiVertex,
     V,
+    V_co,
     Vertex,
     VertexBase,
     VertexLabel,
@@ -99,6 +102,18 @@ from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 
-from vertizee.exception import *
+from vertizee.exception import (
+    AlgorithmError,
+    EdgeNotFound,
+    GraphTypeNotSupported,
+    NegativeWeightCycle,
+    NoPath,
+    ParallelEdgesNotAllowed,
+    SelfLoopsNotAllowed,
+    Unfeasible,
+    VertexNotFound,
+    VertizeeException,
+    VertizeeError,
+)
 
 from vertizee.io.adj_list import read_adj_list, read_weighted_adj_list, write_adj_list_to_file
