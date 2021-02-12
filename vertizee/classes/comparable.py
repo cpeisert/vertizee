@@ -14,6 +14,7 @@
 
 """Protocol defining an interface for comparable types."""
 from abc import abstractmethod
+from typing import Any
 from typing_extensions import Protocol
 
 
@@ -21,18 +22,18 @@ class Comparable(Protocol):
     """Protocol defining an interface for comparable types."""
 
     @abstractmethod
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other: Any) -> bool:
         pass
 
     @abstractmethod
-    def __lt__(self, other: object) -> bool:
+    def __lt__(self, other: Any) -> bool:
         pass
 
-    def __gt__(self, other: object) -> bool:
+    def __gt__(self, other: Any) -> bool:
         return (not self < other) and self != other
 
-    def __le__(self, other: object) -> bool:
-        return self < other or self == other
+    def __le__(self, other: Any) -> bool:
+        return bool(self < other or self == other)
 
-    def __ge__(self, other: object) -> bool:
-        return not self < other
+    def __ge__(self, other: Any) -> bool:
+        return bool(not self < other)

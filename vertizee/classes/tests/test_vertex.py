@@ -36,7 +36,7 @@ from vertizee.classes import vertex as vertex_module
 class TestVertexModuleFunctions:
     """Tests for functions defined in the vertex module."""
 
-    def test_get_vertex_label(self):
+    def test_get_vertex_label(self) -> None:
         g = Graph()
         v_obj: Vertex = g.add_vertex(1)
         assert vertex_module.get_vertex_label(v_obj) == "1", "vertex object label should be '1'"
@@ -46,7 +46,7 @@ class TestVertexModuleFunctions:
             vertex_module.get_vertex_label(("s", {"color": "blue"})) == "s"
         ), "vertex tuple should have label 's'"
 
-    def test_is_vertex_type(self):
+    def test_is_vertex_type(self) -> None:
         g = Graph()
         v: Vertex = g.add_vertex(1)
         assert vertex_module.is_vertex_type(v), "Vertex object should be a VertexType"
@@ -82,7 +82,7 @@ class TestVertexModuleFunctions:
 class TestVertexBase:
     """Tests for VertexBase features shared by all vertex classes."""
 
-    def test_comparison_operators(self):
+    def test_comparison_operators(self) -> None:
         g = Graph()
         v1 = g.add_vertex("a")
         v2 = g.add_vertex("b")
@@ -96,7 +96,7 @@ class TestVertexBase:
         assert v1 > 1, "v1 should be great than a vertex represented by label 1"
         assert v1 < ("b", {"color": "blue"}), "v1 should be less than vertex tuple 'b'"
 
-    def test_repr_str_and_label(self):
+    def test_repr_str_and_label(self) -> None:
         g = Graph()
         v1 = g.add_vertex("a")
         v2 = g.add_vertex(2)
@@ -106,7 +106,7 @@ class TestVertexBase:
         assert v1.__str__() == v1.label, "vertex __str__() should be its label"
         assert v1.__repr__() == v1.__str__(), "vertex __repr__() should match __str__()"
 
-    def test_adj_vertices(self):
+    def test_adj_vertices(self) -> None:
         g = Graph()
         g.add_vertex(1)
         assert not g[1].adj_vertices(), "vertex 1 should have no adjacent vertices"
@@ -125,7 +125,7 @@ class TestVertexBase:
         g.add_edge(4, 4)
         assert g[4] in g[4].adj_vertices(), "vertex 4 should be adjacent to itself"
 
-    def test_attr_dictionary(self):
+    def test_attr_dictionary(self) -> None:
         g = Graph()
         v1 = g.add_vertex("a")
         assert v1._attr is None, "attr dictionary should be None by default"
@@ -138,7 +138,7 @@ class TestVertexBase:
         with pytest.raises(KeyError):
             _ = v1["unknown_key"]
 
-    def test_degree(self):
+    def test_degree(self) -> None:
         g = Graph()
         v0 = g.add_vertex(0)
         assert v0.degree == 0, "vertex 0 should have degree 0"
@@ -149,7 +149,7 @@ class TestVertexBase:
         g.add_edge(1, 2)
         assert g[1].degree == 3, "vertex 1 should have degree 3"
 
-    def test_is_isolated(self):
+    def test_is_isolated(self) -> None:
         g = Graph()
         v1 = g.add_vertex(1)
         assert v1.is_isolated(), "v1 should be isolated"
@@ -167,7 +167,7 @@ class TestVertexBase:
         v1.remove_incident_edges()
         assert v1.is_isolated(), "vertex should be isolated after removing incident edges"
 
-    def test_remove_and_edge_removal(self):
+    def test_remove_and_edge_removal(self) -> None:
         g = Graph()
         v1 = g.add_vertex("a")
         assert g.vertex_count == 1, "graph should have one vertex"
@@ -191,7 +191,7 @@ class TestVertexBase:
 class TestVertex:
     """Tests for ``Vertex`` class (concrete implementation ``_Vertex``)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = Graph()
         v1 = g.add_vertex(1)
         assert isinstance(
@@ -200,7 +200,7 @@ class TestVertex:
         assert isinstance(v1, Vertex), "v1 should be a Vertex instance"
         assert issubclass(Vertex, vertex_module.VertexBase), "Vertex should be VertexBase subclass"
 
-    def test_incident_edges_and_loop_edge(self):
+    def test_incident_edges_and_loop_edge(self) -> None:
         g = Graph()
         g.add_vertex(0)
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"
@@ -218,7 +218,7 @@ class TestVertex:
 class TestDiVertex:
     """Tests for ``DiVertex`` class (concrete implementation ``_DiVertex``)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = DiGraph()
         v1 = g.add_vertex(1)
         assert isinstance(
@@ -229,7 +229,7 @@ class TestDiVertex:
             DiVertex, vertex_module.VertexBase
         ), "DiVertex should be VertexBase subclass"
 
-    def test_adj_vertices(self):
+    def test_adj_vertices(self) -> None:
         g = DiGraph([(1, 1)])
         assert g[1].adj_vertices() == {
             g[1]
@@ -254,7 +254,7 @@ class TestDiVertex:
             g[2],
         }, "vertex 1 should only have itself and vertex 2 as outgoing adjacent vertex"
 
-    def test_degree(self):
+    def test_degree(self) -> None:
         g = DiGraph()
         v0 = g.add_vertex("0")
         assert v0.indegree == 0, "vertex 0 should have indegree 0"
@@ -273,7 +273,7 @@ class TestDiVertex:
         g.add_edge(3, 1)
         assert g[1].indegree == 2, "vertex 1 should have indegree 2"
 
-    def test_incident_edges(self):
+    def test_incident_edges(self) -> None:
         g = DiGraph()
         g.add_edge(1, 0)
         g.add_edge(1, 2)
@@ -293,7 +293,7 @@ class TestDiVertex:
             g.get_edge(1, 2),
         }, "outgoing edges should include (1, 0) and (1, 2)"
 
-    def test_loop_edge(self):
+    def test_loop_edge(self) -> None:
         g = DiGraph()
         g.add_vertex(0)
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"
@@ -308,7 +308,7 @@ class TestDiVertex:
 class TestMultiVertex:
     """Tests for ``MultiVertex`` class (concrete implementation ``_MultiVertex``)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = MultiGraph()
         v1 = g.add_vertex(1)
         assert isinstance(
@@ -319,14 +319,14 @@ class TestMultiVertex:
             MultiVertex, vertex_module.VertexBase
         ), "MultiVertex should be VertexBase subclass"
 
-    def test_adj_vertices(self):
+    def test_adj_vertices(self) -> None:
         g = MultiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert g[1].adj_vertices() == {g[1]}, "vertex with self-loops should be adjacent to itself"
         assert g[2].adj_vertices() == {
             g[3]
         }, "vertex 2 (with parallel connections) should be adjacent to vertex 3"
 
-    def test_degree(self):
+    def test_degree(self) -> None:
         g = MultiGraph()
         v0 = g.add_vertex(0)
         assert v0.degree == 0, "vertex 0 should have degree 0"
@@ -341,7 +341,7 @@ class TestMultiVertex:
         g.add_edge(2, 3)
         assert g[2].degree == 2, "vertex 2 with two parallel edge connections should have degree 2"
 
-    def test_incident_edges_and_loop_edge(self):
+    def test_incident_edges_and_loop_edge(self) -> None:
         g = MultiGraph()
         g.add_vertex(0)
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"
@@ -361,7 +361,7 @@ class TestMultiVertex:
 class TestMultiDiVertex:
     """Tests for ``MultiDiVertex`` class (concrete implementation ``_MultiDiVertex``)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = MultiDiGraph()
         v1 = g.add_vertex(1)
         assert isinstance(
@@ -372,7 +372,7 @@ class TestMultiDiVertex:
             MultiDiVertex, vertex_module.VertexBase
         ), "MultiDiVertex should be VertexBase subclass"
 
-    def test_adj_vertices(self):
+    def test_adj_vertices(self) -> None:
         g = MultiDiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert g[1].adj_vertices() == {
             g[1]
@@ -392,7 +392,7 @@ class TestMultiDiVertex:
             g[3]
         }, "vertex 2 should have vertex 3 as outgoing adjacent vertex"
 
-    def test_degree(self):
+    def test_degree(self) -> None:
         g = MultiDiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert g[1].degree == 4, "vertex with two self loops should have degree 4"
         assert g[1].indegree == 2, "vertex with two loops should have indegree 2"
@@ -402,7 +402,7 @@ class TestMultiDiVertex:
         assert g[2].indegree == 0, "vertex 2 should have indegree 0"
         assert g[3].indegree == 2, "vertex 3 should have indegree 2"
 
-    def test_incident_edges(self):
+    def test_incident_edges(self) -> None:
         g = MultiDiGraph([(1, 1), (1, 1), (2, 3), (2, 3)])
         assert g[1].incident_edges() == {g.get_edge(1, 1)}, "vertex 1 should be incident on (1, 1)"
         assert g[1].incident_edges_incoming() == {
@@ -415,7 +415,7 @@ class TestMultiDiVertex:
         assert g[2].incident_edges_outgoing() == {g.get_edge(2, 3)}, "outgoing edges should (2, 3)"
         assert not g[2].incident_edges_incoming(), "should be no incoming edges"
 
-    def test_loop_edge(self):
+    def test_loop_edge(self) -> None:
         g = MultiDiGraph()
         g.add_vertex(0)
         assert not g[0].loop_edge, "vertex 0 should not have a loop edge"

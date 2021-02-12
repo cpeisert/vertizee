@@ -38,7 +38,7 @@ TEST_DIR = "vertizee/io/tests"
 class TestGraphIOAdjList:
     """Tests for reading and writing files containing graph adjacency list."""
 
-    def test_digraph_read_adj_list(self):
+    def test_digraph_read_adj_list(self) -> None:
         g = MultiDiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, DIGRAPH_FILE01), g)
 
@@ -55,6 +55,7 @@ class TestGraphIOAdjList:
         assert len(g[3].incident_edges_outgoing()) == 1, "v3 should have 1 outgoing edge"
         assert len(g[4].incident_edges_outgoing()) == 0, "v4 should have 0 outgoing edges"
         v5_loop_edge = g[5].loop_edge
+        assert v5_loop_edge is not None
         assert v5_loop_edge.multiplicity == 2, "v5 should have 2 loops"
         assert (
             len(g[5].incident_edges_incoming()) == 1
@@ -65,16 +66,17 @@ class TestGraphIOAdjList:
 
         assert g.get_edge(3, 4) is not None, "graph should have edge (3, 4)"
 
-    def test_digraph_write_adj_list(self):
+    def test_digraph_write_adj_list(self) -> None:
         g = MultiDiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, DIGRAPH_FILE01), g)
         write_adj_list_to_file(os.path.join(os.getcwd(), TEST_DIR, DIGRAPH_OUTPUT_FILE), g)
 
-    def test_multigraph_read_adj_list01(self):
+    def test_multigraph_read_adj_list01(self) -> None:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE01), g)
 
         v1_loop_edge = g[1].loop_edge
+        assert v1_loop_edge is not None
         assert v1_loop_edge.multiplicity == 2, "v1 should have 2 loops"
         assert g[1].degree == 6, "deg(v1) should be 6"
         assert len(g[2].incident_edges()) == 2, (
@@ -98,7 +100,7 @@ class TestGraphIOAdjList:
         assert g.get_edge(1, 4) is not None, "There should be an edge (1, 4)"
         assert g.get_edge(1, 2) is not None, "There should be an edge (1, 2)"
 
-    def test_multigraph_read_adj_list02(self):
+    def test_multigraph_read_adj_list02(self) -> None:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE02), g)
 
@@ -110,7 +112,7 @@ class TestGraphIOAdjList:
         assert g.get_edge(2, 4) is not None, "graph should have edge (2, 4)"
         assert g.get_edge(1, 3) is not None, "graph should have edge (1, 3)"
 
-    def test_multigraph_read_adj_list03(self):
+    def test_multigraph_read_adj_list03(self) -> None:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE03), g)
 
@@ -125,7 +127,7 @@ class TestGraphIOAdjList:
         with pytest.raises(KeyError):
             assert g.get_edge(2, 6) is None, "graph should not have edge (2, 6)"
 
-    def test_multigraph_write_adj_list01(self):
+    def test_multigraph_write_adj_list01(self) -> None:
         g = MultiGraph()
         read_adj_list(os.path.join(os.getcwd(), TEST_DIR, GRAPH_FILE01), g)
         write_adj_list_to_file(os.path.join(os.getcwd(), TEST_DIR, GRAPH_OUTPUT_FILE01), g)

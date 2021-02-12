@@ -26,18 +26,19 @@ from vertizee.algorithms.search.depth_first_search import (
     dfs_preorder_traversal,
 )
 from vertizee.classes.data_structures.tree import Tree
-from vertizee.classes.edge import Edge
+from vertizee.classes.edge import DiEdge, Edge, MultiDiEdge
 from vertizee.classes.graph import DiGraph, Graph, MultiDiGraph
+from vertizee.classes.vertex import DiVertex, MultiDiVertex, Vertex
 
 
 class TestDepthFirstSearch:
     """Tests for depth-first search."""
 
-    def test_dfs_undirected_cyclic_graph(self):
+    def test_dfs_undirected_cyclic_graph(self) -> None:
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        results: SearchResults = dfs(g, 0)
-        tree: Tree = next(iter(results.graph_search_trees()))
+        results: SearchResults[Vertex, Edge] = dfs(g, 0)
+        tree: Tree[Vertex, Edge] = next(iter(results.graph_search_trees()))
 
         assert tree.root == 0, "DFS tree should be rooted at vertex 0"
         assert (
@@ -73,9 +74,9 @@ class TestDepthFirstSearch:
             not results.cross_edges() and not results.forward_edges()
         ), "using DFS in an undirected graph, every edge is either a tree edge or a back edge"
 
-    def test_dfs_undirected_cyclic_graph_with_self_loop(self):
+    def test_dfs_undirected_cyclic_graph_with_self_loop(self) -> None:
         g = Graph([(0, 0), (0, 1), (1, 2), (3, 4)])
-        results: SearchResults = dfs(g)
+        results: SearchResults[Vertex, Edge] = dfs(g)
 
         assert len(results.graph_search_trees()) == 2, "DFS should have discovered two DFS trees"
         assert len(results.vertices_preorder()) == 5, "DFS tree should have 5 vertices"
@@ -91,7 +92,7 @@ class TestDepthFirstSearch:
         ), "graph should have zero forward edges (true for all undirected graphs)"
         assert not results.is_acyclic(), "should not be acyclic, since it contains a self loop"
 
-    def test_dfs_directed_cyclic_graph(self):
+    def test_dfs_directed_cyclic_graph(self) -> None:
         g = MultiDiGraph()
         # This graph is from "Introduction to Algorithms: Third Edition", page 607.
         g.add_edges_from(
@@ -113,12 +114,12 @@ class TestDepthFirstSearch:
         )
 
         # Test DiGraph DFS by specifying source vertex s.
-        results: SearchResults = dfs(g, "s")
+        results: SearchResults[MultiDiVertex, MultiDiEdge] = dfs(g, "s")
 
         assert (
             len(results.graph_search_trees()) == 1
         ), "DFS search should find 1 DFS tree, since source vertex 's' was specified"
-        tree: Tree = next(iter(results.graph_search_trees()))
+        tree: Tree[MultiDiVertex, MultiDiEdge] = next(iter(results.graph_search_trees()))
 
         assert len(tree.edges()) == 4, "DFS tree rooted at vertex 's' should have 4 edges"
         assert len(tree) == 5, "DFS tree rooted at vertex 's' should have 5 vertices"
@@ -127,7 +128,7 @@ class TestDepthFirstSearch:
         assert not results.is_acyclic(), "graph should not be acyclic, since it contains cycles"
 
         # Test DiGraph DFS without specifying a source vertex.
-        results: SearchResults = dfs(g)
+        results: SearchResults[MultiDiVertex, MultiDiEdge] = dfs(g)
 
         assert len(results.vertices_preorder()) == len(
             results.vertices_postorder()
@@ -144,10 +145,10 @@ class TestDepthFirstSearch:
         )
         assert classified_edge_count == g.edge_count, "classified edges should equal total edges"
 
-    def test_vertices_topological_order(self):
+    def test_vertices_topological_order(self) -> None:
         g = DiGraph([("s", "t"), ("t", "u"), ("u", "v")])
 
-        results: SearchResults = dfs(g)
+        results: SearchResults[DiVertex, DiEdge] = dfs(g)
         topo_sorted = results.vertices_topological_order()
         assert topo_sorted[0] == "s", "first element of path graph topo sort should be s"
         assert topo_sorted[1] == "t", "second element of path graph topo sort should be t"
@@ -157,7 +158,7 @@ class TestDepthFirstSearch:
         g = DiGraph()
         g.add_edges_from([("s", "v"), ("s", "w"), ("v", "t"), ("w", "t")])
 
-        results: SearchResults = dfs(g)
+        results: SearchResults[DiVertex, DiEdge] = dfs(g)
         topo_sorted = results.vertices_topological_order()
         assert topo_sorted[0] == "s", "first element of topo sort should be s"
         assert topo_sorted[1] == "v" or topo_sorted[1] == "w", (
@@ -165,7 +166,7 @@ class TestDepthFirstSearch:
         )
         assert topo_sorted[3] == "t", "fourth element topo sort should be t"
 
-    def test_dfs_traversal_undirected_graph(self):
+    def test_dfs_traversal_undirected_graph(self) -> None:
         g = Graph([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         edge_iter = dfs_labeled_edge_traversal(g)
         dfs_edge_tuples = list(edge_iter)
@@ -213,7 +214,7 @@ class TestDepthFirstSearch:
             not cross_edges and not forward_edges
         ), "DFS on an undirected graph, every edge is either a tree edge or a back edge"
 
-    def test_dfs_traversal_directed_graph(self):
+    def test_dfs_traversal_directed_graph(self) -> None:
         g = DiGraph([(0, 1), (1, 2), (2, 1)])
 
         # from pprint import pprint
@@ -259,27 +260,27 @@ class TestDepthFirstSearch:
         with pytest.raises(StopIteration):
             v = next(vertex_generator)
 
-    def test_dfs_reverse_traversal(self):
+    def test_dfs_reverse_traversal(self) -> None:
         g = DiGraph([(0, 1), (1, 2), (2, 0)])
 
         vertices = list(dfs_preorder_traversal(g, source=0))
-        assert vertices == [0, 1, 2], "preorder vertices should be 0, 1, 2"
+        assert vertices == [g[0], g[1], g[2]], "preorder vertices should be 0, 1, 2"
         vertices = list(dfs_preorder_traversal(g, source=0, reverse_graph=True))
-        assert vertices == [0, 2, 1], "reverse graph preorder vertices should be 0, 2, 1"
+        assert vertices == [g[0], g[2], g[1]], "reverse graph preorder vertices should be 0, 2, 1"
 
         vertices = list(dfs_postorder_traversal(g, source=0))
-        assert vertices == [2, 1, 0], "postorder vertices should be 2, 1, 0"
+        assert vertices == [g[2], g[1], g[0]], "postorder vertices should be 2, 1, 0"
         vertices = list(dfs_postorder_traversal(g, source=0, reverse_graph=True))
-        assert vertices == [1, 2, 0], "reverse graph postorder vertices should be 1, 2, 0"
+        assert vertices == [g[1], g[2], g[0]], "reverse graph postorder vertices should be 1, 2, 0"
 
         g = DiGraph([(0, 1), (1, 4), (4, 0), (4, 3), (3, 1), (2, 3), (2, 4)])
 
         vertices = list(dfs_preorder_traversal(g, source=0))
-        assert vertices == [0, 1, 4, 3], "preorder vertices should be 0, 1, 4, 3"
+        assert vertices == [g[0], g[1], g[4], g[3]], "preorder vertices should be 0, 1, 4, 3"
         vertices = list(dfs_preorder_traversal(g, source=0, reverse_graph=True))
 
-        preorder1 = [0, 4, 1, 3, 2]
-        preorder2 = [0, 4, 2, 1, 3]
+        preorder1 = [g[0], g[4], g[1], g[3], g[2]]
+        preorder2 = [g[0], g[4], g[2], g[1], g[3]]
         assert vertices in (
             preorder1,
             preorder2,

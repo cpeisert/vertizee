@@ -70,7 +70,7 @@ test_edges_multi_tree = [
 class TestEdmonds:
     """Tests for Edmonds' algorithm to find spanning arborescenes and branchings."""
 
-    def test_edmonds_empty_graph(self):
+    def test_edmonds_empty_graph(self) -> None:
         g = DiGraph()
 
         # Edmonds' algorithm does not work on empty graphs.
@@ -78,15 +78,15 @@ class TestEdmonds:
             for _ in directed.edmonds(g):
                 pass
 
-    def test_edmonds_undirected_graph(self):
+    def test_edmonds_undirected_graph(self) -> None:
         g = Graph([("s", "t", 10), ("s", "y", 5), ("t", "y", 2)])
 
         # Edmonds' algorithm does not work on undirected graphs.
         with pytest.raises(exception.GraphTypeNotSupported):
-            for _ in directed.edmonds(g):  # type: ignore
+            for _ in directed.edmonds(g):
                 pass
 
-    def test_edmonds_max_spanning_arborescence(self):
+    def test_edmonds_max_spanning_arborescence(self) -> None:
         g = DiGraph(test_edges_acyclic)
         spanning_edges_max_arborescence = {
             ("a", "e"),
@@ -104,7 +104,7 @@ class TestEdmonds:
 
         assert arborescence.weight == 45, "max spanning arborescence weight should be 45"
 
-    def test_edmonds_min_spanning_arborescence(self):
+    def test_edmonds_min_spanning_arborescence(self) -> None:
         g = DiGraph(test_edges_acyclic)
         spanning_edges_min_arborescence = {
             ("a", "e"),
@@ -121,7 +121,7 @@ class TestEdmonds:
 
         assert arborescence.weight == 30, "min spanning arborescence weight should be 30"
 
-    def test_edmonds_max_spanning_arborescence_cyclic_graph(self):
+    def test_edmonds_max_spanning_arborescence_cyclic_graph(self) -> None:
         g = DiGraph(test_edges_cyclic)
         spanning_edges_max_arborescence = {
             ("b", "a"),
@@ -140,7 +140,7 @@ class TestEdmonds:
 
         assert arborescence.weight == 28, "max spanning arborescence weight should be 28"
 
-    def test_edmonds_min_spanning_arborescence_cyclic_graph(self):
+    def test_edmonds_min_spanning_arborescence_cyclic_graph(self) -> None:
         g = DiGraph(test_edges_cyclic)
         spanning_edges_min_arborescence = {
             ("d", "e"),
@@ -159,12 +159,12 @@ class TestEdmonds:
 
         assert arborescence.weight == 18, "min spanning arborescence weight should be 18"
 
-    def test_edmonds_max_directed_forest(self):
+    def test_edmonds_max_directed_forest(self) -> None:
         g = DiGraph(test_edges_multi_tree)
         main_arborescence = {("d", "a"), ("a", "b"), ("b", "c"), ("c", "f")}
 
         count = 0
-        weight = 0
+        weight = 0.0
         for arborescence in directed.edmonds(g, minimum=False, find_spanning_arborescence=False):
             count += 1
             weight += arborescence.weight
@@ -175,12 +175,12 @@ class TestEdmonds:
         assert count == 6, "max branching should have 6 arborescences"
         assert weight == 20
 
-    def test_edmonds_min_directed_forest(self):
+    def test_edmonds_min_directed_forest(self) -> None:
         g = DiGraph(test_edges_multi_tree)
         main_arborescence = {("j", "g"), ("g", "h"), ("h", "i"), ("g", "c")}
 
         count = 0
-        weight = 0
+        weight = 0.0
         for arborescence in directed.edmonds(g, minimum=True, find_spanning_arborescence=False):
             count += 1
             weight += arborescence.weight
@@ -191,7 +191,7 @@ class TestEdmonds:
         assert count == 5, "min branching should have 5 arborescences"
         assert weight == -24
 
-    def test_edmonds_max_arborescence_multigraph(self):
+    def test_edmonds_max_arborescence_multigraph(self) -> None:
         g = MultiDiGraph(
             [
                 ("a", "b", 1),
@@ -213,12 +213,12 @@ class TestEdmonds:
 
         assert len(arborescence.edges()) == 3, "max spanning arborescence should have 3 edges"
 
-        weight = 0
+        weight = 0.0
         for edge in spanning_edges_max_arborescence:
             weight += max(c.weight for c in arborescence.get_edge(edge[0], edge[1]).connections())
         assert weight == 20
 
-    def test_edmonds_min_arborescence_multigraph(self):
+    def test_edmonds_min_arborescence_multigraph(self) -> None:
         g = MultiDiGraph(
             [
                 ("a", "b", 1),
@@ -240,12 +240,12 @@ class TestEdmonds:
 
         assert len(arborescence.edges()) == 3, "min spanning arborescence should have 3 edges"
 
-        weight = 0
+        weight = 0.0
         for edge in spanning_edges_min_arborescence:
             weight += min(c.weight for c in arborescence.get_edge(edge[0], edge[1]).connections())
         assert weight == 6
 
-    def test_edmonds_unfeasible_spanning_arborescence(self):
+    def test_edmonds_unfeasible_spanning_arborescence(self) -> None:
         """Test to ensure that Unfeasible raised if a digraph does not contain a spanning
         arborescence."""
         g = DiGraph([("a", "b", 1), ("c", "d", 3)])
@@ -257,12 +257,12 @@ class TestEdmonds:
 class TestOptimumDirectedForest:
     """Tests for wrapper function optimum_directed_forest."""
 
-    def test_max_directed_forest(self):
+    def test_max_directed_forest(self) -> None:
         g = DiGraph(test_edges_multi_tree)
         main_arborescence = {("d", "a"), ("a", "b"), ("b", "c"), ("c", "f")}
 
         count = 0
-        weight = 0
+        weight = 0.0
         for arborescence in directed.optimum_directed_forest(g, minimum=False):
             count += 1
             weight += arborescence.weight
@@ -273,12 +273,12 @@ class TestOptimumDirectedForest:
         assert count == 6, "max branching should have 6 arborescences"
         assert weight == 20
 
-    def test_min_directed_forest(self):
+    def test_min_directed_forest(self) -> None:
         g = DiGraph(test_edges_multi_tree)
         main_arborescence = {("j", "g"), ("g", "h"), ("h", "i"), ("g", "c")}
 
         count = 0
-        weight = 0
+        weight = 0.0
         for arborescence in directed.optimum_directed_forest(g, minimum=True):
             count += 1
             weight += arborescence.weight
@@ -293,7 +293,7 @@ class TestOptimumDirectedForest:
 class TestSpanningArborescence:
     """Tests for wrapper function spanning_arborescence."""
 
-    def test_spanning_arborescence_empty_graph(self):
+    def test_spanning_arborescence_empty_graph(self) -> None:
         g = DiGraph()
 
         # Spanning arborescence is undefined for an empty graph.
@@ -301,7 +301,7 @@ class TestSpanningArborescence:
             for _ in directed.spanning_arborescence(g):
                 pass
 
-    def test_spanning_arborescence_undirected_graph(self):
+    def test_spanning_arborescence_undirected_graph(self) -> None:
         g = Graph([("s", "t", 10), ("s", "y", 5), ("t", "y", 2)])
 
         # Spanning arborescence is undefined for an undirected graph.
@@ -309,7 +309,7 @@ class TestSpanningArborescence:
             for _ in directed.spanning_arborescence(g):
                 pass
 
-    def test_max_spanning_arborescence(self):
+    def test_max_spanning_arborescence(self) -> None:
         g = DiGraph(test_edges_acyclic)
         spanning_edges_max_arborescence = {
             ("a", "e"),
@@ -327,7 +327,7 @@ class TestSpanningArborescence:
 
         assert arborescence.weight == 45, "max spanning arborescence weight should be 45"
 
-    def test_min_spanning_arborescence(self):
+    def test_min_spanning_arborescence(self) -> None:
         g = DiGraph(test_edges_acyclic)
         spanning_edges_min_arborescence = {
             ("a", "e"),

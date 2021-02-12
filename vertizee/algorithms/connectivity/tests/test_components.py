@@ -23,16 +23,18 @@ import pytest
 from vertizee import exception
 from vertizee.algorithms.connectivity import components
 from vertizee.algorithms.connectivity.components import Component
+from vertizee.classes.edge import Edge, MultiDiEdge
 from vertizee.classes.graph import Graph, MultiDiGraph
+from vertizee.classes.vertex import MultiDiVertex, Vertex
 
 
 class TestConnectedComponents:
     """Tests for algorithms that find the connected components in graphs."""
 
-    def test_component(self):
+    def test_component(self) -> None:
         g = Graph([(1, 2), (2, 3), (4, 5), (7, 7)])
-        component_list: List[Component] = list(components.connected_components(g))
-        c_123: Component = [c for c in component_list if 1 in c][0]
+        component_list: List[Component[Vertex, Edge]] = list(components.connected_components(g))
+        c_123: Component[Vertex, Edge] = [c for c in component_list if 1 in c][0]
         assert not c_123._edge_set, "without accessing edges, `_edge_set` should not be initialized"
 
         c_123.edges()
@@ -46,38 +48,48 @@ class TestConnectedComponents:
             elif (7, 7) in component:
                 c_77 = component
 
-        assert c_45._edge_set, "calling __contains__ should result in _edge_set initialization"
-        assert c_77._edge_set, "calling __contains__ should result in _edge_set initialization"
-        assert 7 in c_77, "vertex 7 should be in component containing edge (7, 7)"
+        assert c_45 is not None
+        assert c_77 is not None
+        assert (
+            c_45._edge_set is not None
+        ), "calling __contains__ should result in _edge_set initialization"
+        assert (
+            c_77._edge_set is not None
+        ), "calling __contains__ should result in _edge_set initialization"
+        assert g[7] in c_77, "vertex 7 should be in component containing edge (7, 7)"
 
-    def test_connected_components(self):
+    def test_connected_components(self) -> None:
         g = Graph([(1, 2), (2, 3), (4, 5), (7, 7)])
         g.add_vertex(8)
-        component_list: List[Component] = list(components.connected_components(g))
+        component_list: List[Component[Vertex, Edge]] = list(components.connected_components(g))
         assert len(component_list) == 4, "graph should have 4 components"
         edge_count = sum(len(list(component.edges())) for component in component_list)
         assert edge_count == 4, "components should contain a grand total of 4 edges"
 
         mg: MultiDiGraph = get_example_multidigraph()
-        scc_list: List[Component] = list(components.connected_components(mg))
+        scc_list: List[Component[MultiDiVertex, MultiDiEdge]] = list(
+            components.connected_components(mg)
+        )
         assert len(scc_list) == 4, "multidigraph should have 4 strongly-connected components"
 
-    def test_exceptions(self):
+    def test_exceptions(self) -> None:
         empty_g = Graph()
         with pytest.raises(exception.Unfeasible):
             components.connected_components(empty_g)
 
         g = Graph([(1, 2)])
         with pytest.raises(exception.GraphTypeNotSupported):
-            components.strongly_connected_components(g)  # type: ignore
+            components.strongly_connected_components(g)
 
-    def test_kosaraju_topological_ordering(self):
+    def test_kosaraju_topological_ordering(self) -> None:
         """Test that the strongly-connected components are output in topological order, meaning
         that for components Ci and Cj, if output_index[Ci] < output_index[Cj], then there exists
         and edge from Ci to Cj."""
         g: MultiDiGraph = get_example_multidigraph()
 
-        sccs: List[Component] = list(components.strongly_connected_components(g))
+        sccs: List[Component[MultiDiVertex, MultiDiEdge]] = list(
+            components.strongly_connected_components(g)
+        )
 
         assert len(sccs) == 4, "Graph should have 4 strong-connected components."
 
@@ -87,7 +99,7 @@ class TestConnectedComponents:
         assert g["f"] in sccs[1].vertices() or g["h"] in sccs[1].vertices()
         assert g["f"] in sccs[0].vertices() or g["h"] in sccs[0].vertices()
 
-    def test_strongly_connected_components(self):
+    def test_strongly_connected_components(self) -> None:
         g: MultiDiGraph = get_example_multidigraph()
         scc_list = list(components.strongly_connected_components(g))
 
@@ -113,7 +125,7 @@ class TestConnectedComponents:
         assert len(scc_fg) == 2, "SCC 'fg' should have 2 vertices."
         assert len(scc_h) == 1, "SCC 'h' should have 1 vertex."
 
-    def test_weakly_connected_components(self):
+    def test_weakly_connected_components(self) -> None:
         g: MultiDiGraph = get_example_multidigraph()
         scc_list = list(components.weakly_connected_components(g))
         assert len(scc_list) == 1, "graph should have one weakly-connected component"

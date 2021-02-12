@@ -16,6 +16,8 @@
 # pylint: disable=no-self-use
 # pylint: disable=missing-function-docstring
 
+from typing import cast, Iterable
+
 from vertizee import Graph, DiGraph, MultiGraph
 
 from vertizee.classes import edge as edge_module
@@ -25,7 +27,7 @@ from vertizee.classes import primitives_parsing as pp_module
 class TestVertexData:
     """Tests for the VertexData class."""
 
-    def test_from_vertex_obj(self):
+    def test_from_vertex_obj(self) -> None:
         g = Graph()
         g.add_vertex(1, color="blue")
 
@@ -34,7 +36,7 @@ class TestVertexData:
         assert vertex_data.attr["color"] == "blue", "should have 'color' attribute set to 'blue'"
         assert vertex_data.vertex_object, "should have reference to vertex object"
 
-    def test_attr(self):
+    def test_attr(self) -> None:
         vertex_data = pp_module.VertexData("s")
         assert vertex_data.label == "s", "label should be 's'"
         assert not vertex_data.attr, "there should be no attributes by default"
@@ -46,7 +48,7 @@ class TestVertexData:
 class TestEdgeData:
     """Tests for the EdgeData class."""
 
-    def test_attr(self):
+    def test_attr(self) -> None:
         v1 = pp_module.VertexData("1")
         v2 = pp_module.VertexData("2")
         edge_data = pp_module.EdgeData(v1, v2)
@@ -62,7 +64,7 @@ class TestEdgeData:
         edge_data2.attr["color"] = "blue"
         assert edge_data2.attr["color"] == "blue", "should have 'color' attribute set to 'blue'"
 
-    def test_get_label(self):
+    def test_get_label(self) -> None:
         v1 = pp_module.VertexData("1")
         v2 = pp_module.VertexData("2")
         edge_data1 = pp_module.EdgeData(v2, v1)
@@ -75,7 +77,7 @@ class TestEdgeData:
         assert edge_data2.get_label(is_directed=False) == "(1, 2)", "label should be (1, 2)"
         assert edge_data2.get_label(is_directed=True) == "(2, 1)", "label should be (2, 1)"
 
-    def test_vertex1_vertex2(self):
+    def test_vertex1_vertex2(self) -> None:
         v1 = pp_module.VertexData("1")
         v2 = pp_module.VertexData("2")
         edge_data1 = pp_module.EdgeData(v2, v1)
@@ -88,7 +90,7 @@ class TestEdgeData:
         assert edge_data2.vertex1.label == "2", "vertex1 should be 2"
         assert edge_data2.vertex2.label == "1", "vertex2 should be 1"
 
-    def test_weight(self):
+    def test_weight(self) -> None:
         g = Graph()
         g.add_edge(1, 2)
         edge_data1 = pp_module.EdgeData.from_edge_obj(g.get_edge(1, 2))
@@ -107,7 +109,7 @@ class TestEdgeData:
 class TestPrimitivesParsingModuleFunctions:
     """Tests for functions defined in the primitive parsing module."""
 
-    def test_parse_edge_type(self):
+    def test_parse_edge_type(self) -> None:
         g = Graph()
         g.add_edge(1, 2)
         edge_data1 = pp_module.parse_edge_type(g.get_edge(1, 2))
@@ -144,7 +146,7 @@ class TestPrimitivesParsingModuleFunctions:
         assert edge_data6.weight == 9.5
         assert edge_data6.attr["k"] == "v"
 
-    def test_parse_graph_primitive(self):
+    def test_parse_graph_primitive(self) -> None:
         edge_tuple_attr = (1, 2, {"color": "blue"})
         data1: pp_module.ParsedEdgeAndVertexData = pp_module.parse_graph_primitive(edge_tuple_attr)
         assert data1.edges[0].vertex1.label == "1"
@@ -158,14 +160,15 @@ class TestPrimitivesParsingModuleFunctions:
         assert data2.vertices[0].attr["mass"] == 4.5
         assert not data2.edges, "there should be no parsed edges"
 
-    def test_parse_graph_primitives_from(self):
+    def test_parse_graph_primitives_from(self) -> None:
         primitives = [1, "s", (2, {"mass": 3.5}), (2, 3), (3, 4, 3.5), (4, 5, {"color": "blue"})]
+        primitives = cast(Iterable[pp_module.GraphPrimitive], primitives)
         data: pp_module.ParsedEdgeAndVertexData = pp_module.parse_graph_primitives_from(primitives)
         assert len(data.vertices) == 3, "there should be 3 parsed vertices"
         assert len(data.edges) == 3, "there should be 3 parsed edges"
         assert set(v.label for v in data.vertices) == {"1", "s", "2"}
 
-    def test_parse_vertex_type(self):
+    def test_parse_vertex_type(self) -> None:
         g = Graph()
         g.add_vertex(1, mass=5.5)
         vertex_data1 = pp_module.parse_vertex_type(g[1])

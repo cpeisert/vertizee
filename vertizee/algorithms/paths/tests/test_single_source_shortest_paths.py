@@ -33,13 +33,13 @@ from vertizee.algorithms.paths.single_source import (
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.edge import Attributes, MultiEdgeBase
 from vertizee.classes.graph import DiGraph, MultiDiGraph, MultiGraph
-from vertizee.classes.vertex import V
+from vertizee.classes.vertex import DiVertex, MultiDiVertex, MultiVertex, V
 
 
 class TestBellmanFord:
     """Tests for Bellman-Ford algorithm."""
 
-    def test_bellman_ford_default_edge_weight(self):
+    def test_bellman_ford_default_edge_weight(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -55,7 +55,7 @@ class TestBellmanFord:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = bellman_ford(g, "s")
+        path_dict: VertexDict[ShortestPath[DiVertex]] = bellman_ford(g, "s")
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -64,7 +64,7 @@ class TestBellmanFord:
         assert path_dict["y"].length == 5, "Length of path s ~> y should be 5."
         assert path_dict["z"].length == 7, "Length of path s ~> z should be 7."
 
-    def test_bellman_ford_negative_edge_weights(self):
+    def test_bellman_ford_negative_edge_weights(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -80,7 +80,7 @@ class TestBellmanFord:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = bellman_ford(g, "s")
+        path_dict: VertexDict[ShortestPath[DiVertex]] = bellman_ford(g, "s")
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -89,7 +89,7 @@ class TestBellmanFord:
         assert path_dict["y"].length == 4, "Length of path s ~> y should be 4."
         assert path_dict["z"].length == 1, "Length of path s ~> z should be 1."
 
-    def test_bellman_ford_path_reconstruction(self):
+    def test_bellman_ford_path_reconstruction(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -105,7 +105,7 @@ class TestBellmanFord:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = bellman_ford(g, "s", save_paths=True)
+        path_dict: VertexDict[ShortestPath[DiVertex]] = bellman_ford(g, "s", save_paths=True)
 
         assert path_dict["t"].path() == ["s", "t"], "Path s ~> t should be [s, t]."
         assert path_dict["x"].path() == [
@@ -124,7 +124,7 @@ class TestBellmanFord:
         path_s_z = reconstruct_path("s", "z", path_dict)
         assert path_s_z == path_dict["z"].path(), "Algorithm path should match reconstructed path."
 
-    def test_bellman_ford_reverse_graph(self):
+    def test_bellman_ford_reverse_graph(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -140,7 +140,7 @@ class TestBellmanFord:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = bellman_ford(g, "s", reverse_graph=True)
+        path_dict: VertexDict[ShortestPath[DiVertex]] = bellman_ford(g, "s", reverse_graph=True)
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -149,7 +149,7 @@ class TestBellmanFord:
         assert path_dict["y"].length == 4, "Length of path s ~> y should be 4."
         assert path_dict["z"].length == 7, "Length of path s ~> z should be 7."
 
-    def test_bellman_ford_negative_weight_cycle(self):
+    def test_bellman_ford_negative_weight_cycle(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -168,7 +168,7 @@ class TestBellmanFord:
         with pytest.raises(NegativeWeightCycle):
             bellman_ford(g, "s")
 
-    def test_bellman_ford_undirected_negative_weight_cycle(self):
+    def test_bellman_ford_undirected_negative_weight_cycle(self) -> None:
         g = MultiGraph(
             [
                 ("s", "t", 10),
@@ -187,7 +187,7 @@ class TestBellmanFord:
         with pytest.raises(NegativeWeightCycle):
             bellman_ford(g, "s")
 
-    def test_bellman_ford_undirected(self):
+    def test_bellman_ford_undirected(self) -> None:
         g = MultiGraph(
             [
                 ("s", "t", 10),
@@ -203,7 +203,7 @@ class TestBellmanFord:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = bellman_ford(g, "s")
+        path_dict: VertexDict[ShortestPath[MultiVertex]] = bellman_ford(g, "s")
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -216,7 +216,7 @@ class TestBellmanFord:
 class TestBreadthFirstSearchShortestPaths:
     """Tests for shortest-paths unweighted using breadth-first search."""
 
-    def test_breadth_first_search_shortest_paths(self):
+    def test_breadth_first_search_shortest_paths(self) -> None:
         g = DiGraph(
             [
                 ("s", "t"),
@@ -232,7 +232,7 @@ class TestBreadthFirstSearchShortestPaths:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = breadth_first_search_shortest_paths(g, "s")
+        path_dict: VertexDict[ShortestPath[DiVertex]] = breadth_first_search_shortest_paths(g, "s")
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -245,7 +245,7 @@ class TestBreadthFirstSearchShortestPaths:
 class TestDijkstra:
     """Tests for Dijkstra's algorithm."""
 
-    def test_dijkstra_default_edge_weight(self):
+    def test_dijkstra_default_edge_weight(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -261,7 +261,7 @@ class TestDijkstra:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = dijkstra(g, "s")
+        path_dict: VertexDict[ShortestPath[DiVertex]] = dijkstra(g, "s")
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -270,7 +270,7 @@ class TestDijkstra:
         assert path_dict["y"].length == 5, "Length of path s ~> y should be 5."
         assert path_dict["z"].length == 7, "Length of path s ~> z should be 7."
 
-    def test_dijkstra_path_reconstruction(self):
+    def test_dijkstra_path_reconstruction(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -286,7 +286,7 @@ class TestDijkstra:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = dijkstra(g, "s", save_paths=True)
+        path_dict: VertexDict[ShortestPath[DiVertex]] = dijkstra(g, "s", save_paths=True)
 
         assert path_dict["t"].path() == ["s", "y", "t"], "Path s ~> t should be [s, y, t]."
         assert path_dict["x"].path() == ["s", "y", "t", "x"], "Path s ~> x should be [s, y, t, x]."
@@ -299,7 +299,7 @@ class TestDijkstra:
         path_s_z = reconstruct_path("s", "z", path_dict)
         assert path_s_z == path_dict["z"].path(), "Algorithm path should match reconstructed path."
 
-    def test_dijkstra_edge_attr_weights(self):
+    def test_dijkstra_edge_attr_weights(self) -> None:
         WEIGHT = "weight_key"
         g = DiGraph(
             [
@@ -326,7 +326,7 @@ class TestDijkstra:
         g.get_edge("z", "s")[WEIGHT] = 7
         g.get_edge("z", "x")[WEIGHT] = 6
 
-        path_dict: VertexDict[ShortestPath] = dijkstra(g, "s", weight=WEIGHT)
+        path_dict: VertexDict[ShortestPath[DiVertex]] = dijkstra(g, "s", weight=WEIGHT)
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."
@@ -335,7 +335,7 @@ class TestDijkstra:
         assert path_dict["y"].length == 5, "Length of path s ~> y should be 5."
         assert path_dict["z"].length == 7, "Length of path s ~> z should be 7."
 
-    def test_dijkstra_edge_weight_filter_function(self):
+    def test_dijkstra_edge_weight_filter_function(self) -> None:
         COLOR = "color_key"
 
         g = DiGraph(
@@ -387,14 +387,14 @@ class TestDijkstra:
                 return None
             return edge.weight
 
-        path_dict: VertexDict[ShortestPath] = dijkstra(g, "s", weight=get_weight)
+        path_dict: VertexDict[ShortestPath[DiVertex]] = dijkstra(g, "s", weight=get_weight)
         assert path_dict["s"].length == 0, "Length of s path should be 0."
         assert path_dict["t"].length == 10, "Length of path s ~> t should be 10."
         assert path_dict["x"].length == 11, "Length of path s ~> x should be 11."
         assert path_dict["y"].length == 12, "Length of path s ~> y should be 12."
         assert path_dict["z"].length == 15, "Length of path s ~> z should be 15."
 
-    def test_dijkstra_reverse_graph(self):
+    def test_dijkstra_reverse_graph(self) -> None:
         g = MultiDiGraph(
             [
                 ("s", "t", 10),
@@ -410,14 +410,14 @@ class TestDijkstra:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = dijkstra(g, "s", reverse_graph=True)
+        path_dict: VertexDict[ShortestPath[MultiDiVertex]] = dijkstra(g, "s", reverse_graph=True)
         assert path_dict["s"].length == 0, "Length of s path should be 0."
         assert path_dict["t"].length == 11, "Length of path s ~> t should be 11."
         assert path_dict["x"].length == 11, "Length of path s ~> x should be 11."
         assert path_dict["y"].length == 9, "Length of path s ~> y should be 9."
         assert path_dict["z"].length == 7, "Length of path s ~> z should be 7."
 
-    def test_dijkstra_undirected_graph(self):
+    def test_dijkstra_undirected_graph(self) -> None:
         g = MultiGraph(
             [
                 ("s", "t", 10),
@@ -433,14 +433,14 @@ class TestDijkstra:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = dijkstra(g, "s")
+        path_dict: VertexDict[ShortestPath[MultiVertex]] = dijkstra(g, "s")
         assert path_dict["s"].length == 0, "Length of s path should be 0."
         assert path_dict["t"].length == 7, "Length of path s ~> t should be 7."
         assert path_dict["x"].length == 8, "Length of path s ~> x should be 8."
         assert path_dict["y"].length == 5, "Length of path s ~> y should be 5."
         assert path_dict["z"].length == 7, "Length of path s ~> z should be 7."
 
-    def test_dijkstra_fibonacci_default_edge_weight(self):
+    def test_dijkstra_fibonacci_default_edge_weight(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -456,7 +456,7 @@ class TestDijkstra:
             ]
         )
 
-        path_dict: VertexDict[ShortestPath] = dijkstra_fibonacci(g, "s")
+        path_dict: VertexDict[ShortestPath[DiVertex]] = dijkstra_fibonacci(g, "s")
 
         assert len(path_dict) == 5, "Shortest path_dict dictionary should have length equal to |V|."
         assert path_dict["s"].length == 0, "Length of s path should be 0."

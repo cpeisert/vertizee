@@ -60,12 +60,12 @@ from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
-from vertizee.classes.edge import Edge, MultiEdge
-from vertizee.classes.vertex import MultiVertex, Vertex
+from vertizee.classes.edge import E_co
+from vertizee.classes.vertex import MultiVertex, Vertex, VertexBase
 
 if TYPE_CHECKING:
-    from vertizee.classes.graph import Graph, MultiGraph
-    from vertizee.classes.vertex import VertexType
+    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.vertex import V_co, VertexType
 
 
 INFINITY: Final[float] = float("inf")
@@ -76,8 +76,8 @@ INFINITY: Final[float] = float("inf")
 # kruskal_spanning_tree.
 #
 def kruskal_optimum_forest(
-    graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Tree[Union[Vertex, MultiVertex], Union[Edge, MultiEdge]]]:
+    graph: GraphBase[V_co, E_co], minimum: bool = True, weight: str = "Edge__weight"
+) -> Iterator[Tree[V_co, E_co]]:
     r"""Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
     :term:`optimum spanning forest` of an :term:`undirected graph` using Kruskal's algorithm.
 
@@ -121,9 +121,7 @@ def kruskal_optimum_forest(
     sorted_edges = [p[0] for p in sorted(edge_weight_pairs, key=lambda pair: pair[1])]
     union_find = UnionFind(*graph.vertices())
 
-    vertex_to_tree: Dict[
-        Union[Vertex, MultiVertex], Tree[Union[Vertex, MultiVertex], Union[Edge, MultiEdge]]
-    ] = {v: Tree(v) for v in graph.vertices()}
+    vertex_to_tree: Dict[V_co, Tree[V_co, E_co]] = {v: Tree(v) for v in graph.vertices()}
 
     for edge in sorted_edges:
         if not union_find.in_same_set(edge.vertex1, edge.vertex2):
@@ -139,8 +137,8 @@ def kruskal_optimum_forest(
 
 
 def kruskal_spanning_tree(
-    graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Union[Edge, MultiEdge]]:
+    graph: GraphBase[V_co, E_co], minimum: bool = True, weight: str = "Edge__weight"
+) -> Iterator[E_co]:
     r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Kruskal's algorithm.
 
@@ -167,7 +165,7 @@ def kruskal_spanning_tree(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
-        Union[Edge, MultiEdge]: An iterator over the edges of the minimum (or maximum) spanning tree
+        E_co: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Kruskal's algorithm.
 
     Raises:
@@ -199,8 +197,8 @@ def kruskal_spanning_tree(
 
 
 def optimum_forest(
-    graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Tree[Union[Vertex, MultiVertex], Union[Edge, MultiEdge]]]:
+    graph: GraphBase[V_co, E_co], minimum: bool = True, weight: str = "Edge__weight"
+) -> Iterator[Tree[V_co, E_co]]:
     r"""Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
     :term:`optimum spanning forest` of an :term:`undirected graph` using Kruskal's algorithm.
 
@@ -230,11 +228,11 @@ def optimum_forest(
 
 
 def prim_spanning_tree(
-    graph: Union[Graph, MultiGraph],
+    graph: GraphBase[V_co, E_co],
     root: Optional["VertexType"] = None,
     minimum: bool = True,
     weight: str = "Edge__weight",
-) -> Iterator[Union[Edge, MultiEdge]]:
+) -> Iterator[E_co]:
     r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Prim's algorithm.
 
@@ -270,7 +268,7 @@ def prim_spanning_tree(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
-        Union[Edge, MultiEdge]: Edges from the minimum (or maximum) spanning tree discovered
+        E_co: Edges from the minimum (or maximum) spanning tree discovered
         using Prim's algorithm.
 
     See Also:
@@ -286,37 +284,33 @@ def prim_spanning_tree(
         )
     if root is not None:
         try:
-            root_vertex: Union[Vertex, MultiVertex] = graph[root]
+            root_vertex = graph[root]
         except KeyError as error:
             raise exception.VertexNotFound(f"root vertex '{root}' not in graph") from error
     else:
         # pylint: disable=stop-iteration-return
-        root_vertex = cast(Union[Vertex, MultiVertex], next(iter(graph.vertices())))
+        root_vertex = next(iter(graph.vertices()))
 
     weight_function = get_weight_function(weight, minimum=minimum)
 
-    predecessor: Dict[
-        Union[Vertex, MultiVertex], Optional[Union[Vertex, MultiVertex]]
-    ] = collections.defaultdict(lambda: None)
+    predecessor: Dict[VertexBase, Optional[VertexBase]] = collections.defaultdict(lambda: None)
     """A dictionary mapping a vertex to its predecessor. A predecessor is the parent vertex in the
     spanning tree. Root vertices have predecessor None."""
 
-    priority: Dict[Union[Vertex, MultiVertex], float] = collections.defaultdict(lambda: INFINITY)
+    priority: Dict[VertexBase, float] = collections.defaultdict(lambda: INFINITY)
     """Dictionary mapping a vertex to its priority. Default priority is INFINITY."""
 
-    def prim_priority_function(v: Union[Vertex, MultiVertex]) -> float:
+    def prim_priority_function(v: VertexBase) -> float:
         return priority[v]
 
-    priority_queue: PriorityQueue[Union[Vertex, MultiVertex]] = PriorityQueue(
-        prim_priority_function
-    )
+    priority_queue: PriorityQueue[VertexBase] = PriorityQueue(prim_priority_function)
     for v in graph:
         priority_queue.add_or_update(v)
     priority[root_vertex] = 0
     priority_queue.add_or_update(root_vertex)
 
     vertices_in_tree = set()
-    tree_edge: Optional[Union[Edge, MultiEdge]] = None
+    tree_edge: Optional[E_co] = None
     sign = 1 if minimum else -1
 
     while priority_queue:
@@ -341,11 +335,11 @@ def prim_spanning_tree(
 
 
 def prim_fibonacci(
-    graph: Union[Graph, MultiGraph],
+    graph: GraphBase[V_co, E_co],
     root: Optional["VertexType"] = None,
     minimum: bool = True,
     weight: str = "Edge__weight",
-) -> Iterator[Union[Edge, MultiEdge]]:
+) -> Iterator[E_co]:
     r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Prim's algorithm implemented using a :term:`Fibonacci heap`.
 
@@ -382,7 +376,7 @@ def prim_fibonacci(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
-        Union[Edge, MultiEdge]: Edges from the minimum (or maximum) spanning tree discovered
+        E_co: Edges from the minimum (or maximum) spanning tree discovered
         using Prim's algorithm.
 
     See Also:
@@ -399,35 +393,33 @@ def prim_fibonacci(
         )
     if root is not None:
         try:
-            root_vertex: Union[Vertex, MultiVertex] = graph[root]
+            root_vertex = graph[root]
         except KeyError as error:
             raise exception.VertexNotFound(f"root vertex '{root}' not in graph") from error
     else:
         # pylint: disable=stop-iteration-return
-        root_vertex = cast(Union[Vertex, MultiVertex], next(iter(graph.vertices())))
+        root_vertex = next(iter(graph.vertices()))
 
     weight_function = get_weight_function(weight, minimum=minimum)
 
-    predecessor: Dict[
-        Union[Vertex, MultiVertex], Optional[Union[Vertex, MultiVertex]]
-    ] = collections.defaultdict(lambda: None)
+    predecessor: Dict[VertexBase, Optional[VertexBase]] = collections.defaultdict(lambda: None)
     """A dictionary mapping a vertex to its predecessor. A predecessor is the parent vertex in the
     spanning tree. Root vertices have predecessor None."""
 
-    priority: Dict[Union[Vertex, MultiVertex], float] = collections.defaultdict(lambda: INFINITY)
+    priority: Dict[VertexBase, float] = collections.defaultdict(lambda: INFINITY)
     """Dictionary mapping a vertex to its priority. Default priority is INFINITY."""
 
-    def prim_priority_function(v: Union[Vertex, MultiVertex]) -> float:
+    def prim_priority_function(v: VertexBase) -> float:
         return priority[v]
 
-    fib_heap: FibonacciHeap[Union[Vertex, MultiVertex]] = FibonacciHeap(prim_priority_function)
+    fib_heap: FibonacciHeap[VertexBase] = FibonacciHeap(prim_priority_function)
     for v in graph:
         fib_heap.insert(v)
     priority[root_vertex] = 0
     fib_heap.update_item_with_decreased_priority(root_vertex)
 
     vertices_in_tree = set()
-    tree_edge: Optional[Union[Edge, MultiEdge]] = None
+    tree_edge: Optional[E_co] = None
     sign = 1 if minimum else -1
 
     while fib_heap:
@@ -453,8 +445,8 @@ def prim_fibonacci(
 
 
 def spanning_tree(
-    graph: Union["Graph", "MultiGraph"], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Union[Edge, MultiEdge]]:
+    graph: GraphBase[V_co, E_co], minimum: bool = True, weight: str = "Edge__weight"
+) -> Iterator[E_co]:
     r"""Iterates over a minimum (or maximum) :term:`spanning tree` of a weighted,
     :term:`undirected graph` using Kruskal's algorithm.
 
@@ -488,7 +480,7 @@ def spanning_tree(
             dictionary. The default value ("Edge__weight") uses the edge property ``weight``.
 
     Yields:
-        Union[Edge, MultiEdge]: An iterator over the edges of the minimum (or maximum) spanning tree
+        E_co: An iterator over the edges of the minimum (or maximum) spanning tree
         discovered using Kruskal's algorithm.
 
     See Also:

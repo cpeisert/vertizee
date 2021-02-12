@@ -54,11 +54,9 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
-    List,
     Optional,
     Set,
     TYPE_CHECKING,
-    Union,
     ValuesView,
 )
 
@@ -68,7 +66,6 @@ import vertizee.algorithms.search.depth_first_search as dfs_module
 from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import SetView
 from vertizee.classes.edge import E_co
-from vertizee.classes.graph import DiGraph, MultiDiGraph
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 from vertizee.classes.vertex import DiVertex, MultiDiVertex, V, V_co
 
@@ -165,14 +162,13 @@ def connected_components(graph: "GraphBase[V_co, E_co]") -> Iterator["Component[
     if len(graph) == 0:
         raise exception.Unfeasible("components are undefined for an empty graph")
     if graph.is_directed():
-        assert isinstance(graph, (DiGraph, MultiDiGraph))
-        return cast(Iterator[Component[V_co, E_co]], strongly_connected_components(graph))
+        return strongly_connected_components(graph)
     return _plain_depth_first_search(graph, adjacency_function=_get_adjacent_to_child)
 
 
 def strongly_connected_components(
-    graph: Union["DiGraph", "MultiDiGraph"]
-) -> Iterator["Component[Union[DiVertex, MultiDiVertex], Union[DiEdge, MultiDiEdge]]"]:
+    graph: GraphBase[V_co, E_co]
+) -> Iterator["Component[V_co, E_co]"]:
     """Returns an iterator over the :term:`strongly-connected <strongly connected>` components of
     the :term:`digraph`.
 
@@ -198,18 +194,13 @@ def strongly_connected_components(
     if not graph.is_directed():
         raise exception.GraphTypeNotSupported("graph must be directed")
 
-    postorder = cast(
-        List[Union[DiVertex, MultiDiVertex]],
-        list(dfs_module.dfs_postorder_traversal(graph, reverse_graph=True)),  # type: ignore
-    )
+    postorder = list(dfs_module.dfs_postorder_traversal(graph, reverse_graph=True))
     return _plain_depth_first_search(
         graph, adjacency_function=_get_adjacent_to_child, vertices=reversed(postorder)
     )
 
 
-def weakly_connected_components(
-    graph: Union["DiGraph", "MultiDiGraph"]
-) -> Iterator["Component[Union[DiVertex, MultiDiVertex], Union[DiEdge, MultiDiEdge]]"]:
+def weakly_connected_components(graph: GraphBase[V_co, E_co]) -> Iterator["Component[V_co, E_co]"]:
     """Returns an iterator over the :term:`weakly-connected <weakly connected>` components of the
     graph.
 
@@ -232,7 +223,7 @@ def weakly_connected_components(
 def _get_adjacent_to_child(child: V, parent: Optional[V]) -> Iterator[V]:
     if child._parent_graph.is_directed():
         assert isinstance(child, (DiVertex, MultiDiVertex))
-        return cast(Iterator[V], iter(child.adj_vertices_outgoing()))
+        return iter(child.adj_vertices_outgoing())
     return _get_adjacent_to_child_undirected(child, parent)
 
 
@@ -242,7 +233,7 @@ def _get_adjacent_to_child_undirected(child: V, parent: Optional[V]) -> Iterator
     adj_vertices = set(child.adj_vertices())
     if parent:
         adj_vertices = adj_vertices - {parent}
-    return cast(Iterator[V], iter(adj_vertices))
+    return iter(adj_vertices)
 
 
 def _plain_depth_first_search(

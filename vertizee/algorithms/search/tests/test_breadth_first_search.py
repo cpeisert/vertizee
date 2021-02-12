@@ -16,7 +16,6 @@
 # pylint: disable=no-self-use
 # pylint: disable=missing-function-docstring
 
-from pprint import pprint
 import pytest
 
 from vertizee import exception
@@ -36,11 +35,11 @@ from vertizee.classes.vertex import Vertex, MultiDiVertex
 class TestBreadthFirstSearch:
     """Tests for breadth-first search."""
 
-    def test_bfs_undirected_cyclic_graph(self):
+    def test_bfs_undirected_cyclic_graph(self) -> None:
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         results: SearchResults[Vertex, Edge] = bfs(g, 0)
-        tree: Tree = next(iter(results.graph_search_trees()))
+        tree: Tree[Vertex, Edge] = next(iter(results.graph_search_trees()))
 
         assert tree.root == 0, "BFS tree should be rooted at vertex 0"
         assert (
@@ -73,9 +72,9 @@ class TestBreadthFirstSearch:
         assert first_edge.vertex1 == 0, "first edge should have vertex1 of 0"
         assert first_edge.vertex2 == 1, "first edge should have vertex2 of 1"
 
-    def test_bfs_undirected_graph_with_self_loop_and_two_trees(self):
+    def test_bfs_undirected_graph_with_self_loop_and_two_trees(self) -> None:
         g = Graph([(0, 0), (0, 1), (1, 2), (3, 4)])
-        results: SearchResults = bfs(g)
+        results: SearchResults[Vertex, Edge] = bfs(g)
 
         assert len(results.graph_search_trees()) == 2, "BFS should have discovered two BFS trees"
         assert len(results.vertices_preorder()) == 5, "BFS tree should have 5 vertices"
@@ -84,7 +83,7 @@ class TestBreadthFirstSearch:
         ), "a BFS should yield vertices in same order for both preorder and postorder"
         assert len(results.back_edges()) == 1, "graph should have one self-loop back edge"
 
-    def test_bfs_directed_cyclic_graph(self):
+    def test_bfs_directed_cyclic_graph(self) -> None:
         g = MultiDiGraph()
         g.add_edges_from(
             [
@@ -105,7 +104,8 @@ class TestBreadthFirstSearch:
             ]
         )
 
-        pprint(list(bfs_labeled_edge_traversal(g, 1)))
+        # from pprint import pprint
+        # pprint(list(bfs_labeled_edge_traversal(g, 1)))
 
         results1: SearchResults[MultiDiVertex, MultiDiEdge] = bfs(g, 1)
         search_trees = results1.graph_search_trees()
@@ -148,7 +148,7 @@ class TestBreadthFirstSearch:
         )
         assert classified_edge_count == len(g.edges()), "classified edges should equal total edges"
 
-    def test_bfs_traversal_undirected_graph(self):
+    def test_bfs_traversal_undirected_graph(self) -> None:
         g = Graph([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
         edge_iter = bfs_labeled_edge_traversal(g)
         bfs_edge_tuples = list(edge_iter)
@@ -227,11 +227,11 @@ class TestBreadthFirstSearch:
         depth1_3 = next(
             depth
             for parent, child, label, direction, depth in bfs_tuples2
-            if child in (1, 3) and label == Label.CROSS_EDGE
+            if child.label in ("1", "3") and label == Label.CROSS_EDGE
         )
         assert depth1_3 == INFINITY, "non-tree edges should report depth as infinity"
 
-    def test_bfs_traversal_directed_graph(self):
+    def test_bfs_traversal_directed_graph(self) -> None:
         g = DiGraph([(0, 1), (1, 2), (2, 1)])
 
         tuple_generator = bfs_labeled_edge_traversal(g, source=0)
@@ -291,10 +291,10 @@ class TestBreadthFirstSearch:
         with pytest.raises(StopIteration):
             v = next(vertex_generator)
 
-    def test_dfs_reverse_traversal(self):
+    def test_dfs_reverse_traversal(self) -> None:
         g = DiGraph([(0, 1), (1, 2)])
 
         vertices = list(bfs_vertex_traversal(g, source=1))
-        assert vertices == [1, 2]
+        assert vertices == [g[1], g[2]]
         vertices = list(bfs_vertex_traversal(g, source=1, reverse_graph=True))
-        assert vertices == [1, 0]
+        assert vertices == [g[1], g[0]]

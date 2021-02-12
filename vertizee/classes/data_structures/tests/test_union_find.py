@@ -22,7 +22,7 @@ from vertizee.classes.data_structures.union_find import UnionFind
 class TestUnionFind:
     """Tests for UnionFind data structure."""
 
-    def test_init_make_set(self):
+    def test_init_make_set(self) -> None:
         uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5)
 
         assert len(uf) == 5, "Union-find should contain 5 items."
@@ -35,7 +35,7 @@ class TestUnionFind:
         assert len(uf) == 8, "Union-find should contain 8 items."
         assert uf.set_count == 8, "Union-find should contain 8 sets."
 
-    def test_find_set_and_union_and_iter(self):
+    def test_find_set_and_union_and_iter(self) -> None:
         uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
         item1 = None
@@ -64,7 +64,7 @@ class TestUnionFind:
         assert uf.in_same_set(1, 10), "Items 1 and 10 should be in the same set."
         assert not uf.in_same_set(1, 15), "Items 1 and 15 should not be in the same set."
 
-    def test_get_set_and_get_sets(self):
+    def test_get_set_and_get_sets(self) -> None:
         uf: UnionFind[int] = UnionFind(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
         uf.union(1, 2)

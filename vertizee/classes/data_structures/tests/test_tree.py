@@ -28,9 +28,9 @@ from vertizee.classes.vertex import Vertex
 class TestTree:
     """Tests for trees."""
 
-    def test__contains__(self):
+    def test__contains__(self) -> None:
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
-        tree = Tree(g[1])
+        tree: Tree[Vertex, Edge] = Tree(g[1])
         assert g[1] in tree, "vertex 1 should be in tree"
         assert 1 in tree, "vertex specified as int should be in tree"
         assert "1" in tree, "vertex specified as str should be in tree"
@@ -47,9 +47,9 @@ class TestTree:
         with pytest.raises(TypeError):
             _ = (1, 2, 3, 4) not in g  # type: ignore
 
-    def test__getitem__(self):
+    def test__getitem__(self) -> None:
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
-        tree = Tree(g[1])
+        tree: Tree[Vertex, Edge] = Tree(g[1])
         assert isinstance(tree[1], Vertex), "tree should have vertex 1"
         assert isinstance(tree["1"], Vertex), "tree should have vertex 1"
         assert isinstance(tree[(1, {})], Vertex), "tree should have vertex 1"
@@ -70,9 +70,9 @@ class TestTree:
         with pytest.raises(KeyError):
             _ = g.get_edge(1, 3)
 
-    def test__iter__(self):
+    def test__iter__(self) -> None:
         g = Graph([(1, 2), (2, 3), (3, 4)])
-        tree = Tree(g[1])
+        tree: Tree[Vertex, Edge] = Tree(g[1])
         tree.add_edge(g.get_edge(1, 2))
         tree.add_edge(g.get_edge(2, 3))
         tree.add_edge(g.get_edge(3, 4))
@@ -82,17 +82,17 @@ class TestTree:
             tree
         ), "tree should iterate over its 4 vertices"
 
-    def test__len__(self):
+    def test__len__(self) -> None:
         g = Graph([(1, 2), (2, 3), (3, 4)])
-        tree = Tree(g[1])
+        tree: Tree[Vertex, Edge] = Tree(g[1])
         tree.add_edge(g.get_edge(1, 2))
         tree.add_edge(g.get_edge(2, 3))
         tree.add_edge(g.get_edge(3, 4))
         assert len(tree) == 4, "tree should contain 4 vertices"
 
-    def test_add_edge(self):
+    def test_add_edge(self) -> None:
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
-        tree = Tree(g[1])
+        tree: Tree[Vertex, Edge] = Tree(g[1])
         tree.add_edge(g.get_edge(1, 2))
         assert (1, 2) in tree
 
@@ -106,10 +106,10 @@ class TestTree:
             # Raises exception due to cycle.
             tree.add_edge(g.get_edge(1, 4))
 
-    def test_merge(self):
+    def test_merge(self) -> None:
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
-        tree1 = Tree(g[1])
-        tree5 = Tree(g[5])
+        tree1: Tree[Vertex, Edge] = Tree(g[1])
+        tree5: Tree[Vertex, Edge] = Tree(g[5])
 
         tree1.add_edge(g.get_edge(1, 4))
         tree1.add_edge(g.get_edge(4, 3))

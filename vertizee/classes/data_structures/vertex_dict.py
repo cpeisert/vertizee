@@ -80,10 +80,16 @@ class VertexDict(MutableMapping["VertexType", VT]):
 
     __slots__ = ("data",)
 
-    def __init__(self, dictionary: Optional[Dict[Any, Any]] = None, /, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        other: Union[Mapping[Any, Any], Iterable[Tuple[Any, Any]], None] = None,
+        /,
+        **kwargs: Any,
+    ) -> None:
         self.data: Dict[str, VT] = {}
-        if dictionary is not None:
-            self.update(dictionary)
+
+        if other:
+            self.update(other)
         if kwargs:
             self.update(kwargs)
 

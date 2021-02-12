@@ -28,17 +28,19 @@ class Item:
         self.name = name
         self.priority = priority
 
-    def __eq__(self, other: "Item"):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Item):
+            return False
         return self.name == other.name and self.priority == other.priority
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.name))
 
 
 class TestFibonacciHeap:
     """Tests for FibonacciHeap data structure."""
 
-    def test_insert_and_length_and_minimum(self):
+    def test_insert_and_length_and_minimum(self) -> None:
         fh: FibonacciHeap[Item] = FibonacciHeap(lambda i: i.priority)
         first = Item("first", 1)
         second = Item("second", 2)
@@ -59,7 +61,7 @@ class TestFibonacciHeap:
         assert len(fh) == 6, "Fibonacci heap should contain 5 items."
         assert fh.minimum == zeroeth, "Min item should be `zeroeth`."
 
-    def test_union(self):
+    def test_union(self) -> None:
         fh: FibonacciHeap[Item] = FibonacciHeap(lambda i: i.priority)
         first = Item("first", 1)
         second = Item("second", 2)
@@ -79,7 +81,7 @@ class TestFibonacciHeap:
         assert len(fh) == 4, "After Fibonacci heap union should contain 4 items."
         assert fh.minimum == neg_two, "Min item should be `neg_two`."
 
-    def test_extract_min(self):
+    def test_extract_min(self) -> None:
         fh: FibonacciHeap[Item] = FibonacciHeap(lambda i: i.priority)
         first = Item("first", 1)
         second = Item("second", 2)
@@ -120,7 +122,7 @@ class TestFibonacciHeap:
         min_item = fh.extract_min()
         assert min_item is None, "Extracted min item from empty heap should be `None`."
 
-    def test_update_item_with_decreased_priority(self):
+    def test_update_item_with_decreased_priority(self) -> None:
         fh: FibonacciHeap[Item] = FibonacciHeap(lambda i: i.priority)
         first = Item("first", 1)
         second = Item("second", 2)
@@ -146,7 +148,7 @@ class TestFibonacciHeap:
         fh.update_item_with_decreased_priority(fourth)
         assert fh.minimum == fourth, "Heap minimum should be `fourth`."
 
-    def test_delete(self):
+    def test_delete(self) -> None:
         fh: FibonacciHeap[Item] = FibonacciHeap(lambda i: i.priority)
         first = Item("first", 1)
         second = Item("second", 2)

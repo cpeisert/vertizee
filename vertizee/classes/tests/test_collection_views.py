@@ -22,7 +22,7 @@ from vertizee.classes.collection_views import ItemsView, ListView, SetView
 class TestCollectionViews:
     """Tests for functions defined in the collection_views module."""
 
-    def test_items_view(self):
+    def test_items_view(self) -> None:
         d = {1: "one", 2: "two", 3: "three"}
         items_view = ItemsView(d)
         assert (1, "one") in items_view
@@ -45,7 +45,7 @@ class TestCollectionViews:
         assert ("five", 5) in items_view2
         assert ("five", 4) not in items_view2
 
-    def test_list_view(self):
+    def test_list_view(self) -> None:
         list1 = [5, 6, 7, 5]
         list_view = ListView(list1)
 
@@ -81,7 +81,7 @@ class TestCollectionViews:
         assert bool(list_view2), "Non-empty list view should evaluate to True"
         assert not bool(ListView._from_iterable([])), "Empty list view should evaluate to False"
 
-    def test_set_view(self):
+    def test_set_view(self) -> None:
         set1 = {10, 11, 12}
         set_view = SetView(set1)
 

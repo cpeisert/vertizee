@@ -29,6 +29,7 @@ from vertizee.algorithms.paths.all_pairs import (
 )
 from vertizee.classes.data_structures.vertex_dict import VertexDict
 from vertizee.classes.graph import DiGraph, MultiGraph
+from vertizee.classes.vertex import DiVertex, MultiVertex
 
 INFINITY: Final[float] = float("inf")
 
@@ -36,7 +37,7 @@ INFINITY: Final[float] = float("inf")
 class TestFloydWarshall:
     """Tests for the Floyd-Warshall algorithm."""
 
-    def test_floyd_warshall_positive_edge_weights(self):
+    def test_floyd_warshall_positive_edge_weights(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -52,7 +53,7 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = floyd_warshall(g)
 
         assert len(all_paths_dict) == 5, "all_paths_dict dictionary should have length equal to |V|"
         assert len(all_paths_dict["s"]) == 5, (
@@ -70,7 +71,7 @@ class TestFloydWarshall:
         assert all_paths_dict["y"]["s"].length == 9, "length of path y ~> s should be 9"
         assert all_paths_dict["y"]["z"].length == 2, "length of path y ~> z should be 2"
 
-    def test_floyd_warshall_negative_edge_weights(self):
+    def test_floyd_warshall_negative_edge_weights(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -87,7 +88,7 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = floyd_warshall(g)
 
         assert (
             len(all_paths_dict) == 6
@@ -121,7 +122,7 @@ class TestFloydWarshall:
         assert all_paths_dict["z"]["y"].length == 11, "length of path z ~> y should be 11"
         assert all_paths_dict["z"]["z"].length == 0, "length of path z ~> z should be 0"
 
-    def test_floyd_warshall_save_paths(self):
+    def test_floyd_warshall_save_paths(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -137,7 +138,9 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g, save_paths=False)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = floyd_warshall(
+            g, save_paths=False
+        )
 
         assert all_paths_dict["s"]["z"].path() == []
         assert all_paths_dict["y"]["s"].path() == []
@@ -146,7 +149,7 @@ class TestFloydWarshall:
         assert all_paths_dict["y"]["y"].path() == []
         assert all_paths_dict["y"]["z"].path() == []
 
-    def test_floyd_warshall_path_reconstruction(self):
+    def test_floyd_warshall_path_reconstruction(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -163,7 +166,7 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g, save_paths=True)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = floyd_warshall(g, save_paths=True)
 
         assert all_paths_dict["s"]["z"].path() == ["s", "y", "z"]
         assert all_paths_dict["y"]["s"].path() == ["y", "z", "s"]
@@ -188,7 +191,7 @@ class TestFloydWarshall:
         path_y_a = reconstruct_path("y", "a", all_paths_dict)
         assert path_y_a == all_paths_dict["y"]["a"].path()
 
-    def test_floyd_warshall_negative_weight_cycle(self):
+    def test_floyd_warshall_negative_weight_cycle(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -207,7 +210,7 @@ class TestFloydWarshall:
         with pytest.raises(NegativeWeightCycle):
             floyd_warshall(g)
 
-    def test_floyd_warshall_undirected_negative_weight_cycle(self):
+    def test_floyd_warshall_undirected_negative_weight_cycle(self) -> None:
         g = MultiGraph(
             [
                 ("s", "t", 10),
@@ -226,7 +229,7 @@ class TestFloydWarshall:
         with pytest.raises(NegativeWeightCycle):
             floyd_warshall(g)
 
-    def test_floyd_warshall_undirected(self):
+    def test_floyd_warshall_undirected(self) -> None:
         g = MultiGraph(
             [
                 ("s", "t", 10),
@@ -242,7 +245,7 @@ class TestFloydWarshall:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = floyd_warshall(g)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[MultiVertex]]] = floyd_warshall(g)
 
         assert (
             len(all_paths_dict) == 5
@@ -263,7 +266,7 @@ class TestFloydWarshall:
 class TestJohnson:
     """Tests for Johnson's algorithm."""
 
-    def test_johnson_positive_edge_weights(self):
+    def test_johnson_positive_edge_weights(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -279,7 +282,7 @@ class TestJohnson:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = johnson(g)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = johnson(g)
 
         assert len(all_paths_dict) == 5, "all_paths_dict dictionary should have length equal to |V|"
         assert len(all_paths_dict["s"]) == 5, (
@@ -297,7 +300,7 @@ class TestJohnson:
         assert all_paths_dict["y"]["s"].length == 9, "length of path y ~> s should be 9"
         assert all_paths_dict["y"]["z"].length == 2, "length of path y ~> z should be 2"
 
-    def test_johnson_negative_edge_weights(self):
+    def test_johnson_negative_edge_weights(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -314,7 +317,7 @@ class TestJohnson:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = johnson(g)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = johnson(g)
 
         assert len(all_paths_dict) == 6, "all_paths_dict dictionary should have length equal to |V|"
         assert len(all_paths_dict["s"]) == 6, (
@@ -342,7 +345,7 @@ class TestJohnson:
         assert all_paths_dict["z"]["y"].length == 11, "length of path z ~> y should be 11"
         assert all_paths_dict["z"]["z"].length == 0, "length of path z ~> z should be 0"
 
-    def test_johnson_path_reconstruction(self):
+    def test_johnson_path_reconstruction(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -359,7 +362,7 @@ class TestJohnson:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = johnson(g, save_paths=True)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = johnson(g, save_paths=True)
 
         assert all_paths_dict["s"]["z"].path() == ["s", "y", "z"], "path s ~> z should be [s, y, z]"
         assert all_paths_dict["y"]["y"].path() == ["y"], "path y ~> y should be [y]"
@@ -375,7 +378,7 @@ class TestJohnson:
         path_y_a = reconstruct_path("y", "a", all_paths_dict)
         assert path_y_a == all_paths_dict["y"]["a"].path()
 
-    def test_johnson_negative_weight_cycle(self):
+    def test_johnson_negative_weight_cycle(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -394,7 +397,7 @@ class TestJohnson:
         with pytest.raises(NegativeWeightCycle):
             johnson(g)
 
-    def test_johnson_fibonacci_negative_edge_weights(self):
+    def test_johnson_fibonacci_negative_edge_weights(self) -> None:
         g = DiGraph(
             [
                 ("s", "t", 10),
@@ -411,7 +414,7 @@ class TestJohnson:
             ]
         )
 
-        all_paths_dict: VertexDict[VertexDict[ShortestPath]] = johnson_fibonacci(g)
+        all_paths_dict: VertexDict[VertexDict[ShortestPath[DiVertex]]] = johnson_fibonacci(g)
 
         assert len(all_paths_dict) == 6, "all_paths_dict dictionary should have length equal to |V|"
         assert len(all_paths_dict["s"]) == 6, (

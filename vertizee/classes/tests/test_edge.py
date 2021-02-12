@@ -28,6 +28,7 @@ from vertizee import (
     MultiEdge,
     MultiDiGraph,
     MultiDiEdge,
+    MultiVertex,
 )
 
 from vertizee.classes import edge as edge_module
@@ -36,7 +37,7 @@ from vertizee.classes import edge as edge_module
 class TestEdgeModuleFunctions:
     """Tests for functions defined in edge module."""
 
-    def test_create_edge_label(self):
+    def test_create_edge_label(self) -> None:
         g = Graph()
         v1 = g.add_vertex(1)
         v2 = g.add_vertex(2)
@@ -73,7 +74,7 @@ class TestEdgeModuleFunctions:
 class TestEdgeConnectionData:
     """Tests for EdgeConnectionData class."""
 
-    def test_edge_connection_data(self):
+    def test_edge_connection_data(self) -> None:
         ecd = edge_module.EdgeConnectionData(weight=99.9)
         assert ecd._attr is None, "attributes property should be None"
         assert not ecd.has_attributes_dict(), "attr dictionary should not be initialized"
@@ -87,10 +88,10 @@ class TestEdgeConnectionData:
 class TestEdgeConnectionView:
     """Tests for edge view class EdgeConnectionView."""
 
-    def test_edgeview(self):
+    def test_edgeview(self) -> None:
         mg = MultiGraph([(1, 1), (1, 1), (3, 2), (2, 3)])
         loops: MultiEdge = mg.get_edge(1, 1)
-        loop_view: EdgeConnectionView = loops.connections()[0]
+        loop_view: EdgeConnectionView[MultiVertex, MultiEdge] = loops.connections()[0]
         assert loop_view.is_loop(), "edge connection should be a loop"
         assert loop_view.label == "(1, 1)", "label should be '(1, 1)'"
         assert (
@@ -119,7 +120,7 @@ class TestEdgeConnectionView:
 class TestMutableEdgeBase:
     """Tests for MutableEdgeBase features shared by all single-connection edge classes."""
 
-    def test__eq__(self):
+    def test__eq__(self) -> None:
         g1 = Graph([(1, 2), (3, 4, 2.5)])
         g2 = Graph([(1, 2), (3, 4, 5.0)])
 
@@ -128,7 +129,7 @@ class TestMutableEdgeBase:
             3, 4
         ), "edges (3, 4, 2.5) and (3, 4, 5.0) should not be equal"
 
-    def test_attr__getitem__setitem__(self):
+    def test_attr__getitem__setitem__(self) -> None:
         g = Graph([(1, 2)])
         edge = g.get_edge(1, 2)
         assert not edge.has_attributes_dict(), "attr dict should not be instantiated"
@@ -147,7 +148,7 @@ class TestMutableEdgeBase:
         with pytest.raises(KeyError):
             _ = edge["unknown_key"]
 
-    def test_contract(self):
+    def test_contract(self) -> None:
         g = Graph([(1, 2), (1, 3), (2, 3), (2, 4), (2, 2)])
         assert g[1].adj_vertices() == {
             g[2],
@@ -161,6 +162,7 @@ class TestMutableEdgeBase:
             g[3],
             g[4],
         }, "after edge contraction, vertex 1 should be adjacent to vertices 1, 3, and 4"
+        assert g[1].loop_edge is not None
         assert (
             g[1].loop_edge.label == "(1, 1)"
         ), "vertex 1 should have loop edge (1, 1), due to loop that was on vertex 2"
@@ -170,13 +172,13 @@ class TestMutableEdgeBase:
         g2.get_edge("a", "b").contract(remove_loops=True)
         assert not g2["a"].loop_edge, "loop edge should be removed after edge contraction"
 
-    def test_loop(self):
+    def test_loop(self) -> None:
         g = Graph([(1, 1)])
         assert g.get_edge(1, 1).is_loop(), "edge (1, 1) should self identify as a loop"
         assert g.get_edge(1, 1).vertex1 == 1, "loop edge vertex1 should be 1"
         assert g.get_edge(1, 1).vertex2 == 1, "loop edge vertex2 should be 1"
 
-    def test_remove(self):
+    def test_remove(self) -> None:
         g = Graph([(1, 2), (2, 3)])
         assert g.has_edge(1, 2), "prior to removal, graph should have edge (1, 2)"
         assert not g[1].is_isolated(), "vertex 1 should not be isolated prior to edge removal"
@@ -193,7 +195,7 @@ class TestMutableEdgeBase:
             1
         ), "after edge removal, semi-isolated vertex 1 should have been removed"
 
-    def test_weight(self):
+    def test_weight(self) -> None:
         g = Graph([(1, 2), (3, 4, 9.5)])
         assert (
             g.get_edge(1, 2).weight == edge_module.DEFAULT_WEIGHT
@@ -202,7 +204,7 @@ class TestMutableEdgeBase:
         with pytest.raises(AttributeError):
             g.get_edge(3, 4).weight = 100  # type: ignore
 
-    def test_vertex1_vertex2(self):
+    def test_vertex1_vertex2(self) -> None:
         g = Graph()
         g.add_edge(2, 1)
         assert g.get_edge(1, 2).vertex1 == 2, "vertex1 should be 2"
@@ -212,7 +214,7 @@ class TestMutableEdgeBase:
 class TestMultiEdgeBase:
     """Tests for MultiEdgeBase features shared by all multiconnection classes."""
 
-    def test_add_remove_get_connection(self):
+    def test_add_remove_get_connection(self) -> None:
         g = MultiGraph([(1, 2)])
         assert g.get_edge(1, 2).multiplicity == 1, "edge (1, 2) should have multiplicity 1"
 
@@ -230,7 +232,7 @@ class TestMultiEdgeBase:
             g.get_edge(1, 2).multiplicity == 1
         ), "edge (1, 2) should have multiplicity 1 after removing parallel connection"
 
-    def test_connections_and_connection_items(self):
+    def test_connections_and_connection_items(self) -> None:
         g = MultiGraph([(1, 2), (1, 2), (2, 2), (2, 2), (2, 2)])
         c12 = list(g.get_edge(1, 2).connections())
         assert len(c12) == 2, "edge (1, 2) should have 2 connections"
@@ -241,7 +243,7 @@ class TestMultiEdgeBase:
             keys.add(key)
         assert len(keys) == 3, "edge (2, 2) should have 3 parallel loop connections"
 
-    def test_contract(self):
+    def test_contract(self) -> None:
         g = MultiGraph([(1, 2), (1, 3), (2, 3), (2, 4), (2, 2), (2, 2)])
         assert g[1].adj_vertices() == {
             g[2],
@@ -273,7 +275,7 @@ class TestMultiEdgeBase:
 
         assert not g2[1].loop_edge, "loop edge should be removed after edge contraction"
 
-    def test_loop(self):
+    def test_loop(self) -> None:
         g = MultiGraph([(1, 1), (1, 1)])
         assert g.get_edge(1, 1).is_loop(), "edge (1, 1) should self identify as a loop"
         assert g.get_edge(1, 1).vertex1 == 1, "loop edge vertex1 should be 1"
@@ -282,7 +284,7 @@ class TestMultiEdgeBase:
             g.get_edge(1, 1).multiplicity == 2
         ), "there should be two parallel loop edge connections"
 
-    def test_remove(self):
+    def test_remove(self) -> None:
         g = MultiGraph([(1, 2), (1, 2), (2, 3)])
         assert g.has_edge(1, 2), "prior to removal, graph should have edge (1, 2)"
         assert not g[1].is_isolated(), "vertex 1 should not be isolated prior to edge removal"
@@ -299,7 +301,7 @@ class TestMultiEdgeBase:
             1
         ), "after edge removal, semi-isolated vertex 1 should have been removed"
 
-    def test_weight(self):
+    def test_weight(self) -> None:
         g = MultiGraph([(1, 2), (1, 2), (3, 4, 9.5), (3, 4, 0.5)])
         assert (
             g.get_edge(1, 2).weight == 2 * edge_module.DEFAULT_WEIGHT
@@ -311,7 +313,7 @@ class TestMultiEdgeBase:
             g.get_edge(1, 2).connections()[0].weight == edge_module.DEFAULT_WEIGHT
         ), "Individual connections should default to edge_module.DEFAULT_WEIGHT"
 
-    def test_vertex1_vertex2(self):
+    def test_vertex1_vertex2(self) -> None:
         g = MultiGraph([(2, 1), (1, 2)])
         assert g.get_edge(1, 2).multiplicity == 2, "multiedge should have multiplicity 2"
         assert g.get_edge(1, 2).vertex1 == 2, "vertex1 should be 2"
@@ -321,7 +323,7 @@ class TestMultiEdgeBase:
 class TestEdge:
     """Tests for the Edge class (concrete class _Edge)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = Graph()
         edge: Edge = g.add_edge(1, 2)
         assert isinstance(
@@ -336,7 +338,7 @@ class TestEdge:
             Edge, edge_module.MutableEdgeBase
         ), "Edge should be MutableEdgeBase subclass"
 
-    def test_equality_operator(self):
+    def test_equality_operator(self) -> None:
         g = Graph([(1, 2), (3, 4, 3.5), (4, 5, 7.5, {"color": "blue"}), (6, 7, 9.5, {"k": "v"})])
         g2 = Graph([(2, 1), (3, 4), (4, 5, 7.5, {"color": "red"}), (6, 7, 9.5, {"k": "v"})])
         assert g.get_edge(1, 2) == g.get_edge(
@@ -353,7 +355,7 @@ class TestEdge:
         ), "edges (4, 5) should not be equal due to different attributes"
         assert g.get_edge(6, 7) == g2.get_edge(6, 7), "edges (6, 7) should be equal"
 
-    def test_repr_str_and_label(self):
+    def test_repr_str_and_label(self) -> None:
         g = Graph([(2, 1)])
         assert g.get_edge(2, 1).label == "(1, 2)", "edge label should be (1, 2)"
         assert (
@@ -370,7 +372,7 @@ class TestEdge:
 class TestDiEdge:
     """Tests for the DiEdge class (concrete class _DiEdge)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = DiGraph()
         edge: DiEdge = g.add_edge(1, 2)
         assert isinstance(
@@ -385,7 +387,7 @@ class TestDiEdge:
             DiEdge, edge_module.MutableEdgeBase
         ), "DiEdge should be MutableEdgeBase subclass"
 
-    def test_equality_operator(self):
+    def test_equality_operator(self) -> None:
         dg = DiGraph([(1, 2), (3, 4, 3.5), (4, 5, 7.5, {"color": "blue"}), (6, 7, 9.5, {"k": "v"})])
         dg2 = DiGraph([(2, 1), (3, 4), (4, 5, 7.5, {"color": "red"}), (6, 7, 9.5, {"k": "v"})])
         assert dg.get_edge(1, 2) == dg.get_edge(
@@ -402,7 +404,7 @@ class TestDiEdge:
         ), "edges (4, 5) should not be equal due to different attributes"
         assert dg.get_edge(6, 7) == dg2.get_edge(6, 7), "edges (6, 7) should be equal"
 
-    def test_repr_str_and_label(self):
+    def test_repr_str_and_label(self) -> None:
         dg = DiGraph([(2, 1)])
         assert dg.get_edge(2, 1).label == "(2, 1)", "edge label should be (2, 1)"
         assert (
@@ -419,7 +421,7 @@ class TestDiEdge:
 class TestMultiEdge:
     """Tests for MultiEdge class (concrete class _MultiEdge)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = MultiGraph()
         edge: MultiEdge = g.add_edge(1, 2)
         assert isinstance(
@@ -430,7 +432,7 @@ class TestMultiEdge:
             MultiEdge, edge_module.MultiEdgeBase
         ), "MultiEdge should be MultiEdgeBase subclass"
 
-    def test_equality_operator(self):
+    def test_equality_operator(self) -> None:
         mg = MultiGraph([(1, 2), (2, 1), (3, 4), (3, 4, 1.5), (6, 7, 9.5, {"k": "v1"})])
         mg2 = MultiGraph([(2, 1), (2, 1), (3, 4), (3, 4, 5.5), (6, 7, 9.5, {"k": "v2"})])
         assert mg.get_edge(1, 2) == mg2.get_edge(2, 1), "multiedges (1, 2) should be equal"
@@ -441,7 +443,7 @@ class TestMultiEdge:
             6, 7
         ), "multiedges (6, 7) should be equal (attributes of parallel connections not checked)"
 
-    def test_repr_str_and_label(self):
+    def test_repr_str_and_label(self) -> None:
         mg = MultiGraph([(2, 1), (1, 2)])
         assert mg.get_edge(2, 1).label == "(1, 2)", "multiedge label should be (1, 2)"
         assert (
@@ -460,7 +462,7 @@ class TestMultiEdge:
 class TestMultiDiEdge:
     """Tests for MultiDiEdge class (concrete class _MultiDiEdge)."""
 
-    def test_issubclass_and_isinstance(self):
+    def test_issubclass_and_isinstance(self) -> None:
         g = MultiDiGraph()
         edge: MultiDiEdge = g.add_edge(1, 2)
         assert isinstance(
@@ -471,7 +473,7 @@ class TestMultiDiEdge:
             MultiDiEdge, edge_module.MultiEdgeBase
         ), "MultiDiEdge should be MultiEdgeBase subclass"
 
-    def test_equality_operator(self):
+    def test_equality_operator(self) -> None:
         mdg = MultiDiGraph([(1, 2), (2, 1), (3, 4), (3, 4, 1.5), (6, 7, 9.5, {"k": "v1"})])
         mdg2 = MultiDiGraph([(2, 1), (2, 1), (3, 4), (3, 4, 5.5), (6, 7, 9.5, {"k": "v2"})])
         assert mdg.get_edge(1, 2) != mdg2.get_edge(
@@ -487,7 +489,7 @@ class TestMultiDiEdge:
             6, 7
         ), "multiedges (6, 7) should be equal (attributes of parallel connections not checked)"
 
-    def test_repr_str_and_label(self):
+    def test_repr_str_and_label(self) -> None:
         mdg = MultiDiGraph([(2, 1), (2, 1)])
         assert mdg.get_edge(2, 1).label == "(2, 1)", "directed multiedge label should be (2, 1)"
         assert (

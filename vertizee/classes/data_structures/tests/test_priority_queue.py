@@ -16,14 +16,15 @@
 # pylint: disable=no-self-use
 # pylint: disable=missing-function-docstring
 
+from typing import Callable
+
 import pytest
 
-import vertizee as vz
-from vertizee import Vertex
+from vertizee import Graph, Vertex, VertexDict
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 
 
-def get_priority_function(vertex_to_priority: vz.VertexDict):
+def get_priority_function(vertex_to_priority: VertexDict[float]) -> Callable[[Vertex], float]:
     """Returns a function that retrieves the priority of a vertex."""
 
     def priority_function(vertex: Vertex) -> float:
@@ -36,9 +37,9 @@ def get_priority_function(vertex_to_priority: vz.VertexDict):
 class TestPriorityQueue:
     """Tests for PriorityQueue data structure."""
 
-    def test_basic_operations(self):
-        g = vz.Graph([(1, 2), (2, 3), (3, 4), (4, 5)])
-        vertex_priority = vz.VertexDict()
+    def test_basic_operations(self) -> None:
+        g = Graph([(1, 2), (2, 3), (3, 4), (4, 5)])
+        vertex_priority: VertexDict[float] = VertexDict()
         vertex_priority[1] = 100
         vertex_priority[2] = 90
         vertex_priority[3] = 80
