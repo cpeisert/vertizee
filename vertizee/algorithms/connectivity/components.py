@@ -67,16 +67,17 @@ from vertizee.algorithms.algo_utils import search_utils
 import vertizee.algorithms.search.depth_first_search as dfs_module
 from vertizee.classes import primitives_parsing
 from vertizee.classes.collection_views import SetView
+from vertizee.classes.edge import E_co
 from vertizee.classes.graph import DiGraph, MultiDiGraph
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData
 from vertizee.classes.vertex import DiVertex, MultiDiVertex, V, V_co
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import EdgeBase
+    from vertizee.classes.edge import DiEdge, MultiDiEdge
     from vertizee.classes.graph import GraphBase
 
 
-class Component(Generic[V_co]):
+class Component(Generic[V_co, E_co]):
     """A :term:`component <connected component>` in a :term:`graph`.
 
     Args:
@@ -84,7 +85,7 @@ class Component(Generic[V_co]):
     """
 
     def __init__(self, initial_vertex: V_co) -> None:
-        self._edge_set: Optional[Set[EdgeBase[V_co]]] = None
+        self._edge_set: Optional[Set[E_co]] = None
         self._parent_graph = initial_vertex._parent_graph
         self._vertices: Dict[str, V_co] = dict()
         self._vertices[initial_vertex.label] = initial_vertex
@@ -118,7 +119,7 @@ class Component(Generic[V_co]):
         ``len`` is used."""
         return len(self._vertices)
 
-    def edges(self) -> "SetView[EdgeBase[V_co]]":
+    def edges(self) -> "SetView[E_co]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the component
         edges."""
         if self._edge_set:
@@ -130,7 +131,7 @@ class Component(Generic[V_co]):
             for edge in vertex.incident_edges():
                 if edge.vertex1 in vertices and edge.vertex2 in vertices:
                     if edge not in self._edge_set:
-                        self._edge_set.add(cast(EdgeBase[V_co], edge))
+                        self._edge_set.add(cast(E_co, edge))
         return SetView(self._edge_set)
 
     def vertices(self) -> ValuesView[V_co]:
@@ -139,7 +140,7 @@ class Component(Generic[V_co]):
         return self._vertices.values()
 
 
-def connected_components(graph: "GraphBase[V_co]") -> Iterator["Component[V_co]"]:
+def connected_components(graph: "GraphBase[V_co, E_co]") -> Iterator["Component[V_co, E_co]"]:
     """Returns an iterator over the :term:`connected components <connected component>`; if the
     :term:`graph` is directed, then the components are the
     :term:`strongly-connected <strongly connected>` components of the graph.
@@ -165,13 +166,13 @@ def connected_components(graph: "GraphBase[V_co]") -> Iterator["Component[V_co]"
         raise exception.Unfeasible("components are undefined for an empty graph")
     if graph.is_directed():
         assert isinstance(graph, (DiGraph, MultiDiGraph))
-        return cast(Iterator[Component[V_co]], strongly_connected_components(graph))
-    return _plain_depth_first_search(graph.vertices(), adjacency_function=_get_adjacent_to_child)
+        return cast(Iterator[Component[V_co, E_co]], strongly_connected_components(graph))
+    return _plain_depth_first_search(graph, adjacency_function=_get_adjacent_to_child)
 
 
 def strongly_connected_components(
     graph: Union["DiGraph", "MultiDiGraph"]
-) -> Iterator["Component[Union[DiVertex, MultiDiVertex]]"]:
+) -> Iterator["Component[Union[DiVertex, MultiDiVertex], Union[DiEdge, MultiDiEdge]]"]:
     """Returns an iterator over the :term:`strongly-connected <strongly connected>` components of
     the :term:`digraph`.
 
@@ -199,14 +200,16 @@ def strongly_connected_components(
 
     postorder = cast(
         List[Union[DiVertex, MultiDiVertex]],
-        list(dfs_module.dfs_postorder_traversal(graph, reverse_graph=True)),
+        list(dfs_module.dfs_postorder_traversal(graph, reverse_graph=True)),  # type: ignore
     )
-    return _plain_depth_first_search(reversed(postorder), adjacency_function=_get_adjacent_to_child)
+    return _plain_depth_first_search(
+        graph, adjacency_function=_get_adjacent_to_child, vertices=reversed(postorder)
+    )
 
 
 def weakly_connected_components(
     graph: Union["DiGraph", "MultiDiGraph"]
-) -> Iterator["Component[Union[DiVertex, MultiDiVertex]]"]:
+) -> Iterator["Component[Union[DiVertex, MultiDiVertex], Union[DiEdge, MultiDiEdge]]"]:
     """Returns an iterator over the :term:`weakly-connected <weakly connected>` components of the
     graph.
 
@@ -223,9 +226,7 @@ def weakly_connected_components(
             "weakly-connected components are only defined for directed graphs"
         )
 
-    return _plain_depth_first_search(
-        graph.vertices(), adjacency_function=_get_adjacent_to_child_undirected
-    )
+    return _plain_depth_first_search(graph, adjacency_function=_get_adjacent_to_child_undirected)
 
 
 def _get_adjacent_to_child(child: V, parent: Optional[V]) -> Iterator[V]:
@@ -245,8 +246,10 @@ def _get_adjacent_to_child_undirected(child: V, parent: Optional[V]) -> Iterator
 
 
 def _plain_depth_first_search(
-    vertices: Iterable[V], adjacency_function: Callable[[V, Optional[V]], Iterator[V]]
-) -> Iterator[Component[V]]:
+    graph: GraphBase[V_co, E_co],
+    adjacency_function: Callable[[V_co, Optional[V_co]], Iterator[V_co]],
+    vertices: Optional[Iterable[V_co]] = None,
+) -> Iterator[Component[V_co, E_co]]:
     """Performs a plain depth-first search over the specified ``vertices``.
 
     Args:
@@ -257,13 +260,17 @@ def _plain_depth_first_search(
     Yields:
         Component: An iterator of :class:`Component` objects.
     """
-    seen = set()
+    if vertices:
+        vertex_iterable = vertices
+    else:
+        vertex_iterable = graph.vertices()
 
-    for vertex in vertices:
+    seen = set()
+    for vertex in vertex_iterable:
         if vertex in seen:
             continue
 
-        component = Component(initial_vertex=vertex)
+        component: Component[V_co, E_co] = Component(initial_vertex=vertex)
         children = adjacency_function(vertex, None)
         stack = [search_utils.VertexSearchState(vertex, children)]
 

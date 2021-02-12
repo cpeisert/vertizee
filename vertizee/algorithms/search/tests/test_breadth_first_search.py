@@ -16,6 +16,7 @@
 # pylint: disable=no-self-use
 # pylint: disable=missing-function-docstring
 
+from pprint import pprint
 import pytest
 
 from vertizee import exception
@@ -27,8 +28,9 @@ from vertizee.algorithms.search.breadth_first_search import (
     INFINITY,
 )
 from vertizee.classes.data_structures.tree import Tree
-from vertizee.classes.edge import Edge
+from vertizee.classes.edge import Edge, MultiDiEdge
 from vertizee.classes.graph import DiGraph, Graph, MultiDiGraph
+from vertizee.classes.vertex import Vertex, MultiDiVertex
 
 
 class TestBreadthFirstSearch:
@@ -37,7 +39,7 @@ class TestBreadthFirstSearch:
     def test_bfs_undirected_cyclic_graph(self):
         g = Graph()
         g.add_edges_from([(0, 1), (1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (3, 5), (6, 7)])
-        results: SearchResults = bfs(g, 0)
+        results: SearchResults[Vertex, Edge] = bfs(g, 0)
         tree: Tree = next(iter(results.graph_search_trees()))
 
         assert tree.root == 0, "BFS tree should be rooted at vertex 0"
@@ -103,12 +105,14 @@ class TestBreadthFirstSearch:
             ]
         )
 
-        results1: SearchResults = bfs(g, 1)
+        pprint(list(bfs_labeled_edge_traversal(g, 1)))
 
+        results1: SearchResults[MultiDiVertex, MultiDiEdge] = bfs(g, 1)
+        search_trees = results1.graph_search_trees()
         assert (
-            len(results1.graph_search_trees()) == 1
+            len(search_trees) == 1
         ), "BFS search should find 1 BFS tree, since source vertex was specified"
-        tree: Tree = next(iter(results1.graph_search_trees()))
+        tree: Tree[MultiDiVertex, MultiDiEdge] = search_trees[0]
 
         assert len(tree.edges()) == 2, "BFS tree rooted at vertex 1 should have 2 tree edges"
         assert len(tree) == 3, "BFS tree rooted at vertex 1 should have 3 vertices"
@@ -119,14 +123,14 @@ class TestBreadthFirstSearch:
         assert not results1.forward_edges()
         assert not results1.cross_edges()
 
-        results4: SearchResults = bfs(g, 4)
+        results4: SearchResults[MultiDiVertex, MultiDiEdge] = bfs(g, 4)
         assert len(results4.tree_edges()) == 5
         assert len(results4.back_edges()) == 1
         assert len(results4.cross_edges()) == 2
         assert len(results4.forward_edges()) == 1
 
         # Test DiGraph BFS without specifying a source vertex.
-        results: SearchResults = bfs(g)
+        results: SearchResults[MultiDiVertex, MultiDiEdge] = bfs(g)
 
         assert len(results.graph_search_trees()) > 1, "BFS search should find at least 2 BFS trees"
         assert (

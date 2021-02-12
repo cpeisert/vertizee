@@ -373,7 +373,7 @@ class ShortestPath(Generic[V_co]):
         if self._store_full_path:
             assert path_s_k._path is not None
             self._path = path_s_k._path.copy()
-            if path_k_d.length > 1:
+            if path_k_d.edge_count > 0:
                 assert path_k_d._path is not None
                 self._path.extend(path_k_d._path[1:])
 

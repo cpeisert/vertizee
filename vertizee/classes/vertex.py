@@ -54,7 +54,7 @@ Detailed documentation
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import collections.abc
-from typing import Any, cast, Dict, Optional, Set, Tuple, TYPE_CHECKING, TypeVar, Union
+from typing import Any, cast, Dict, Generic, Optional, Set, Tuple, TYPE_CHECKING, TypeVar, Union
 
 from vertizee.classes.comparable import Comparable
 from vertizee.classes.collection_views import SetView
@@ -62,7 +62,7 @@ from vertizee.classes.collection_views import SetView
 # pylint: disable=cyclic-import
 if TYPE_CHECKING:
     from vertizee.classes.edge import DiEdge, Edge, EdgeBase, MultiDiEdge, MultiEdge
-    from vertizee.classes.graph import GraphBase
+    from vertizee.classes.graph import G, GraphBase
 
 # Type aliases
 AttributesDict = dict
@@ -74,7 +74,6 @@ VertexTuple = Tuple[VertexLabel, AttributesDict]
 #: as ``Tuple[VertexLabel, AttributesDict]``. An ``AttributesDict`` is a ``dict``.
 VertexType = Union["VertexBase", VertexLabel, VertexTuple]
 
-
 #: **V** - A generic vertex type parameter.
 #: ``V = TypeVar("V", bound=VertexBase)``
 V = TypeVar("V", bound="VertexBase")
@@ -82,6 +81,10 @@ V = TypeVar("V", bound="VertexBase")
 #: **V_co** - A generic vertex type parameter for use with type-covariant containers.
 #: ``V_co = TypeVar("V_co", bound="VertexBase", covariant=True)``
 V_co = TypeVar("V_co", bound="VertexBase", covariant=True)
+
+#: **E** - A generic edge type parameter defined in "vertex.py" to avoid circular imports.
+#: ``E = TypeVar("E")``
+E = TypeVar("E")
 
 
 def get_vertex_label(other: "VertexType") -> str:
@@ -124,7 +127,12 @@ class VertexBase(ABC, Comparable):
 
     __slots__ = ("_attr", "_incident_edges", "_label", "_parent_graph")
 
-    def __init__(self, label: VertexLabel, parent_graph: "GraphBase[V_co]", **attr: Any) -> None:
+    def __init__(
+        self,
+        label: VertexLabel,
+        parent_graph: "GraphBase[VertexBase, EdgeBase[VertexBase]]",
+        **attr: Any,
+    ) -> None:
         super().__init__()
         self._label = str(label)
 
@@ -133,7 +141,9 @@ class VertexBase(ABC, Comparable):
             self.attr[k] = v
 
         self._parent_graph = parent_graph
-        self._incident_edges = _IncidentEdges(self._label, parent_graph)
+        self._incident_edges: _IncidentEdges[VertexBase, EdgeBase[VertexBase]] = _IncidentEdges(
+            self._label, parent_graph
+        )
 
     def __eq__(self, other: object) -> bool:
         try:
@@ -327,12 +337,24 @@ class Vertex(VertexBase):
         graph[1]
         graph["1"]
 
+    Args:
+        label: The label for this vertex. Must be unique to the graph.
+        parent_graph: The parent graph to which this vertex belongs.
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+
     See Also:
         * :class:`Edge <vertizee.classes.edge.Edge>`
         * :class:`Graph <vertizee.classes.graph.Graph>`
     """
 
     __slots__ = ()
+
+    def __init__(
+        self, label: VertexLabel, parent_graph: "GraphBase[Vertex, Edge]", **attr: Any
+    ) -> None:
+        super().__init__(label, parent_graph, **attr)
+
+        self._incident_edges: _IncidentEdges[Vertex, Edge] = self._incident_edges  # type: ignore
 
     @abstractmethod
     def adj_vertices(self) -> "SetView[Vertex]":
@@ -376,12 +398,26 @@ class DiVertex(VertexBase):
         digraph[1]
         digraph["1"]
 
+    Args:
+        label: The label for this vertex. Must be unique to the graph.
+        parent_graph: The parent graph to which this vertex belongs.
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+
     See Also:
         * :class:`DiEdge <vertizee.classes.edge.DiEdge>`
         * :class:`DiGraph <vertizee.classes.graph.DiGraph>`
     """
 
     __slots__ = ()
+
+    def __init__(
+        self, label: VertexLabel, parent_graph: "GraphBase[DiVertex, DiEdge]", **attr: Any
+    ) -> None:
+        super().__init__(label, parent_graph, **attr)
+
+        self._incident_edges: _IncidentEdges[
+            DiVertex, DiEdge
+        ] = self._incident_edges  # type: ignore
 
     @abstractmethod
     def adj_vertices(self) -> "SetView[DiVertex]":
@@ -438,6 +474,11 @@ class MultiVertex(VertexBase):
     <vertizee.classes.graph.MultiGraph.add_vertex>` and :meth:`MultiGraph.add_vertices_from
     <vertizee.classes.graph.G.add_vertices_from>`.
 
+    Args:
+        label: The label for this vertex. Must be unique to the graph.
+        parent_graph: The parent graph to which this vertex belongs.
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+
     See Also:
         * :class:`MultiEdge <vertizee.classes.edge.MultiEdge>`
         * :class:`MultiGraph <vertizee.classes.graph.MultiGraph>`
@@ -445,6 +486,15 @@ class MultiVertex(VertexBase):
     """
 
     __slots__ = ()
+
+    def __init__(
+        self, label: VertexLabel, parent_graph: "GraphBase[MultiVertex, MultiEdge]", **attr: Any
+    ) -> None:
+        super().__init__(label, parent_graph, **attr)
+
+        self._incident_edges: _IncidentEdges[
+            MultiVertex, MultiEdge
+        ] = self._incident_edges  # type: ignore
 
     @abstractmethod
     def adj_vertices(self) -> "SetView[MultiVertex]":
@@ -471,6 +521,11 @@ class MultiDiVertex(VertexBase):
     <vertizee.classes.graph.MultiDiGraph.add_vertex>` and :meth:`MultiDiGraph.add_vertices_from
     <vertizee.classes.graph.G.add_vertices_from>`.
 
+    Args:
+        label: The label for this vertex. Must be unique to the graph.
+        parent_graph: The parent graph to which this vertex belongs.
+        **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+
     See Also:
         * :class:`MultiDiEdge <vertizee.classes.edge.MultiDiEdge>`
         * :class:`MultiDiGraph <vertizee.classes.graph.MultiDiGraph>`
@@ -478,6 +533,15 @@ class MultiDiVertex(VertexBase):
     """
 
     __slots__ = ()
+
+    def __init__(
+        self, label: VertexLabel, parent_graph: "GraphBase[MultiDiVertex, MultiDiEdge]", **attr: Any
+    ) -> None:
+        super().__init__(label, parent_graph, **attr)
+
+        self._incident_edges: _IncidentEdges[
+            MultiDiVertex, MultiDiEdge
+        ] = self._incident_edges  # type: ignore
 
     @abstractmethod
     def adj_vertices(self) -> "SetView[MultiDiVertex]":
@@ -531,7 +595,7 @@ class _Vertex(Vertex):
     __slots__ = ()
 
     def adj_vertices(self) -> SetView[Vertex]:
-        return SetView(cast(Set[Vertex], self._incident_edges.adj_vertices))
+        return SetView(self._incident_edges.adj_vertices)
 
     @property
     def degree(self) -> int:
@@ -543,11 +607,11 @@ class _Vertex(Vertex):
         return total
 
     def incident_edges(self) -> SetView[Edge]:
-        return cast(SetView[Edge], SetView(self._incident_edges.incident_edges))
+        return SetView(self._incident_edges.incident_edges)
 
     @property
     def loop_edge(self) -> Optional[Edge]:
-        return cast(Edge, self._incident_edges.loop_edge)
+        return self._incident_edges.loop_edge
 
 
 class _DiVertex(DiVertex):
@@ -556,13 +620,13 @@ class _DiVertex(DiVertex):
     __slots__ = ()
 
     def adj_vertices(self) -> SetView[DiVertex]:
-        return cast(SetView[DiVertex], SetView(self._incident_edges.adj_vertices))
+        return SetView(self._incident_edges.adj_vertices)
 
     def adj_vertices_incoming(self) -> SetView[DiVertex]:
-        return cast(SetView[DiVertex], SetView(self._incident_edges.adj_vertices_incoming))
+        return SetView(self._incident_edges.adj_vertices_incoming)
 
     def adj_vertices_outgoing(self) -> SetView[DiVertex]:
-        return cast(SetView[DiVertex], SetView(self._incident_edges.adj_vertices_outgoing))
+        return SetView(self._incident_edges.adj_vertices_outgoing)
 
     @property
     def degree(self) -> int:
@@ -574,13 +638,13 @@ class _DiVertex(DiVertex):
         return total
 
     def incident_edges(self) -> SetView[DiEdge]:
-        return cast(SetView[DiEdge], SetView(self._incident_edges.incident_edges))
+        return SetView(self._incident_edges.incident_edges)
 
     def incident_edges_incoming(self) -> SetView[DiEdge]:
-        return cast(SetView[DiEdge], SetView(self._incident_edges.incoming))
+        return SetView(self._incident_edges.incoming)
 
     def incident_edges_outgoing(self) -> SetView[DiEdge]:
-        return cast(SetView[DiEdge], SetView(self._incident_edges.outgoing))
+        return SetView(self._incident_edges.outgoing)
 
     @property
     def indegree(self) -> int:
@@ -588,7 +652,7 @@ class _DiVertex(DiVertex):
 
     @property
     def loop_edge(self) -> Optional[DiEdge]:
-        return cast(DiEdge, self._incident_edges.loop_edge)
+        return self._incident_edges.loop_edge
 
     @property
     def outdegree(self) -> int:
@@ -601,7 +665,7 @@ class _MultiVertex(MultiVertex):
     __slots__ = ()
 
     def adj_vertices(self) -> SetView[MultiVertex]:
-        return cast(SetView[MultiVertex], SetView(self._incident_edges.adj_vertices))
+        return SetView(self._incident_edges.adj_vertices)
 
     @property
     def degree(self) -> int:
@@ -613,11 +677,11 @@ class _MultiVertex(MultiVertex):
         return total
 
     def incident_edges(self) -> SetView[MultiEdge]:
-        return cast(SetView[MultiEdge], SetView(self._incident_edges.incident_edges))
+        return SetView(self._incident_edges.incident_edges)
 
     @property
     def loop_edge(self) -> Optional[MultiEdge]:
-        return cast(MultiEdge, self._incident_edges.loop_edge)
+        return self._incident_edges.loop_edge
 
 
 class _MultiDiVertex(MultiDiVertex):
@@ -626,13 +690,13 @@ class _MultiDiVertex(MultiDiVertex):
     __slots__ = ()
 
     def adj_vertices(self) -> SetView[MultiDiVertex]:
-        return cast(SetView[MultiDiVertex], SetView(self._incident_edges.adj_vertices))
+        return SetView(self._incident_edges.adj_vertices)
 
     def adj_vertices_incoming(self) -> SetView[MultiDiVertex]:
-        return cast(SetView[MultiDiVertex], SetView(self._incident_edges.adj_vertices_incoming))
+        return SetView(self._incident_edges.adj_vertices_incoming)
 
     def adj_vertices_outgoing(self) -> SetView[MultiDiVertex]:
-        return cast(SetView[MultiDiVertex], SetView(self._incident_edges.adj_vertices_outgoing))
+        return SetView(self._incident_edges.adj_vertices_outgoing)
 
     @property
     def degree(self) -> int:
@@ -644,30 +708,30 @@ class _MultiDiVertex(MultiDiVertex):
         return total
 
     def incident_edges(self) -> SetView[MultiDiEdge]:
-        return cast(SetView[MultiDiEdge], SetView(self._incident_edges.incident_edges))
+        return SetView(self._incident_edges.incident_edges)
 
     def incident_edges_incoming(self) -> SetView[MultiDiEdge]:
-        return cast(SetView[MultiDiEdge], SetView(self._incident_edges.incoming))
+        return SetView(self._incident_edges.incoming)
 
     def incident_edges_outgoing(self) -> SetView[MultiDiEdge]:
-        return cast(SetView[MultiDiEdge], SetView(self._incident_edges.outgoing))
+        return SetView(self._incident_edges.outgoing)
 
     @property
     def indegree(self) -> int:
         indegree_total = 0
         for e in self._incident_edges.incoming:
-            indegree_total += cast(MultiDiEdge, e).multiplicity
+            indegree_total += e.multiplicity
         return indegree_total
 
     @property
     def loop_edge(self) -> Optional[MultiDiEdge]:
-        return cast(MultiDiEdge, self._incident_edges.loop_edge)
+        return self._incident_edges.loop_edge
 
     @property
     def outdegree(self) -> int:
         outdegree_total = 0
         for e in self._incident_edges.outgoing:
-            outdegree_total += cast(MultiDiEdge, e).multiplicity
+            outdegree_total += e.multiplicity
         return outdegree_total
 
 
@@ -689,7 +753,8 @@ def _create_edge_label(v1_label: str, v2_label: str, is_directed: bool) -> str:
     return f"({v1_label}, {v2_label})"
 
 
-class _IncidentEdges:
+# pylint: disable=used-before-assignment
+class _IncidentEdges(Generic[V, E]):
     """Collection of :term:`edges <edge>` that are incident on a shared :term:`vertex`.
 
     Attempting to add an edge that does not have the shared vertex raises an error.
@@ -706,12 +771,12 @@ class _IncidentEdges:
 
     __slots__ = ("_incident_edge_labels", "has_loop", "parent_graph", "shared_vertex_label")
 
-    def __init__(self, shared_vertex_label: str, parent_graph: "GraphBase[VertexBase]") -> None:
+    def __init__(self, shared_vertex_label: str, parent_graph: "G") -> None:
         self._incident_edge_labels: Optional[Set[str]] = None
         """The set of edge labels for edges adjacent to the shared vertex."""
 
         self.has_loop = False
-        self.parent_graph: GraphBase[VertexBase] = parent_graph
+        self.parent_graph = parent_graph
 
         self.shared_vertex_label: str = shared_vertex_label
         """The label of the vertex common between all of the incident edges."""
@@ -734,7 +799,7 @@ class _IncidentEdges:
         str_edges = ", ".join(self.incident_edge_labels)
         return f"_IncidentEdges: {str_edges}"
 
-    def add_edge(self, edge: EdgeBase[VertexBase]) -> None:
+    def add_edge(self, edge: EdgeBase[V]) -> None:
         """Adds an edge incident on the vertex specified by ``shared_vertex_label``.
 
         Args:
@@ -751,7 +816,7 @@ class _IncidentEdges:
             self.has_loop = True
 
     @property
-    def adj_vertices(self) -> Set[VertexBase]:
+    def adj_vertices(self) -> Set[V]:
         """The set of all vertices adjacent to the shared vertex."""
         vertex_labels: Set[str] = set()
         for label in self.incident_edge_labels:
@@ -770,7 +835,7 @@ class _IncidentEdges:
         return vertex_set
 
     @property
-    def adj_vertices_incoming(self) -> Set[VertexBase]:
+    def adj_vertices_incoming(self) -> Set[V]:
         """The set of all vertices adjacent to the shared vertex from incoming edges. For undirected
         graphs, this is an empty set."""
         if not self.parent_graph.is_directed():
@@ -792,7 +857,7 @@ class _IncidentEdges:
         return vertex_set
 
     @property
-    def adj_vertices_outgoing(self) -> Set[VertexBase]:
+    def adj_vertices_outgoing(self) -> Set[V]:
         """Set of all vertices adjacent to the shared vertex from outgoing edges. For undirected
         graphs, this is an empty set."""
         vertex_labels: Set[str] = set()
@@ -818,7 +883,7 @@ class _IncidentEdges:
         return self._incident_edge_labels
 
     @property
-    def incident_edges(self) -> Set[EdgeBase[VertexBase]]:
+    def incident_edges(self) -> Set[E]:
         """The set of all incident edges: parallel, self loops, incoming, and outgoing."""
         edge_set = set()
         for edge_label in self.incident_edge_labels:
@@ -826,7 +891,7 @@ class _IncidentEdges:
         return edge_set
 
     @property
-    def incoming(self) -> Set[EdgeBase[VertexBase]]:
+    def incoming(self) -> Set[E]:
         """Edges whose head vertex is ``shared_vertex_label``. For undirected graphs, this is an
         empty set."""
         if not self.parent_graph.is_directed():
@@ -849,17 +914,19 @@ class _IncidentEdges:
         return edge_set
 
     @property
-    def loop_edge(self) -> Optional[EdgeBase[VertexBase]]:
+    def loop_edge(self) -> Optional[E]:
         """Loops on ``shared_vertex_label``.
 
         Since all loops are parallel to each other, only one Edge object is needed.
         """
         if not self.has_loop:
             return None
-        return self.parent_graph.get_edge(self.shared_vertex_label, self.shared_vertex_label)
+        return cast(
+            E, self.parent_graph.get_edge(self.shared_vertex_label, self.shared_vertex_label)
+        )
 
     @property
-    def outgoing(self) -> Set[EdgeBase[VertexBase]]:
+    def outgoing(self) -> Set[E]:
         """Edges whose tail vertex is ``shared_vertex_label``. For undirected graphs, this is an
         empty set."""
         if not self.parent_graph.is_directed():
@@ -881,7 +948,7 @@ class _IncidentEdges:
             edge_set.add(self.parent_graph._edges[edge_label])
         return edge_set
 
-    def remove_edge(self, edge: EdgeBase[VertexBase]) -> None:
+    def remove_edge(self, edge: EdgeBase[V]) -> None:
         """Removes an incident edge."""
         if edge.label in self.incident_edge_labels:
             self.incident_edge_labels.remove(edge.label)

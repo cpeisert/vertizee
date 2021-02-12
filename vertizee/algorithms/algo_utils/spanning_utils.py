@@ -55,16 +55,27 @@ Detailed documentation
 """
 
 from __future__ import annotations
-from typing import Callable, cast, Dict, Final, List, Optional, Set, Union, ValuesView
+import collections.abc
+import copy
+import random
+from typing import Any, Callable, cast, Dict, Final, Iterable, List, Optional
+from typing import Set, TYPE_CHECKING, Union, ValuesView
 
-from vertizee.classes.graph import DiGraph, GraphBase
-from vertizee.classes.edge import _DiEdge, DiEdge, Edge, MultiEdgeBase, MutableEdgeBase
-from vertizee.classes.vertex import _DiVertex, V_co, VertexBase
+from vertizee.classes import edge as edge_module
+from vertizee.classes import graph as graph_module
+from vertizee.classes.collection_views import SetView
+from vertizee.classes.graph import GraphBase
+from vertizee.classes.edge import _DiEdge, Attributes, MultiEdge, EdgeBase, MultiEdgeBase
+from vertizee.classes.vertex import _DiVertex, _IncidentEdges, VertexBase
+
+if TYPE_CHECKING:
+    from vertizee.classes.edge import E_co, EdgeType
+    from vertizee.classes.vertex import V_co, VertexLabel, VertexType
 
 
 def get_weight_function(
     weight: str = "Edge__weight", minimum: bool = True
-) -> Callable[[MutableEdgeBase[V_co]], float]:
+) -> Callable[[EdgeBase[VertexBase]], float]:
     """Returns a function that accepts an edge and returns the corresponding edge weight.
 
     If there is no edge weight, then the edge weight is assumed to be one.
@@ -80,30 +91,24 @@ def get_weight_function(
             connections is returned, otherwise the maximum weight. Defaults to True.
 
     Returns:
-        Callable[[MutableEdgeBase[V_co]], float]: A function that accepts an edge and returns the
+        Callable[[MutableE_co], float]: A function that accepts an edge and returns the
         corresponding edge weight.
     """
 
-    def default_weight_function(edge: MutableEdgeBase[V_co]) -> float:
+    def default_weight_function(edge: EdgeBase[VertexBase]) -> float:
         if edge._parent_graph.is_multigraph():
             if minimum:
-                return min(c.weight for c in cast(MultiEdgeBase[V_co], edge).connections())
-            return max(c.weight for c in cast(MultiEdgeBase[V_co], edge).connections())
+                return min(c.weight for c in cast(MultiEdgeBase[VertexBase], edge).connections())
+            return max(c.weight for c in cast(MultiEdge, edge).connections())
         return edge.weight
 
-    def attr_weight_function(edge: MutableEdgeBase[V_co]) -> float:
+    def attr_weight_function(edge: EdgeBase[VertexBase]) -> float:
         if edge._parent_graph.is_multigraph():
+            assert isinstance(edge, MultiEdgeBase)
             if minimum:
-                return float(
-                    min(
-                        c.attr.get(weight, 1.0)
-                        for c in cast(MultiEdgeBase[V_co], edge).connections()
-                    )
-                )
-            return float(
-                max(c.attr.get(weight, 1.0) for c in cast(MultiEdgeBase[V_co], edge).connections())
-            )
-        return cast(Union[Edge, DiEdge], edge).attr.get(weight, 1.0)
+                return float(min(c.attr.get(weight, 1.0) for c in edge.connections()))
+            return float(max(c.attr.get(weight, 1.0) for c in edge.connections()))
+        return cast(Attributes, edge).attr.get(weight, 1.0)
 
     if weight == "Edge__weight":
         return default_weight_function
@@ -186,8 +191,12 @@ class PseudoVertex(_DiVertex):
         parent_graph: "PseudoGraph",
         incident_edge_labels: Optional[Set[str]] = None,
     ) -> None:
-        super().__init__(label, cast(GraphBase[VertexBase], parent_graph))
+        super().__init__(label, parent_graph)
         self._incident_edges._incident_edge_labels = incident_edge_labels
+
+        self._incident_edges: _IncidentEdges[
+            PseudoVertex, PseudoEdge
+        ] = self._incident_edges  # type: ignore
 
         self.cycle: Optional[Cycle] = None
         """The cycle that was contracted to form this vertex. If this vertex is not the contraction
@@ -200,6 +209,12 @@ class PseudoVertex(_DiVertex):
     def contains_cycle(self) -> bool:
         """Returns True if the pseudovertex represents the contraction of a cycle."""
         return self.cycle is not None
+
+    def incident_edges_incoming(self) -> SetView[PseudoEdge]:
+        return SetView(self._incident_edges.incoming)
+
+    def incident_edges_outgoing(self) -> SetView[PseudoEdge]:
+        return SetView(self._incident_edges.outgoing)
 
 
 class PseudoEdge(_DiEdge):
@@ -253,7 +268,7 @@ class PseudoEdge(_DiEdge):
         return cast(PseudoVertex, self._vertex2)
 
 
-class PseudoGraph(DiGraph):
+class PseudoGraph(GraphBase[PseudoVertex, PseudoEdge]):
     """PseudoGraph is a graph that supports algorithms that may :term:`contract <contraction>`
     vertices and edges, where the vertices and edges to be contracted comprise a :term:`cycle`.
 
@@ -263,8 +278,30 @@ class PseudoGraph(DiGraph):
         paper "Optimum Branchings". :cite:`1967:edmonds`
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        edges_or_graph: Optional[Union[Iterable["EdgeType"], "GraphBase[V_co, E_co]"]] = None,
+        **attr: Any,
+    ) -> None:
+        super().__init__(
+            allow_self_loops=True,
+            is_directed=True,
+            is_multigraph=False,
+            is_weighted_graph=False,
+            **attr,
+        )
+
+        if edges_or_graph and isinstance(edges_or_graph, GraphBase):
+            graph_module._init_graph_from_graph(self, edges_or_graph)
+
+        elif edges_or_graph and isinstance(edges_or_graph, collections.abc.Iterable):
+            self.add_edges_from(cast(Iterable["EdgeType"], edges_or_graph))
+
+        elif edges_or_graph:
+            raise TypeError(
+                f"expected GraphBase or Iterable instance; {type(edges_or_graph).__name__} found"
+            )
+
         self.cycle_stack: List["Cycle"] = list()
         """The cycle stack is a first-in-last-out (FILO) sequence of cycles found in the graph.
         Each cycle on the stack corresponds to a :class:`PseudoVertex` with the same label that
@@ -273,21 +310,100 @@ class PseudoGraph(DiGraph):
         self.cycle_label_count = 0
         self._CYCLE_LABEL_PREFIX: Final[str] = "__cycle_label_"
 
+    def add_edge(
+        self,
+        vertex1: "VertexType",
+        vertex2: "VertexType",
+        weight: float = edge_module.DEFAULT_WEIGHT,
+        **attr: Any,
+    ) -> "PseudoEdge":
+        """Adds a new directed edge to the graph.
+
+        If an existing edge matches the vertices, the existing edge is returned.
+
+        Args:
+            tail: The starting vertex. This is a synonym for ``vertex1``.
+            head: The destination vertex to which the ``tail`` points. This is a synonym for
+                ``vertex2``.
+            weight: Optional; The edge weight. Defaults to ``edge.DEFAULT_WEIGHT`` (1.0).
+            **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
+
+        Returns:
+            DiEdge: The newly added edge, or an existing edge with matching vertices.
+        """
+        return graph_module._add_edge_to_graph(
+            self, PseudoEdge, vertex1=vertex1, vertex2=vertex2, weight=weight, **attr
+        )
+
     def add_edge_object(self, edge: "PseudoEdge") -> None:
         """Adds a PseudoEdge to the graph."""
         self._edges[edge.label] = edge
         edge.vertex1._add_edge(edge)
         edge.vertex2._add_edge(edge)
 
+    def add_vertex(self, label: "VertexLabel", **attr: Any) -> "PseudoVertex":
+        """Adds a vertex to the graph and returns the new Vertex object. If an existing vertex
+        matches the vertex label, the existing vertex is returned.
+
+        Args:
+            label: The label (``str`` or ``int``) to use for the new vertex.
+            **attr: Optional; Keyword arguments to add to the vertex ``attr`` dictionary.
+
+        Returns:
+            DiVertex: The new vertex (or an existing vertex matching the vertex label).
+        """
+        return graph_module._add_vertex_to_graph(self, PseudoVertex, label=label, **attr)
+
     def add_vertex_object(self, vertex: "PseudoVertex") -> None:
         """Adds a PseudoVertex to the graph."""
         self._vertices[vertex.label] = vertex
+
+    def clear(self) -> None:
+        """Removes all edges and vertices from the graph."""
+        self._edges.clear()
+        self._vertices.clear()
 
     def create_cycle_label(self) -> str:
         """Creates a cycle label that is unique to this graph instance."""
         self.cycle_label_count += 1
         return f"{self._CYCLE_LABEL_PREFIX}{self.cycle_label_count}__"
 
-    def vertices(self) -> ValuesView[PseudoVertex]:
+    def deepcopy(self) -> "PseudoGraph":
+        """Returns a deep copy of this graph."""
+        return copy.deepcopy(self)
+
+    @property
+    def edge_count(self) -> int:
+        """The number of edges."""
+        return len(self._edges)
+
+    def edges(self) -> ValuesView["PseudoEdge"]:
+        """A view of graph edges."""
+        return self._edges.values()
+
+    def get_edge(self, vertex1: "VertexType", vertex2: "VertexType") -> "PseudoEdge":
+        """Returns the :term:`diedge` specified by the vertices, or None if no such edge exists.
+
+        Args:
+            vertex1: The first vertex (the :term:`tail` in :term:`directed graphs
+                <directed graph>`).
+            vertex2: The second vertex (the :term:`head` in directed graphs).
+
+        Returns:
+            PseudoEdge: The specified edge.
+
+        Raises:
+            KeyError: If the graph does not contain an edge with the specified vertex endpoints.
+        """
+        edge_label = edge_module.create_edge_label(vertex1, vertex2, self.is_directed())
+        return self._edges[edge_label]
+
+    def get_random_edge(self) -> Optional["PseudoEdge"]:
+        """Returns a randomly selected edge from the graph, or None if there are no edges."""
+        if self._edges:
+            return random.choice(list(self._edges.values()))
+        return None
+
+    def vertices(self) -> ValuesView["PseudoVertex"]:
         """A view of the graph vertices."""
-        return cast(ValuesView[PseudoVertex], self._vertices.values())
+        return self._vertices.values()

@@ -57,6 +57,7 @@ from vertizee.classes.edge import Attributes, EdgeBase, MultiEdgeBase
 from vertizee.classes.vertex import VertexBase, VertexType
 
 if TYPE_CHECKING:
+    from vertizee.classes.edge import E_co
     from vertizee.classes.graph import GraphBase
     from vertizee.classes.vertex import V_co
 
@@ -103,7 +104,7 @@ def get_weight_function(weight: str = "Edge__weight") -> Callable[[EdgeBase[Vert
 # faster than Johnson's algorithm.
 #
 def all_pairs_shortest_paths(
-    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+    graph: "GraphBase[V_co, E_co]", save_paths: bool = False, weight: str = "Edge__weight"
 ) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph.
 
@@ -177,7 +178,7 @@ def all_pairs_shortest_paths(
 
 
 def floyd_warshall(
-    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+    graph: "GraphBase[V_co, E_co]", save_paths: bool = False, weight: str = "Edge__weight"
 ) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph using the Floyd-Warshall
     algorithm.
@@ -264,15 +265,15 @@ def floyd_warshall(
                 )
                 continue
 
-            edge = graph.get_edge(i, j)
-            if edge is None:
+            if graph.has_edge(i, j):
+                edge = graph.get_edge(i, j)
+                length = weight_function(edge)
                 source_and_destination_to_path[i][j] = ShortestPath(
-                    i, j, initial_length=INFINITY, save_path=save_paths
+                    i, j, initial_length=length, save_path=save_paths
                 )
             else:
-                w = weight_function(edge)
                 source_and_destination_to_path[i][j] = ShortestPath(
-                    i, j, initial_length=w, save_path=save_paths
+                    i, j, initial_length=INFINITY, save_path=save_paths
                 )
 
     for k in graph:
@@ -291,7 +292,7 @@ def floyd_warshall(
 
 
 def johnson(
-    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+    graph: "GraphBase[V_co, E_co]", save_paths: bool = False, weight: str = "Edge__weight"
 ) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm.
@@ -369,7 +370,7 @@ def johnson(
 
 
 def johnson_fibonacci(
-    graph: "GraphBase[V_co]", save_paths: bool = False, weight: str = "Edge__weight"
+    graph: "GraphBase[V_co, E_co]", save_paths: bool = False, weight: str = "Edge__weight"
 ) -> "VertexDict[VertexDict[ShortestPath[V_co]]]":
     r"""Finds the shortest paths between all pairs of vertices in a graph using Donald Johnson's
     algorithm implemented with a Fibonacci heap version of Dijkstra's algorithm.

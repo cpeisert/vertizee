@@ -295,7 +295,8 @@ def parse_vertex_type(vertex_type: "VertexType") -> "VertexData":
         if not isinstance(vertex_type[1], collections.abc.Mapping):
             raise TypeError(
                 "vertex attr dictionary expected Mapping instance; "
-                f"{type(vertex_type[1]).__name__} found"
+                f"{type(vertex_type[1]).__name__} found; make sure that you are not passing an "
+                "edge to GraphBase.__getitem__() or Tree.__getitem__(), for example, graph[edge]"
             )
         vertex_data = VertexData(str(vertex_type[0]))
         vertex_data._attr = copy.deepcopy(vertex_type[1])

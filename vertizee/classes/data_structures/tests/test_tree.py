@@ -43,9 +43,9 @@ class TestTree:
         assert (1, 3) not in tree
 
         with pytest.raises(TypeError):
-            _ = 4.5 not in g
+            _ = 4.5 not in g  # type: ignore
         with pytest.raises(TypeError):
-            _ = (1, 2, 3, 4) not in g
+            _ = (1, 2, 3, 4) not in g  # type: ignore
 
     def test__getitem__(self):
         g = Graph([(1, 2), (2, 3), (1, 4), (3, 4), (4, 5)])
@@ -57,23 +57,16 @@ class TestTree:
         v1 = tree[1]
         assert isinstance(tree[v1], Vertex), "tree should have vertex 1"
         with pytest.raises(TypeError):
-            _ = tree[2.0]
+            _ = tree[2.0]  # type: ignore
         with pytest.raises(KeyError):
             _ = tree[3]
 
         tree.add_edge(g.get_edge(1, 2))
-        assert isinstance(tree[1, 2], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree["1", "2"], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree[(1, 2, {})], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree[1, 2, {}], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree[(1, 2, 1.0)], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree[1, 2, 1.0], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree[(1, 2, 1.0, {})], Edge), "tree should have edge (1, 2)"
-        assert isinstance(tree[1, 2, 1.0, {}], Edge), "tree should have edge (1, 2)"
-        edge = tree[1, 2]
-        assert isinstance(tree[edge], Edge), "tree should have edge (1, 2)"
-        with pytest.raises(TypeError):
-            _ = g.get_edge(1.0, 2.0)
+        assert isinstance(tree.get_edge(1, 2), Edge), "tree should have edge (1, 2)"
+        assert isinstance(tree.get_edge("1", "2"), Edge), "tree should have edge (1, 2)"
+        assert tree.has_edge(1, 2), "tree should have edge (1, 2)"
+        with pytest.raises(KeyError):
+            _ = g.get_edge(1.0, 2.0)  # type: ignore
         with pytest.raises(KeyError):
             _ = g.get_edge(1, 3)
 
@@ -122,4 +115,4 @@ class TestTree:
         tree1.add_edge(g.get_edge(4, 3))
         tree5.add_edge(g.get_edge(5, 4))
         tree1.merge(tree5)
-        assert tree1._vertex_set == {tree1[1], tree1[3], tree1[4], tree1[5]}
+        assert set(tree1.vertices()) == {tree1[1], tree1[3], tree1[4], tree1[5]}

@@ -69,7 +69,7 @@ Detailed documentation
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, cast, Dict, Final, Generic, Iterable, Optional
-from typing import Tuple, Type, TYPE_CHECKING, Union
+from typing import Tuple, Type, TYPE_CHECKING, TypeVar, Union
 
 from vertizee.classes import vertex as vertex_module
 from vertizee.classes.collection_views import ItemsView, ListView
@@ -81,6 +81,7 @@ from vertizee.classes.vertex import (
     V,
     V_co,
     Vertex,
+    VertexBase,
     VertexType,
 )
 from vertizee.utils import abc_utils
@@ -99,6 +100,22 @@ EdgeTupleWeightedAttr = Tuple[VertexType, VertexType, Weight, AttributesDict]
 EdgeLiteral = Union[EdgeTuple, EdgeTupleWeighted, EdgeTupleAttr, EdgeTupleWeightedAttr]
 
 EdgeType = Union["EdgeBase", EdgeLiteral]
+
+#: **E** - A generic edge type parameter.
+#: ``E = TypeVar("E", bound=EdgeBase)``
+E = TypeVar("E", bound="EdgeBase")  # type: ignore
+
+#: **E_co** - A generic covariant edge type parameter.
+#: ``E_co = TypeVar("E_co", bound=EdgeBase, covariant=True)``
+E_co = TypeVar("E_co", bound="EdgeBase", covariant=True)  # type: ignore
+
+#: **ME** - A generic multiedge type parameter.
+#: ``ME = TypeVar("ME", bound=MultiEdgeBase)``
+ME = TypeVar("ME", bound="MultiEdgeBase")  # type: ignore
+
+#: **ME_co** - A generic covariant multiedge type parameter.
+#: ``ME_co = TypeVar("ME_co", bound=MultiEdgeBase, covariant=True)``
+ME_co = TypeVar("ME_co", bound="MultiEdgeBase", covariant=True)  # type: ignore
 
 ConnectionKey = str
 
@@ -154,7 +171,7 @@ class EdgeBase(ABC, Comparable, Generic[V_co]):
     from this class.
 
     This class has a covariant generic type parameter ``V_co``, which supports the type-hint usage
-    ``EdgeBase[V_co]``.
+    ``E_co``.
 
     ``V_co = TypeVar("V_co", bound="VertexBase", covariant=True)`` See :class:`VertexBase
     <vertizee.classes.vertex.VertexBase>`.
@@ -217,7 +234,7 @@ class EdgeBase(ABC, Comparable, Generic[V_co]):
 
     @property
     @abstractmethod
-    def _parent_graph(self) -> GraphBase[V_co]:
+    def _parent_graph(self) -> GraphBase[V_co, EdgeBase[V_co]]:
         """A reference to the graph that contains this edge."""
 
 
@@ -250,13 +267,13 @@ class MutableEdgeBase(EdgeBase[V_co], Generic[V_co]):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, MutableEdgeBase):
-            return _is_edge_equal_to(cast(EdgeBase[V_co], self), other)
+            return _is_edge_equal_to(self, other)
         return NotImplemented  # Delegate equality check to the RHS.
 
     def __lt__(self, other: object) -> bool:
         """Returns True if ``self`` is less than ``other``."""
         if isinstance(other, MutableEdgeBase):
-            return _is_edge_less_than(cast(EdgeBase[V_co], self), other)
+            return _is_edge_less_than(self, other)
         return NotImplemented  # Delegate equality check to the right-hand side.
 
     def __hash__(self) -> int:
@@ -349,9 +366,9 @@ class MutableEdgeBase(EdgeBase[V_co], Generic[V_co]):
         connections."""
 
     @property
-    def _parent_graph(self) -> GraphBase[V_co]:
+    def _parent_graph(self) -> GraphBase[V_co, MutableEdgeBase[V_co]]:
         """A reference to the graph that contains this edge."""
-        return cast(GraphBase[V_co], self._vertex1._parent_graph)
+        return self._vertex1._parent_graph  # type: ignore
 
 
 class Edge(MutableEdgeBase[Vertex]):
@@ -438,6 +455,11 @@ class Edge(MutableEdgeBase[Vertex]):
     def weight(self) -> float:
         """The edge weight (type ``float``)."""
         return self._weight
+
+    @property
+    def _parent_graph(self) -> GraphBase[Vertex, Edge]:
+        """A reference to the graph that contains this edge."""
+        return self._vertex1._parent_graph  # type: ignore
 
 
 class DiEdge(MutableEdgeBase[DiVertex]):
@@ -526,6 +548,11 @@ class DiEdge(MutableEdgeBase[DiVertex]):
         """The edge weight (type ``float``)."""
         return self._weight
 
+    @property
+    def _parent_graph(self) -> GraphBase[DiVertex, DiEdge]:
+        """A reference to the graph that contains this edge."""
+        return self._vertex1._parent_graph  # type: ignore
+
 
 class EdgeConnectionData:
     """Unique data associated with an individual connection in a :term:`multiedge`, such as a
@@ -569,7 +596,7 @@ class EdgeConnectionData:
         return self._attr is not None
 
 
-class EdgeConnectionView(EdgeBase[V_co], Generic[V_co]):
+class EdgeConnectionView(EdgeBase[V_co], Generic[V_co, ME_co]):
     """A dynamic view of an :term:`edge` connection. Connection views provide an edge-like API for
     each of the :term:`parallel edge` connections in a :term:`multiedge` or a :term:`multidiedge`.
 
@@ -581,7 +608,7 @@ class EdgeConnectionView(EdgeBase[V_co], Generic[V_co]):
 
     __slots__ = ("_edge_data", "_multiconnection")
 
-    def __init__(self, multiconnection: "MultiEdgeBase[V_co]", key: "ConnectionKey"):
+    def __init__(self, multiconnection: ME_co, key: "ConnectionKey"):
         self._multiconnection = multiconnection
         self._edge_data: EdgeConnectionData = multiconnection._connections[key]
         self._key: str = key
@@ -647,13 +674,13 @@ class EdgeConnectionView(EdgeBase[V_co], Generic[V_co]):
     def vertex1(self) -> V_co:
         """The first vertex (type ``V_co``). For DiEdge objects, this
         is a synonym for the ``tail`` property."""
-        return self._multiconnection.vertex1
+        return cast(V_co, self._multiconnection.vertex1)
 
     @property
     def vertex2(self) -> V_co:
         """The second vertex (type ``V_co``). For DiEdge objects, this
         is a synonym for the ``head`` property."""
-        return self._multiconnection.vertex2
+        return cast(V_co, self._multiconnection.vertex2)
 
     @property
     def weight(self) -> float:
@@ -661,9 +688,9 @@ class EdgeConnectionView(EdgeBase[V_co], Generic[V_co]):
         return self._edge_data.weight
 
     @property
-    def _parent_graph(self) -> GraphBase[V_co]:
+    def _parent_graph(self) -> GraphBase[V_co, ME_co]:
         """A reference to the graph that contains this edge."""
-        return self._multiconnection._parent_graph
+        return self._multiconnection._parent_graph  # type: ignore
 
 
 class MultiEdgeBase(MutableEdgeBase[V_co], Generic[V_co]):
@@ -707,9 +734,10 @@ class MultiEdgeBase(MutableEdgeBase[V_co], Generic[V_co]):
         vertices are :term:`lexicographically <lexicographical order>` ordered.
         """
 
+    @abstractmethod
     def add_connection(
         self, weight: float = DEFAULT_WEIGHT, key: Optional["ConnectionKey"] = None, **attr: Any
-    ) -> "EdgeConnectionView[V_co]":
+    ) -> "EdgeConnectionView[V_co, MultiEdgeBase[V_co]]":
         """Adds a new edge connection to this multiedge. If the connection key already exists, then
         the existing connection key data is replaced with ``weight`` and ``**attr``.
 
@@ -720,9 +748,8 @@ class MultiEdgeBase(MutableEdgeBase[V_co], Generic[V_co]):
             **attr: Optional; Keyword arguments to add to the ``attr`` dictionary.
 
         Returns:
-            EdgeConnectionView[V]: The newly added edge connection.
+            EdgeConnectionView[V_co, ME_co]: The newly added edge connection.
         """
-        return cast(EdgeConnectionView[V_co], _add_connection(self, weight, key, **attr))
 
     def change_connection_key(self, current_key: "ConnectionKey", new_key: "ConnectionKey") -> None:
         """Changes the dictionary key used to index an edge connection.
@@ -738,27 +765,25 @@ class MultiEdgeBase(MutableEdgeBase[V_co], Generic[V_co]):
             raise KeyError(f"new_key '{new_key}' already in use")
         self._connections[new_key] = self._connections.pop(current_key)
 
-    def connections(self) -> "ListView[EdgeConnectionView[V_co]]":
+    @abstractmethod
+    def connections(self) -> "ListView[EdgeConnectionView[V_co, MultiEdgeBase[V_co]]]":
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the
         connections in the multiconnection, where each connection is represented as an
         :class:`EdgeConnectionView`."""
-        return ListView([EdgeConnectionView(self, key) for key in self._connections])
 
-    def connection_items(self) -> "ItemsView[ConnectionKey, EdgeConnectionView[V_co]]":
+    @abstractmethod
+    def connection_items(
+        self,
+    ) -> "ItemsView[ConnectionKey, EdgeConnectionView[V_co, MultiEdgeBase[V_co]]]":
         """Returns an :class:`ItemsView <vertizee.classes.collection_views.ItemsView>`, where each
         item is a tuple containing a connection key and the corresponding connection in the
         multiconnection. Each connection is represented as an :class:`EdgeConnectionView`."""
-        items = dict()
-        for key in self._connections:
-            view = EdgeConnectionView(self, key)
-            items[key] = view
-        return ItemsView(items)
 
-    def get_connection(self, key: "ConnectionKey") -> "EdgeConnectionView[V_co]":
+    @abstractmethod
+    def get_connection(
+        self, key: "ConnectionKey"
+    ) -> "EdgeConnectionView[V_co, MultiEdgeBase[V_co]]":
         """Supports index accessor notation to retrieve a multiedge connection by its key."""
-        if key in self._connections:
-            return EdgeConnectionView(self, key)
-        raise KeyError(key)
 
     @property
     def multiplicity(self) -> int:
@@ -833,6 +858,28 @@ class MultiEdge(MultiEdgeBase[MultiVertex]):
         vertices are :term:`lexicographically <lexicographical order>` ordered.
         """
 
+    def add_connection(
+        self, weight: float = DEFAULT_WEIGHT, key: Optional["ConnectionKey"] = None, **attr: Any
+    ) -> "EdgeConnectionView[MultiVertex, MultiEdge]":
+        return _add_connection(self, weight, key, **attr)
+
+    def connections(self) -> "ListView[EdgeConnectionView[MultiVertex, MultiEdge]]":
+        return ListView([EdgeConnectionView(self, key) for key in self._connections])
+
+    def connection_items(
+        self,
+    ) -> "ItemsView[ConnectionKey, EdgeConnectionView[MultiVertex, MultiEdge]]":
+        items = dict()
+        for key in self._connections:
+            view: EdgeConnectionView[MultiVertex, MultiEdge] = EdgeConnectionView(self, key)
+            items[key] = view
+        return ItemsView(items)
+
+    def get_connection(self, key: "ConnectionKey") -> "EdgeConnectionView[MultiVertex, MultiEdge]":
+        if key in self._connections:
+            return EdgeConnectionView(self, key)
+        raise KeyError(key)
+
     @property
     def vertex1(self) -> MultiVertex:
         """The first vertex (type :class:`MultiVertex <vertizee.classes.vertex.MultiVertex>`)."""
@@ -890,6 +937,30 @@ class MultiDiEdge(MultiEdgeBase[MultiDiVertex]):
         vertices are :term:`lexicographically <lexicographical order>` ordered.
         """
 
+    def add_connection(
+        self, weight: float = DEFAULT_WEIGHT, key: Optional["ConnectionKey"] = None, **attr: Any
+    ) -> "EdgeConnectionView[MultiDiVertex, MultiDiEdge]":
+        return _add_connection(self, weight, key, **attr)
+
+    def connections(self) -> "ListView[EdgeConnectionView[MultiDiVertex, MultiDiEdge]]":
+        return ListView([EdgeConnectionView(self, key) for key in self._connections])
+
+    def connection_items(
+        self,
+    ) -> "ItemsView[ConnectionKey, EdgeConnectionView[MultiDiVertex, MultiDiEdge]]":
+        items = dict()
+        for key in self._connections:
+            view: EdgeConnectionView[MultiDiVertex, MultiDiEdge] = EdgeConnectionView(self, key)
+            items[key] = view
+        return ItemsView(items)
+
+    def get_connection(
+        self, key: "ConnectionKey"
+    ) -> "EdgeConnectionView[MultiDiVertex, MultiDiEdge]":
+        if key in self._connections:
+            return EdgeConnectionView(self, key)
+        raise KeyError(key)
+
     @property
     def vertex1(self) -> MultiDiVertex:
         """The tail vertex (type :class:`MultiDiVertex <vertizee.classes.vertex.MultiDiVertex>`),
@@ -940,8 +1011,8 @@ class _MultiDiEdge(MultiDiEdge):
 
 
 def _add_connection(
-    edge: MultiEdgeBase[V_co], weight: float, key: Optional["ConnectionKey"] = None, **attr: Any
-) -> EdgeConnectionView[V_co]:
+    edge: ME, weight: float, key: Optional["ConnectionKey"] = None, **attr: Any
+) -> EdgeConnectionView[V, ME]:
     """Adds a new edge connection to the multiedge. If the connection key already
     exists, then the existing connection key data is replaced with ``weight`` and ``**attr``.
 
@@ -979,14 +1050,14 @@ def _add_connection(
     return EdgeConnectionView(edge, new_key)
 
 
-def _is_edge_equal_to(edge: EdgeBase[V_co], other: EdgeBase[V_co]) -> bool:
+def _is_edge_equal_to(edge: E, other: E) -> bool:
     """Returns True if ``edge`` is logically equal to ``other``."""
     if edge is other:
         return True
-    v1: V_co = edge.vertex1
-    v2: V_co = edge.vertex2
-    o_v1: V_co = other.vertex1
-    o_v2: V_co = other.vertex2
+    v1 = edge.vertex1
+    v2 = edge.vertex2
+    o_v1 = other.vertex1
+    o_v2 = other.vertex2
 
     if not v1._parent_graph.is_directed():
         if v1.label > v2.label:
@@ -1008,14 +1079,14 @@ def _is_edge_equal_to(edge: EdgeBase[V_co], other: EdgeBase[V_co]) -> bool:
     return True
 
 
-def _is_edge_less_than(edge: EdgeBase[V_co], other: EdgeBase[V_co]) -> bool:
+def _is_edge_less_than(edge: E, other: E) -> bool:
     """Returns True if ``edge`` is less than ``other``."""
     if edge is other:
         return False
-    v1: V_co = edge.vertex1
-    v2: V_co = edge.vertex2
-    o_v1: V_co = other.vertex1
-    o_v2: V_co = other.vertex2
+    v1 = edge.vertex1
+    v2 = edge.vertex2
+    o_v1 = other.vertex1
+    o_v2 = other.vertex2
 
     if not v1._parent_graph.is_directed():
         if v1.label > v2.label:
@@ -1040,9 +1111,7 @@ def _is_edge_less_than(edge: EdgeBase[V_co], other: EdgeBase[V_co]) -> bool:
     return False
 
 
-def _contract_edge(
-    edge: MutableEdgeBase[V_co], graph: GraphBase[V_co], remove_loops: bool = False
-) -> None:
+def _contract_edge(edge: E, graph: GraphBase[V, E], remove_loops: bool = False) -> None:
     """Contracts an edge by removing it from the graph and merging its two incident vertices.
 
     Args:
@@ -1063,16 +1132,16 @@ def _contract_edge(
             vertex2 = v1
         elif incident.vertex1 == v2:
             vertex1 = v1
-            vertex2 = cast(V_co, incident.vertex2)
+            vertex2 = incident.vertex2
         else:  # incident.vertex2 == v2
-            vertex1 = cast(V_co, incident.vertex1)
+            vertex1 = incident.vertex1
             vertex2 = v1
 
         if graph.is_multigraph():
             assert isinstance(incident, MultiEdgeBase)
-            multiedge: Optional[MultiEdgeBase[V_co]] = None
+            multiedge: Optional[MultiEdgeBase[VertexBase]] = None
             if graph.has_edge(vertex1, vertex2):
-                multiedge = cast(MultiEdgeBase[V_co], graph.get_edge(vertex1, vertex2))
+                multiedge = cast(MultiEdgeBase[VertexBase], graph.get_edge(vertex1, vertex2))
 
             for connection in incident.connections():
                 attr = connection.attr if connection.has_attributes_dict() else dict()
@@ -1080,7 +1149,7 @@ def _contract_edge(
                     multiedge.add_connection(weight=connection.weight, **attr)
                 else:
                     multiedge = cast(
-                        MultiEdgeBase[V_co],
+                        MultiEdgeBase[VertexBase],
                         graph.add_edge(vertex1, vertex2, weight=connection.weight, **attr),
                     )
         else:

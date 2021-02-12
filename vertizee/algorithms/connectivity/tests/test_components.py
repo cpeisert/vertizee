@@ -32,15 +32,14 @@ class TestConnectedComponents:
     def test_component(self):
         g = Graph([(1, 2), (2, 3), (4, 5), (7, 7)])
         component_list: List[Component] = list(components.connected_components(g))
-        c_12_23: Component = [c for c in component_list if 1 in c][0]
-        assert (
-            not c_12_23._edge_set
-        ), "without accessing edges, `_edge_set` should not be initialized"
+        c_123: Component = [c for c in component_list if 1 in c][0]
+        assert not c_123._edge_set, "without accessing edges, `_edge_set` should not be initialized"
 
-        c_12_23.edges()
-        assert c_12_23._edge_set, "after accessing edges, `_edge_set` should be initialized"
+        c_123.edges()
+        assert c_123._edge_set, "after accessing edges, `_edge_set` should be initialized"
 
         c_45 = None
+        c_77 = None
         for component in component_list:
             if (4, 5) in component:
                 c_45 = component
@@ -70,7 +69,7 @@ class TestConnectedComponents:
 
         g = Graph([(1, 2)])
         with pytest.raises(exception.GraphTypeNotSupported):
-            components.strongly_connected_components(g)
+            components.strongly_connected_components(g)  # type: ignore
 
     def test_kosaraju_topological_ordering(self):
         """Test that the strongly-connected components are output in topological order, meaning
@@ -95,6 +94,7 @@ class TestConnectedComponents:
         assert len(scc_list) == 4, "should be 4 strongly-connected components"
         assert max(len(list(scc.edges())) for scc in scc_list) == 3
 
+        scc_abe = scc_cd = scc_fg = scc_h = None
         for scc in scc_list:
             if g["a"] in scc:
                 scc_abe = scc
@@ -104,6 +104,10 @@ class TestConnectedComponents:
                 scc_fg = scc
             else:
                 scc_h = scc
+        assert scc_abe is not None
+        assert scc_cd is not None
+        assert scc_fg is not None
+        assert scc_h is not None
         assert len(scc_abe) == 3, "SCC 'abe' should have 3 vertices."
         assert len(scc_cd) == 2, "SCC 'cd' should have 2 vertices."
         assert len(scc_fg) == 2, "SCC 'fg' should have 2 vertices."

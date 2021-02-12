@@ -61,10 +61,12 @@ from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
 from vertizee.classes.edge import Edge, MultiEdge
+from vertizee.classes.vertex import MultiVertex, Vertex
 
 if TYPE_CHECKING:
     from vertizee.classes.graph import Graph, MultiGraph
-    from vertizee.classes.vertex import MultiVertex, Vertex, VertexType
+    from vertizee.classes.vertex import VertexType
+
 
 INFINITY: Final[float] = float("inf")
 
@@ -75,7 +77,7 @@ INFINITY: Final[float] = float("inf")
 #
 def kruskal_optimum_forest(
     graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Tree[Union[Vertex, MultiVertex]]]:
+) -> Iterator[Tree[Union[Vertex, MultiVertex], Union[Edge, MultiEdge]]]:
     r"""Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
     :term:`optimum spanning forest` of an :term:`undirected graph` using Kruskal's algorithm.
 
@@ -119,9 +121,9 @@ def kruskal_optimum_forest(
     sorted_edges = [p[0] for p in sorted(edge_weight_pairs, key=lambda pair: pair[1])]
     union_find = UnionFind(*graph.vertices())
 
-    vertex_to_tree: Dict[Union[Vertex, MultiVertex], Tree[Union[Vertex, MultiVertex]]] = {
-        v: Tree(v) for v in graph.vertices()
-    }
+    vertex_to_tree: Dict[
+        Union[Vertex, MultiVertex], Tree[Union[Vertex, MultiVertex], Union[Edge, MultiEdge]]
+    ] = {v: Tree(v) for v in graph.vertices()}
 
     for edge in sorted_edges:
         if not union_find.in_same_set(edge.vertex1, edge.vertex2):
@@ -198,7 +200,7 @@ def kruskal_spanning_tree(
 
 def optimum_forest(
     graph: Union[Graph, MultiGraph], minimum: bool = True, weight: str = "Edge__weight"
-) -> Iterator[Tree[Union[Vertex, MultiVertex]]]:
+) -> Iterator[Tree[Union[Vertex, MultiVertex], Union[Edge, MultiEdge]]]:
     r"""Iterates over the minimum (or maximum) :term:`trees <tree>` comprising an
     :term:`optimum spanning forest` of an :term:`undirected graph` using Kruskal's algorithm.
 

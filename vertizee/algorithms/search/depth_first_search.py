@@ -70,11 +70,12 @@ from vertizee.classes import edge as edge_module
 from vertizee.classes.edge import MultiEdgeBase
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.vertex_dict import VertexDict
+from vertizee.classes.vertex import V, V_co
 
 if TYPE_CHECKING:
-    from vertizee.classes.edge import EdgeBase
+    from vertizee.classes.edge import E, E_co, EdgeBase
     from vertizee.classes.graph import GraphBase
-    from vertizee.classes.vertex import V, V_co, VertexType
+    from vertizee.classes.vertex import VertexType
 
 BLACK: Final[str] = "black"
 GRAY: Final[str] = "gray"
@@ -82,8 +83,8 @@ WHITE: Final[str] = "white"
 
 
 def dfs(
-    graph: GraphBase[V_co], source: Optional[VertexType] = None, reverse_graph: bool = False
-) -> SearchResults[V_co]:
+    graph: GraphBase[V_co, E_co], source: Optional["VertexType"] = None, reverse_graph: bool = False
+) -> SearchResults[V_co, E_co]:
     """Performs a depth-first-search and provides detailed results (e.g. a forest of
     depth-first-search trees, cycle detection, and edge classification).
 
@@ -130,7 +131,7 @@ def dfs(
         graph, source=source, reverse_graph=reverse_graph
     )
 
-    dfs_tree: Optional[Tree[V_co]] = None
+    dfs_tree: Optional[Tree[V_co, E_co]] = None
     for (parent, child, label, direction) in labeled_edge_tuple_iterator:
         vertex = child
 
@@ -140,7 +141,7 @@ def dfs(
 
             if label == Label.TREE_ROOT:
                 dfs_tree = Tree(root=vertex)
-                dfs_results._search_tree_forest.add(dfs_tree)
+                dfs_results._search_tree_forest.append(dfs_tree)
                 dfs_results._vertices_preorder.append(vertex)
         elif direction == Direction.POSTORDER:
             dfs_results._vertices_postorder.append(vertex)
@@ -166,7 +167,7 @@ def dfs(
 
 
 def dfs_labeled_edge_traversal(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
@@ -341,7 +342,7 @@ def dfs_labeled_edge_traversal(
 
 
 def dfs_postorder_traversal(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
@@ -383,7 +384,7 @@ def dfs_postorder_traversal(
 
 
 def dfs_preorder_traversal(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[int] = None,
     reverse_graph: bool = False,
@@ -419,13 +420,13 @@ def dfs_preorder_traversal(
 
 
 def _check_for_parallel_edge_cycle(
-    graph: GraphBase[V_co], dfs_results: SearchResults[V_co], edge: EdgeBase[V_co]
+    graph: GraphBase[V, E], dfs_results: SearchResults[V, E], edge: E
 ) -> None:
     """Helper function to check for parallel edge cycles."""
     if edge is None:
         return
     if not graph.is_directed() and graph.is_multigraph():
-        multiplicity = cast(MultiEdgeBase[V_co], edge).multiplicity
+        multiplicity = cast(MultiEdgeBase[V], edge).multiplicity
         if multiplicity > 1:
             dfs_results._is_acyclic = False
     elif graph.is_directed() and dfs_results.is_acyclic():

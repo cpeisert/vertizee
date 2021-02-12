@@ -19,7 +19,7 @@
 import gc
 
 from collections import Counter
-from typing import Type
+from typing import Type, Union
 
 import pytest
 
@@ -30,7 +30,9 @@ from vertizee.classes.graph import DiGraph, G, Graph, MultiDiGraph, MultiGraph
 from vertizee.classes.vertex import Vertex
 
 
-def _check_for_memory_leak(cls_graph: Type[G]) -> None:
+def _check_for_memory_leak(
+    cls_graph: Type[Union[Graph, DiGraph, MultiGraph, MultiDiGraph]]
+) -> None:
     def count_objects_of_type(_type: type) -> int:
         return sum(1 for obj in gc.get_objects() if isinstance(obj, _type))
 
@@ -78,9 +80,9 @@ class TestG:
         assert (1, 3) not in g, "edge (1, 3) should not be in graph"
 
         with pytest.raises(TypeError):
-            _ = 4.5 not in g
+            _ = 4.5 not in g  # type: ignore
         with pytest.raises(TypeError):
-            _ = (1, 2, 3, 4) not in g
+            _ = (1, 2, 3, 4) not in g  # type: ignore
 
     def test__getitem__(self):
         g = Graph()
@@ -91,16 +93,16 @@ class TestG:
         assert isinstance(g[1, {}], Vertex), "graph should have vertex 1"
         v1 = g[1]
         assert isinstance(g[v1], Vertex), "graph should have vertex 1"
-        with pytest.raises(TypeError):
-            _ = g.get_edge(2.0)
+        with pytest.raises(KeyError):
+            _ = g.get_edge(1, 3)  # type: ignore
         with pytest.raises(KeyError):
             _ = g[3]
 
         assert isinstance(g.get_edge(1, 2), Edge), "graph should have edge (1, 2)"
         assert isinstance(g.get_edge("1", "2"), Edge), "graph should have edge (1, 2)"
         _ = g.get_edge(1, 2)
-        with pytest.raises(TypeError):
-            _ = g.get_edge(1.0, 2.0)
+        with pytest.raises(KeyError):
+            _ = g.get_edge(1.0, 2.0)  # type: ignore
         with pytest.raises(KeyError):
             _ = g.get_edge(1, 3)
 

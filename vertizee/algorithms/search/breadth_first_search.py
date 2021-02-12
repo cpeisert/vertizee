@@ -58,17 +58,19 @@ from vertizee.algorithms.algo_utils.search_utils import (
 from vertizee.classes import edge as edge_module
 from vertizee.classes.data_structures.tree import Tree
 from vertizee.classes.data_structures.union_find import UnionFind
-from vertizee.classes.vertex import V, V_co, VertexType
+from vertizee.classes.vertex import V, V_co
 
 if TYPE_CHECKING:
+    from vertizee.classes.edge import E_co
     from vertizee.classes.graph import GraphBase
+    from vertizee.classes.vertex import VertexType
 
 INFINITY: Final[float] = float("inf")
 
 
 def bfs(
-    graph: GraphBase[V_co], source: Optional[VertexType] = None, reverse_graph: bool = False
-) -> SearchResults[V_co]:
+    graph: GraphBase[V_co, E_co], source: Optional[VertexType] = None, reverse_graph: bool = False
+) -> SearchResults[V_co, E_co]:
     """Performs a breadth-first-search and provides detailed results (e.g. a :term:`forest` of
     breadth-first-search :term:`trees <tree>` and edge classification).
 
@@ -118,14 +120,14 @@ def bfs(
         graph, source=source, reverse_graph=reverse_graph
     )
 
-    bfs_tree: Optional[Tree[V_co]] = None
+    bfs_tree: Optional[Tree[V_co, E_co]] = None
     for (parent, child, label, direction, _) in labeled_edge_tuple_iterator:
         vertex = child
 
         if direction == Direction.PREORDER:
             if label == Label.TREE_ROOT:
                 bfs_tree = Tree(root=vertex)
-                results._search_tree_forest.add(bfs_tree)
+                results._search_tree_forest.append(bfs_tree)
                 results._vertices_preorder.append(vertex)
         elif direction == Direction.POSTORDER:
             results._vertices_postorder.append(vertex)
@@ -148,7 +150,7 @@ def bfs(
 
 
 def bfs_labeled_edge_traversal(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[float] = None,
     reverse_graph: bool = False,
@@ -258,11 +260,11 @@ def bfs_labeled_edge_traversal(
 
     vertex_depth: Dict[V_co, float] = collections.defaultdict(lambda: INFINITY)
 
+    vertices: Union[ValuesView[V_co], Set[V_co]]
     if source is None:
-        vertices: Union[ValuesView[V_co], Set[V_co]] = graph.vertices()
+        vertices = graph.vertices()
     else:
-        s: V_co = graph[source]
-        vertices = {s}
+        vertices = {graph[source]}
     if depth_limit is None:
         depth_limit = INFINITY
 
@@ -286,13 +288,12 @@ def bfs_labeled_edge_traversal(
             parent_state: VertexSearchState[V_co] = queue.popleft()
             parent = parent_state.parent
 
-            # [START for]
             for child in parent_state.children:
                 edge_label = edge_module.create_edge_label(parent, child, graph.is_directed())
 
                 if child not in seen:  # Discovered new vertex?
                     seen.add(child)
-                    if parent_state.depth:
+                    if parent_state.depth is not None:
                         depth_now = parent_state.depth + 1
                     vertex_depth[child] = depth_now
                     predecessor[child] = parent
@@ -309,36 +310,8 @@ def bfs_labeled_edge_traversal(
                         queue.append(VertexSearchState(child, grandchildren, depth_now))
                 elif edge_label not in classified_edges:
                     classified_edges.add(edge_label)
-                    if not search_trees.in_same_set(parent, child):
-                        # parent and child are in different search trees, so its a cross edge
-                        yield (
-                            parent,
-                            child,
-                            Label.CROSS_EDGE,
-                            Direction.ALREADY_DISCOVERED,
-                            INFINITY,
-                        )
-                    elif parent == child:  # self loops are considered back edges
-                        yield parent, child, Label.BACK_EDGE, Direction.ALREADY_DISCOVERED, INFINITY
-                    elif vertex_depth[parent] == vertex_depth[child]:
-                        yield (
-                            parent,
-                            child,
-                            Label.CROSS_EDGE,
-                            Direction.ALREADY_DISCOVERED,
-                            INFINITY,
-                        )
-                    elif vertex_depth[parent] < vertex_depth[child]:
-                        yield (
-                            parent,
-                            child,
-                            Label.FORWARD_EDGE,
-                            Direction.ALREADY_DISCOVERED,
-                            INFINITY,
-                        )
-                    else:
-                        yield parent, child, Label.BACK_EDGE, Direction.ALREADY_DISCOVERED, INFINITY
-            # [END for]
+                    classification = _classify_edge(parent, child, vertex_depth, search_trees)
+                    yield parent, child, classification, Direction.ALREADY_DISCOVERED, INFINITY
 
             if predecessor[parent]:
                 yield (
@@ -353,7 +326,7 @@ def bfs_labeled_edge_traversal(
 
 
 def bfs_vertex_traversal(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: Optional[VertexType] = None,
     depth_limit: Optional[float] = None,
     reverse_graph: bool = False,
@@ -392,3 +365,85 @@ def bfs_vertex_traversal(
     return (
         child for parent, child, label, direction, depth in edges if direction == Direction.PREORDER
     )
+
+
+def _classify_edge(
+    parent: V, child: V, vertex_depth: Dict[V, float], search_trees: UnionFind[V]
+) -> str:
+    """Helper function to classify non-tree edges in a breadth-first-search (BFS) tree.
+
+    Args:
+        parent: The parent vertex of the edge being classified in the BFS tree.
+        child:  The child vertex of the edge being classified in the BFS tree.
+        vertex_depth: A dictionary mapping vertices to their depth in the BFS tree.
+        search_trees: A UnionFind data structure of disjoint sets, where each set is a BFS tree.
+
+    Returns:
+        str: An edge classification label. See
+        :class:`Label <vertizee.algorithms.algo_utils.search_utils.Label>`.
+    """
+    if parent == child:  # self loops are considered back edges
+        return Label.BACK_EDGE
+    if vertex_depth[parent] == vertex_depth[child]:
+        return Label.CROSS_EDGE
+    if search_trees.in_same_set(parent, child):
+        if vertex_depth[parent] > vertex_depth[child]:
+            # parent and child are in SAME search tree and parent is an ancestor of
+            # child, so its a back edge
+            return Label.BACK_EDGE
+        if vertex_depth[parent] < vertex_depth[child]:
+            return Label.FORWARD_EDGE
+
+        raise exception.AlgorithmError(
+            "parent and child have equal depths in the "
+            "breadth-first-search tree and should have been labeled as a cross edge; this error "
+            "should never happen"
+        )
+
+    # parent and child are in different search trees, so its a cross edge
+    return Label.CROSS_EDGE
+
+
+# TODO(cpeisert): Implement and test speed versus labeled bfs traversal.
+# def _plain_breadth_first_search(
+#     vertices: Iterable[V], adjacency_function: Callable[[V, Optional[V]], Iterator[V]]
+# ) -> Iterator[Component[V]]:
+#     """Performs a plain depth-first search over the specified ``vertices``.
+
+#     Args:
+#         vertices: The graph vertices to be searched.
+#         adjacency_function: The function for retrieving the adjacent vertices of each vertex during
+#             the depth-first search.
+
+#     Yields:
+#         Component: An iterator of :class:`Component` objects.
+#     """
+#
+# NOTE(cpeisert): This code is copied from _plain_depth_first_search in components.py.
+#
+#     seen = set()
+
+#     for vertex in vertices:
+#         if vertex in seen:
+#             continue
+
+#         component = Component(initial_vertex=vertex)
+#         children = adjacency_function(vertex, None)
+#         stack = [search_utils.VertexSearchState(vertex, children)]
+
+#         while stack:
+#             parent = stack[-1].parent
+#             children = stack[-1].children
+#             try:
+#                 child = next(children)
+#             except StopIteration:
+#                 stack.pop()
+#                 continue
+
+#             if child not in seen:
+#                 seen.add(child)
+#                 component._vertices[child.label] = child
+#                 grandchildren = adjacency_function(child, parent)
+#                 stack.append(search_utils.VertexSearchState(child, grandchildren))
+
+#         yield component

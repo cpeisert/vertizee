@@ -29,14 +29,14 @@ from vertizee.classes import primitives_parsing
 from vertizee.classes import edge as edge_module
 from vertizee.classes.comparable import Comparable
 from vertizee.classes.primitives_parsing import GraphPrimitive, ParsedEdgeAndVertexData, VertexData
-from vertizee.classes.edge import EdgeBase, MultiEdgeBase
+from vertizee.classes.edge import E, E_co, MultiEdgeBase
 from vertizee.classes.vertex import V_co
 
 if TYPE_CHECKING:
     from vertizee.classes.vertex import VertexType
 
 
-class Tree(Comparable, Generic[V_co]):
+class Tree(Comparable, Generic[V_co, E_co]):
     """A :term:`tree <free tree>` is a :term:`graph` that is :term:`connected` and does not contain
     :term:`circuits <circuit>`.
 
@@ -64,7 +64,7 @@ class Tree(Comparable, Generic[V_co]):
     def __init__(self, root: V_co) -> None:
         super().__init__()
         self._root = root
-        self._edges: Dict[str, EdgeBase[V_co]] = dict()
+        self._edges: Dict[str, E_co] = dict()
         """A dictionary mapping edge labels to edge objects. See :func:`create_edge_label
         <vertizee.classes.edge.create_edge_label>`."""
 
@@ -141,10 +141,6 @@ class Tree(Comparable, Generic[V_co]):
         vertex_data: VertexData = primitives_parsing.parse_vertex_type(vertex)
         return self._vertices[vertex_data.label]
 
-    def __hash__(self) -> int:
-        """Supports adding trees to set-like collections."""
-        return hash(self._vertices)
-
     def __iter__(self) -> Iterator[V_co]:
         """Iterates over the vertices of the tree."""
         yield from self._vertices.values()
@@ -154,7 +150,7 @@ class Tree(Comparable, Generic[V_co]):
         ``len`` is used."""
         return len(self._vertices)
 
-    def add_edge(self, edge: EdgeBase[V_co]) -> None:
+    def add_edge(self, edge: E) -> E:
         """Adds a new edge to the tree.
 
         Exactly one of the edge's vertices must already be in the tree. If neither of the edge's
@@ -171,7 +167,7 @@ class Tree(Comparable, Generic[V_co]):
                 or neither of its endpoints are in the tree (which would make the edge unreachable).
         """
         if edge.label in self._edges:
-            return
+            return edge
         if edge.vertex1.label not in self._vertices and edge.vertex2.label not in self._vertices:
             raise exception.Unfeasible(
                 f"neither of the edge endpoints {edge} were found in the "
@@ -183,9 +179,10 @@ class Tree(Comparable, Generic[V_co]):
                 "tree, which would create a cycle; trees are acyclic"
             )
 
-        self._edges[edge.label] = edge
+        self._edges[edge.label] = cast(E_co, edge)
         self._vertices[edge.vertex1.label] = edge.vertex1
         self._vertices[edge.vertex2.label] = edge.vertex2
+        return edge
 
     @property
     def edge_count(self) -> int:
@@ -194,9 +191,26 @@ class Tree(Comparable, Generic[V_co]):
             return sum(cast(MultiEdgeBase[V_co], e).multiplicity for e in self._edges.values())
         return len(self._edges)
 
-    def edges(self) -> ValuesView[EdgeBase[V_co]]:
+    def edges(self) -> ValuesView[E_co]:
         """A view of the tree edges."""
         return self._edges.values()
+
+    def get_edge(self, vertex1: "VertexType", vertex2: "VertexType") -> E_co:
+        """Returns the :term:`edge` specified by the vertices, or None if no such edge exists.
+
+        Args:
+            vertex1: The first vertex (the :term:`tail` in :term:`directed graphs
+                <directed graph>`).
+            vertex2: The second vertex (the :term:`head` in directed graphs).
+
+        Returns:
+            EdgeBase[V]: The specified edge.
+
+        Raises:
+            KeyError: If the tree does not contain an edge with the specified vertex endpoints.
+        """
+        edge_label = edge_module.create_edge_label(vertex1, vertex2, self.is_directed())
+        return self._edges[edge_label]
 
     def has_edge(self, vertex1: VertexType, vertex2: VertexType) -> bool:
         """Returns True if the tree contains the edge.
@@ -241,7 +255,7 @@ class Tree(Comparable, Generic[V_co]):
         """Returns True if this is a multigraph (i.e. a graph that allows parallel edges)."""
         return self._root._parent_graph.is_multigraph()
 
-    def merge(self, other: "Tree[V_co]") -> None:
+    def merge(self, other: "Tree[V_co, E_co]") -> None:
         """Merges ``other`` into this tree."""
         self._edges.update(other._edges)
         self._vertices.update(other._vertices)

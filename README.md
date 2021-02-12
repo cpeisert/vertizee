@@ -49,10 +49,9 @@ set()
 
 ## Features
 
-* Object-oriented API: vertices and incident_edges are first-class objects
+* Object-oriented API: vertices and edges are first-class objects
 * Graph theory greatest-hits including:
   * Breadth-first-search (BFS) and depth-first search (DFS)
-  * Cuts: Karger and Karger-Stein algorithms
   * Shortest-paths: the Bellman-Ford algorithm and Dijkstra's algorithm
   * All-pairs-shortest paths: the Floyd-Warshall algorithm and Johnson's algorithm
   * Spanning trees: Kruskal's and Prim's algorithms

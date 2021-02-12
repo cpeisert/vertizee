@@ -83,7 +83,7 @@ class TestEdmonds:
 
         # Edmonds' algorithm does not work on undirected graphs.
         with pytest.raises(exception.GraphTypeNotSupported):
-            for _ in directed.edmonds(g):
+            for _ in directed.edmonds(g):  # type: ignore
                 pass
 
     def test_edmonds_max_spanning_arborescence(self):
@@ -215,7 +215,7 @@ class TestEdmonds:
 
         weight = 0
         for edge in spanning_edges_max_arborescence:
-            weight += max(c.weight for c in arborescence[edge].connections())
+            weight += max(c.weight for c in arborescence.get_edge(edge[0], edge[1]).connections())
         assert weight == 20
 
     def test_edmonds_min_arborescence_multigraph(self):
@@ -242,7 +242,7 @@ class TestEdmonds:
 
         weight = 0
         for edge in spanning_edges_min_arborescence:
-            weight += min(c.weight for c in arborescence[edge].connections())
+            weight += min(c.weight for c in arborescence.get_edge(edge[0], edge[1]).connections())
         assert weight == 6
 
     def test_edmonds_unfeasible_spanning_arborescence(self):

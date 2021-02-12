@@ -57,7 +57,7 @@ from vertizee.algorithms.search import breadth_first_search
 from vertizee.classes.data_structures.fibonacci_heap import FibonacciHeap
 from vertizee.classes.data_structures.priority_queue import PriorityQueue
 from vertizee.classes.data_structures.vertex_dict import VertexDict
-from vertizee.classes.edge import Attributes, MultiEdgeBase
+from vertizee.classes.edge import Attributes, E_co, MultiEdgeBase
 
 if TYPE_CHECKING:
     from vertizee.classes.graph import GraphBase
@@ -156,7 +156,7 @@ def get_weight_function(
 
 
 def shortest_paths(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
@@ -258,7 +258,7 @@ def shortest_paths(
 
 
 def bellman_ford(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
@@ -350,7 +350,7 @@ def bellman_ford(
 
 
 def breadth_first_search_shortest_paths(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
@@ -428,7 +428,7 @@ def breadth_first_search_shortest_paths(
 
 
 def dijkstra(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,
@@ -524,7 +524,7 @@ def dijkstra(
 
 
 def dijkstra_fibonacci(
-    graph: GraphBase[V_co],
+    graph: GraphBase[V_co, E_co],
     source: VertexType,
     save_paths: bool = False,
     reverse_graph: bool = False,

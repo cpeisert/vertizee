@@ -113,11 +113,12 @@ from vertizee.classes import edge as edge_module
 from vertizee.classes.edge import EdgeBase, EdgeTuple, EdgeTupleWeighted, MultiEdgeBase
 
 if TYPE_CHECKING:
+    from vertizee.classes.edge import E
     from vertizee.classes.graph import GraphBase
     from vertizee.classes.vertex import V, VertexBase
 
 
-def read_adj_list(path: str, new_graph: "GraphBase[V]", delimiters: str = r",\s*|\s+") -> None:
+def read_adj_list(path: str, new_graph: "GraphBase[V, E]", delimiters: str = r",\s*|\s+") -> None:
     """Reads an adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then :term:`vertices <vertex>` and :term:`edges <edge>` are
@@ -163,7 +164,7 @@ def read_adj_list(path: str, new_graph: "GraphBase[V]", delimiters: str = r",\s*
         new_graph.add_edges_from(edge_tuples)
 
 
-def read_weighted_adj_list(path: str, new_graph: "GraphBase[V]") -> None:
+def read_weighted_adj_list(path: str, new_graph: "GraphBase[V, E]") -> None:
     """Reads a :term:`weighted` adjacency list from a text file and populates ``new_graph``.
 
     The ``new_graph`` is cleared and then :term:`vertices <vertex>` and :term:`edges <edge>` are
@@ -207,7 +208,7 @@ def read_weighted_adj_list(path: str, new_graph: "GraphBase[V]") -> None:
 
 def write_adj_list_to_file(
     path: str,
-    graph: "GraphBase[V]",
+    graph: "GraphBase[V, E]",
     delimiter: str = "\t",
     include_weights: bool = False,
     weights_are_integers: bool = False,

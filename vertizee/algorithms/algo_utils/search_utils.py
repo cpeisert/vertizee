@@ -56,7 +56,7 @@ from typing import cast, Final, Generic, List, Iterator, Optional, Set, TYPE_CHE
 from vertizee import exception
 from vertizee.classes.collection_views import ListView, SetView
 from vertizee.classes.data_structures.tree import Tree
-from vertizee.classes.edge import EdgeBase
+from vertizee.classes.edge import E_co
 from vertizee.classes.vertex import DiVertex, MultiDiVertex, V, V_co
 
 if TYPE_CHECKING:
@@ -135,7 +135,7 @@ class Label:
     format relative to back, cross, forward, and tree edges."""
 
 
-class SearchResults(Generic[V_co]):
+class SearchResults(Generic[V_co, E_co]):
     """Stores the results of a :term:`graph` search.
 
     A graph search produces the following outputs:
@@ -176,17 +176,17 @@ class SearchResults(Generic[V_co]):
             search. False indicates that the search results are based on a breadth-first search.
     """
 
-    def __init__(self, graph: "GraphBase[V_co]", depth_first_search: bool) -> None:
+    def __init__(self, graph: "GraphBase[V_co, E_co]", depth_first_search: bool) -> None:
         self._depth_first_search = depth_first_search
         self._graph = graph
-        self._edges_in_discovery_order: List[EdgeBase[V_co]] = []
-        self._search_tree_forest: Set[Tree[V_co]] = set()
+        self._edges_in_discovery_order: List[E_co] = []
+        self._search_tree_forest: List[Tree[V_co, E_co]] = []
 
         # Edge classification.
-        self._back_edges: Set[EdgeBase[V_co]] = set()
-        self._cross_edges: Set[EdgeBase[V_co]] = set()
-        self._forward_edges: Set[EdgeBase[V_co]] = set()
-        self._tree_edges: Set[EdgeBase[V_co]] = set()
+        self._back_edges: Set[E_co] = set()
+        self._cross_edges: Set[E_co] = set()
+        self._forward_edges: Set[E_co] = set()
+        self._tree_edges: Set[E_co] = set()
         self._vertices_postorder: List[V_co] = []
         self._vertices_preorder: List[V_co] = []
 
@@ -197,22 +197,22 @@ class SearchResults(Generic[V_co]):
         preorder is the order in which the vertices were discovered."""
         yield from self._vertices_preorder
 
-    def back_edges(self) -> "SetView[EdgeBase[V_co]]":
+    def back_edges(self) -> "SetView[E_co]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the back edges
         found during the graph search."""
         return SetView(self._back_edges)
 
-    def cross_edges(self) -> "SetView[EdgeBase[V_co]]":
+    def cross_edges(self) -> "SetView[E_co]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the cross edges
         found during the graph search."""
         return SetView(self._cross_edges)
 
-    def edges_in_discovery_order(self) -> "ListView[EdgeBase[V_co]]":
+    def edges_in_discovery_order(self) -> "ListView[E_co]":
         """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the edges
         found during the graph search in order of discovery."""
         return ListView(self._edges_in_discovery_order)
 
-    def forward_edges(self) -> "SetView[EdgeBase[V_co]]":
+    def forward_edges(self) -> "SetView[E_co]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the forward
         edges found during a graph search."""
         return SetView(self._forward_edges)
@@ -240,10 +240,10 @@ class SearchResults(Generic[V_co]):
             )
         return self._is_acyclic
 
-    def graph_search_trees(self) -> "SetView[Tree[V_co]]":
-        """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the the
+    def graph_search_trees(self) -> "ListView[Tree[V_co, E_co]]":
+        """Returns a :class:`ListView <vertizee.classes.collection_views.ListView>` of the the
         graph search trees found during the graph search."""
-        return SetView(self._search_tree_forest)
+        return ListView(self._search_tree_forest)
 
     def has_topological_ordering(self) -> bool:
         """Returns True if the search results provide a valid :term:`topological ordering` of the
@@ -262,7 +262,7 @@ class SearchResults(Generic[V_co]):
         results are from a breadth-first search."""
         return self._depth_first_search
 
-    def tree_edges(self) -> "SetView[EdgeBase[V_co]]":
+    def tree_edges(self) -> "SetView[E_co]":
         """Returns a :class:`SetView <vertizee.classes.collection_views.SetView>` of the tree
         edges found during the graph search."""
         return SetView(self._tree_edges)
