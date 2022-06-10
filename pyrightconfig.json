@@ -15,14 +15,14 @@
     ],
 
     "stubPath": "src/stubs",
-    "venvPath": "~/anaconda3/envs/",
+    "venvPath": "~/miniconda3/envs/",
 
     "reportMissingImports": true,
     "reportMissingTypeStubs": false,
     "typeCheckingMode": "basic",
     "useLibraryCodeForTypes": true,
 
-    "pythonVersion": "3.8",
+    "pythonVersion": "3.10",
     "pythonPlatform": "Linux",
 
     "executionEnvironments": [
@@ -31,3 +31,4 @@
       }
     ]
   }
+  
